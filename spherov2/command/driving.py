@@ -1,6 +1,7 @@
 from enum import IntFlag, IntEnum
 from functools import partial
 
+from spherov2.helper import to_bytes
 from spherov2.packet import Packet
 
 
@@ -28,7 +29,7 @@ class Driving:
 
     @staticmethod
     def drive_with_heading(speed, heading, drive_flags: DriveFlags, target_id=None):
-        return Driving.__encode(command_id=7, data=[speed, *heading, drive_flags], target_id=target_id)
+        return Driving.__encode(command_id=7, data=[speed, *to_bytes(heading, 2), drive_flags], target_id=target_id)
 
     @staticmethod
     def set_stabilization(stabilization_index: StabilizationIndexes, target_id=None):

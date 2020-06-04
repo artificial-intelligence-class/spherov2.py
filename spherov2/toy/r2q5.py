@@ -1,18 +1,24 @@
 import struct
 from enum import IntEnum
+from functools import cached_property
 
 from spherov2.command.animatronic import Animatronic, R2LegActions
+from spherov2.command.api_and_shell import APIAndShell
 from spherov2.command.driving import Driving, DriveFlags, StabilizationIndexes
 from spherov2.command.firmware import Firmware, PendingUpdateFlags
 from spherov2.command.io import IO
 from spherov2.command.power import Power, BatteryStates
 from spherov2.command.sensor import Sensor, CollisionDetectionMethods
 from spherov2.command.system_info import SystemInfo
+from spherov2.controls.v2 import DriveControl
 from spherov2.toy.core import Toy, ToySensor
 from spherov2.helper import to_int
+from spherov2.toy.types import ToyType
 
 
 class R2Q5(Toy):
+    toy_type = ToyType('R2-Q5', 'Q5-', 'Q5', .12)
+
     class LEDs(IntEnum):
         FRONT_RED = 0
         FRONT_GREEN = 1
@@ -114,6 +120,9 @@ class R2Q5(Toy):
         }
     }
 
+    def ping(self, data):
+        return self._execute(APIAndShell.ping(data)).data
+
     def drive_with_heading(self, speed, heading, drive_flags=DriveFlags.forward):
         self._execute(Driving.drive_with_heading(speed, heading, drive_flags))
 
@@ -208,3 +217,7 @@ class R2Q5(Toy):
         self._execute(Sensor.configure_collision_detection(
             collision_detection_method, x_threshold, y_threshold, x_speed, y_speed, dead_time
         ))
+
+    @cached_property
+    def drive_control(self) -> DriveControl:
+        return DriveControl(self)
