@@ -26,7 +26,7 @@ class BleakAdaptor:
         self.__execute(self.__device.disconnect())
         with self.__lock:
             self.__event_loop.call_soon_threadsafe(self.__event_loop.stop)
-        self.__thread.join()
+            self.__thread.join()
         self.__event_loop.close()
 
     def set_callback(self, uuid, cb):

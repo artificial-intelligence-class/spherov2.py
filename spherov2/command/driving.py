@@ -6,9 +6,9 @@ from spherov2.packet import Packet
 
 
 class DriveFlags(IntFlag):
-    forward = 0b0
-    backward = 0b1
-    turbo = 0b10
+    FORWARD = 0b0
+    BACKWARD = 0b1
+    TURBO = 0b10
 
 
 class StabilizationIndexes(IntEnum):
@@ -20,8 +20,19 @@ class StabilizationIndexes(IntEnum):
     SPEED_AND_YAW_CONTROL_SYSTEM = 5
 
 
+class RawMotorModes(IntFlag):
+    OFF = 0b0
+    FORWARD = 0b1
+    REVERSE = 0b10
+
+
 class Driving:
     __encode = partial(Packet, device_id=22)
+
+    @staticmethod
+    def set_raw_motors(left_mode: RawMotorModes, left_speed, right_mode: RawMotorModes, right_speed, target_id=None):
+        return Driving.__encode(command_id=1, data=[left_mode, left_speed, right_mode, right_speed],
+                                target_id=target_id)
 
     @staticmethod
     def reset_yaw(target_id=None):

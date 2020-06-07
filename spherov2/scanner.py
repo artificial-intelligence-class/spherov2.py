@@ -1,13 +1,19 @@
 from typing import List, Type
 from spherov2.adapter.bleak import BleakAdaptor
 from spherov2.toy.core import Toy
-from spherov2.toy.r2q5 import R2Q5
+
+
+def all_toys(cls=Toy):
+    subtypes = cls.__subclasses__()
+    yield cls
+    for sub in subtypes:
+        yield from all_toys(sub)
 
 
 def find_toys(timeout=5.0, toy_types: List[Type[Toy]] = None):
     toys = BleakAdaptor.scan_toys(timeout)
     if toy_types is None:
-        toy_types = [R2Q5]
+        toy_types = all_toys()
     ret = []
     for toy in toys:
         for toy_cls in toy_types:

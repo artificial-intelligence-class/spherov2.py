@@ -82,10 +82,6 @@ class Toy:
             self.__packets[packet.id] = packet
             self.__cv.notify_all()
 
-    @cached_property
-    def drive_control(self):
-        raise NotImplementedError
-
 
 @dataclass
 class ToySensor:
