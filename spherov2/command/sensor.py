@@ -13,6 +13,7 @@ class CollisionDetectionMethods(IntEnum):
 
 class Sensor:
     __encode = partial(Packet, device_id=24)
+    sensor_streaming_data_notify = (24, 2, 0xff)
 
     @staticmethod
     def set_sensor_streaming_mask(interval, count, sensor_masks, target_id=None):

@@ -1,5 +1,6 @@
+import threading
 from enum import IntEnum
-from typing import Dict
+from typing import Dict, List, Callable
 
 from spherov2.command.driving import DriveFlags
 from spherov2.controls.enums import RawMotorModes
@@ -68,3 +69,84 @@ class LedControl:
                 self.__toy.set_all_leds_with_16_bit_mask(mask, led_values)
             elif hasattr(self.__toy, 'set_all_leds_with_8_bit_mask'):
                 self.__toy.set_all_leds_with_8_bit_mask(mask, led_values)
+
+
+class SensorControl:
+    def __init__(self, toy: Toy):
+        self.__toy = toy
+        toy.add_sensor_streaming_data_notify_listener(self.__process_sensor_stream_data)
+
+        self.__count = 0
+        self.__interval = 250
+        self.__enabled = {}
+        self.__enabled_extended = {}
+        self.__listeners = set()
+
+    def __process_sensor_stream_data(self, sensor_data: List[float]):
+        data = {}
+
+        def __new_data():
+            n = {}
+            for name, component in components.items():
+                d = sensor_data.pop(0)
+                if component.modifier:
+                    d = component.modifier(d)
+                n[name] = d
+            data[sensor] = n
+
+        for sensor, components in self.__toy.sensors.items():
+            if sensor in self.__enabled:
+                __new_data()
+        for sensor, components in self.__toy.extended_sensors.items():
+            if sensor in self.__enabled_extended:
+                __new_data()
+
+        for f in self.__listeners:
+            threading.Thread(target=f, args=(data,)).start()
+
+    def add_sensor_data_listener(self, callback: Callable[[Dict[str, Dict[str, float]]], None]):
+        self.__listeners.add(callback)
+
+    def remove_sensor_data_listener(self, callback: Callable[[Dict[str, Dict[str, float]]], None]):
+        self.__listeners.remove(callback)
+
+    def set_count(self, count: int):
+        if count > 0:
+            self.__count = count
+            self.update()
+
+    def set_interval(self, interval: int):
+        if interval >= 0:
+            self.__interval = interval
+            self.update()
+
+    def update(self):
+        sensors_mask = extended_sensors_mask = 0
+        for sensor in self.__enabled.values():
+            for component in sensor.values():
+                sensors_mask |= component.bit
+        for sensor in self.__enabled_extended.values():
+            for component in sensor.values():
+                extended_sensors_mask |= component.bit
+        self.__toy.set_sensor_streaming_mask(0, self.__count, sensors_mask)
+        self.__toy.set_extended_sensor_streaming_mask(extended_sensors_mask)
+        self.__toy.set_sensor_streaming_mask(self.__interval, self.__count, sensors_mask)
+
+    def enable(self, *sensors):
+        for sensor in sensors:
+            if sensor in self.__toy.sensors:
+                self.__enabled[sensor] = self.__toy.sensors[sensor]
+            elif sensor in self.__toy.extended_sensors:
+                self.__enabled_extended[sensor] = self.__toy.extended_sensors[sensor]
+        self.update()
+
+    def disable(self, *sensors):
+        for sensor in sensors:
+            self.__enabled.pop(sensor, None)
+            self.__enabled_extended.pop(sensor, None)
+        self.update()
+
+    def disable_all(self):
+        self.__enabled.clear()
+        self.__enabled_extended.clear()
+        self.update()

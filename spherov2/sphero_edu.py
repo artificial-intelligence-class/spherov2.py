@@ -19,7 +19,7 @@ from spherov2.toy.r2q5 import R2Q5
 from spherov2.toy.rvr import RVR
 from spherov2.toy.sphero import Sphero
 from spherov2.types import Color
-from spherov2.utils import ToyUtil
+from spherov2.utils import ToyUtil, SensorManager
 
 
 class Stance(str, Enum):
@@ -38,14 +38,18 @@ class SpheroEduAPI:
         self.__raw_motor = namedtuple('rawMotor', ('left', 'right'))(0, 0)
         self.__leds = defaultdict(partial(Color, 0, 0, 0))
 
+        self.__sensor_manager = SensorManager(toy)
+
         self.__stopped = threading.Event()
         self.__updating = threading.Lock()
         self.__thread = threading.Thread(target=self.__background)
 
     def __enter__(self):
         self.__toy.__enter__()
-        self.__toy.wake()
         self.__thread.start()
+        self.__toy.wake()
+        ToyUtil.set_robot_state_on_start(self.__toy)
+        self.__sensor_manager.start_capturing_sensor_data()
         return self
 
     def __exit__(self, *args):
@@ -116,8 +120,8 @@ class SpheroEduAPI:
         ToyUtil.roll_start(self.__toy, self.__heading, self.__speed)
 
     def spin(self, angle: int, duration: float):
-        """Spins the robot for a given number of degrees over time, with 360° being a single revolution. 
-        For example, to spin the robot 360° over 1s, use: ``spin(360, 1)``. 
+        """Spins the robot for a given number of degrees over time, with 360° being a single revolution.
+        For example, to spin the robot 360° over 1s, use: ``spin(360, 1)``.
         Use :func:`set_speed` prior to :func:`spin` to have the robot move in circle or an arc or circle.
 
         Note: Unlike official API, performance of spin is guaranteed, but may be longer than the specified duration."""
@@ -211,10 +215,10 @@ class SpheroEduAPI:
 
     # The R2-D2 and R2-Q5 Droids are physically different from other Sphero robots,
     # so there are some unique commands that only they can use.
-    def set_dome_position(self, angle: int):
+    def set_dome_position(self, angle: float):
         """Rotates the dome on its axis, from -160° to 180°. For example, set to 45° using ``set_dome_position(45).``"""
         if isinstance(self.__toy, (R2D2, R2Q5)):
-            ToyUtil.set_head_position(self.__toy, bound_value(-160, angle, 180))
+            ToyUtil.set_head_position(self.__toy, bound_value(-160., angle, 180.))
 
     def set_stance(self, stance: Stance):
         """Changes the stance between bipod and tripod. Set to bipod using ``set_stance(Stance.Bipod)`` and
@@ -232,7 +236,7 @@ class SpheroEduAPI:
         if isinstance(self.__toy, (R2D2, R2Q5)):
             with self.__updating:
                 self.__stop_all()
-            ToyUtil.perform_leg_action(self.__toy, R2LegActions.WADDLE if waddle else R2LegActions.OFF)
+            ToyUtil.perform_leg_action(self.__toy, R2LegActions.WADDLE if waddle else R2LegActions.STOP)
 
     # Lights: control the color and brightness of LEDs on a robot.
     def set_main_led(self, color: Color):
@@ -243,11 +247,22 @@ class SpheroEduAPI:
         if isinstance(self.__toy, (R2D2, R2Q5)):
             self.__leds['front'] = self.__leds['back'] = self.__leds['main']
         elif isinstance(self.__toy, RVR):
-            self.__leds['left_headlight'] = self.__leds['right_headlight'] = \
+            self.__leds['front'] = \
                 self.__leds['left_status_indication'] = self.__leds['right_status_indication'] = \
                 self.__leds['battery_door_rear'] = self.__leds['battery_door_front'] = \
                 self.__leds['power_button_front'] = self.__leds['power_button_rear'] = \
                 self.__leds['back'] = self.__leds['main']
+
+    def set_front_led(self, color: Color):
+        """For Sphero RVR: Changes the color of RVR's front two LED headlights together.
+
+        For Sphero BOLT, R2D2, R2Q5: Changes the color of the front LED light.
+
+        Set this using RGB (red, green, blue) values on a scale of 0 - 255. For example, the magenta color is expressed
+        as ``set_front_color(Color(239, 0, 255))``."""
+        if isinstance(self.__toy, (R2D2, R2Q5, BOLT, RVR)):
+            self.__leds['front'] = bound_color(color, self.__leds['front'])
+            ToyUtil.set_front_led(self.__toy, **self.__leds['front']._asdict())
 
     def set_back_led(self, color: Union[Color, int]):
         """For older Sphero:
@@ -261,21 +276,21 @@ class SpheroEduAPI:
             set_back_led(255)  # Bright
             delay(0.33)
 
-
         For Sphero BOLT, R2D2, R2Q5:
         Changes the color of the back LED light. Set this using RGB (red, green, blue) values on a scale of 0 - 255.
 
         For Sphero RVR:
-        Changes the color of the left and right breaklight LED light."""
+        Changes the color of the left and right breaklight LED light. Set this using RGB (red, green, blue) values
+        on a scale of 0 - 255."""
         if isinstance(color, int):
             self.__leds['back'] = Color(r=0, g=0, b=bound_value(0, color, 255))
             ToyUtil.set_back_led_brightness(self.__toy, self.__leds['back'].b)
-        if isinstance(self.__toy, (R2D2, R2Q5, BOLT, RVR)):
+        elif isinstance(self.__toy, (R2D2, R2Q5, BOLT, RVR)):
             self.__leds['back'] = bound_color(color, self.__leds['back'])
             ToyUtil.set_back_led(self.__toy, **self.__leds['back']._asdict())
 
     def fade(self, from_color: Color, to_color: Color, duration: float):
-        """Changes the main LED lights from one color to another over a period of seconds. For example, to fade from 
+        """Changes the main LED lights from one color to another over a period of seconds. For example, to fade from
         green to blue over 3s, use: ``fade(Color(0, 255, 0), Color(0, 0, 255), 3.0)``."""
         from_color = bound_color(from_color, self.__leds['main'])
         to_color = bound_color(to_color, self.__leds['main'])
@@ -303,3 +318,57 @@ class SpheroEduAPI:
             else:
                 self.set_main_led(Color(0, 0, 0))
             time.sleep(period)
+
+    # TODO Sphero BOLT Lights
+
+    # TODO Sphero RVR Lights
+
+    # BB-9E Lights
+    def set_dome_leds(self, brightness: int):
+        """Controls the brightness of the two single color LEDs (red and blue) in the dome, from 0 to 15. We don't use
+        0-255 for this light because it has less granular control. For example, set them to full brightness using
+        ``set_dome_leds(15)``."""
+        if isinstance(self.__toy, BB9E):
+            self.__leds['dome'] = bound_value(0, brightness, 15)
+            ranged = self.__leds['dome'] * 255 // 15
+            ToyUtil.set_head_led(self.__toy, ranged)
+
+    # R2-D2 & R2-Q5 Lights
+    def set_holo_projector_led(self, brightness: int):
+        """Changes the brightness of the Holographic Projector white LED, from 0 to 255. For example, set it to full
+        brightness using ``set_holo_projector_led(255)``."""
+        if isinstance(self.__toy, (R2D2, R2Q5)):
+            self.__leds['holo_projector'] = bound_value(0, brightness, 255)
+            ToyUtil.set_holo_projector(self.__toy, self.__leds['holo_projector'])
+
+    def set_logic_display_leds(self, brightness: int):
+        """Changes the brightness of the Logic Display LEDs, from 0 to 255. For example, set it to full brightness
+        using ``set_logic_display_leds(255)``."""
+        if isinstance(self.__toy, (R2D2, R2Q5)):
+            self.__leds['logic_display'] = bound_value(0, brightness, 255)
+            ToyUtil.set_logic_display(self.__toy, self.__leds['logic_display'])
+
+    # Sounds: Control sounds and words which can play from your programming device's speaker or the robot.
+    def play_sound(self, sound: IntEnum):
+        """Unique Star Wars Droid Sounds are available for BB-8, BB-9E and R2-D2. For example, to play the R2-D2 Burnout
+        sound use ``play_sound(R2D2.Audio.R2_BURNOUT)``."""
+        if hasattr(self.__toy, 'Audio'):
+            if sound not in self.__toy.Audio:
+                raise ValueError(f'Sound {sound} cannot be played by this toy')
+            ToyUtil.play_sound(self.__toy, sound, False)
+
+    # Sensors: Querying sensor data allows you to react to real-time values coming from the robots' physical sensors.
+    def get_acceleration(self):
+        """Provides motion acceleration data along a given axis measured by the Accelerometer, in g's, where g =
+        9.80665 m/s^2.
+
+        ``get_acceleration()['x']`` is the left-to-right acceleration, from -8 to 8 g's.
+
+        ``get_acceleration()['y']`` is the forward-to-back acceleration, from of -8 to 8 g's.
+
+        ``get_acceleration()['z']`` is the upward-to-downward acceleration, from -8 to 8 g's."""
+        return self.__sensor_manager.accelerometer
+
+    def get_vertical_acceleration(self):
+        """This is the upward or downward acceleration regardless of the robot's orientation, from -8 to 8 g's."""
+        return self.__sensor_manager.vertical_accel

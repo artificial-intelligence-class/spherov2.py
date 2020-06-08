@@ -1,8 +1,10 @@
 import threading
 import time
+from collections import defaultdict, OrderedDict
+from concurrent import futures
 from dataclasses import dataclass
-from functools import cached_property
 from queue import SimpleQueue
+from typing import Callable
 
 from spherov2.adapter.bleak import BleakAdaptor
 from spherov2.packet import Packet, Collector
@@ -10,16 +12,22 @@ from spherov2.toy.consts import CharacteristicUUID
 from spherov2.toy.types import ToyType
 
 
-class CommandTimeoutException(Exception):
-    ...
-
-
 class CommandExecuteError(Exception):
     ...
 
 
+@dataclass
+class ToySensor:
+    bit: int
+    min_value: float
+    max_value: float
+    modifier: Callable[[float], float] = None
+
+
 class Toy:
     toy_type = ToyType('Robot', None, 'Sphero', .06)
+    sensors = OrderedDict()
+    extended_sensors = OrderedDict()
 
     def __init__(self, mac_address, adapter_cls=BleakAdaptor):
         self.mac_address = mac_address
@@ -27,8 +35,8 @@ class Toy:
         self.__adapter = None
         self.__adapter_cls = adapter_cls
         self.__decoder = Collector(self.__new_packet)
-        self.__packets = {}
-        self.__cv = threading.Condition()
+        self.__waiting = defaultdict(SimpleQueue)
+        self.__notifiers = defaultdict(set)
 
         self.__thread = threading.Thread(target=self.__process_packet)
         self.__packet_queue = SimpleQueue()
@@ -54,7 +62,7 @@ class Toy:
             payload = self.__packet_queue.get()
             if payload is None:
                 break
-            print('request ' + ' '.join([hex(c) for c in payload]))
+            # print('request ' + ' '.join([hex(c) for c in payload]))
             self.__adapter.write(CharacteristicUUID.api_v2.value, payload)
             time.sleep(self.toy_type.cmd_safe_interval)
 
@@ -65,27 +73,27 @@ class Toy:
         return self._wait_packet(packet.id)
 
     def _wait_packet(self, key, timeout=10.0):
-        with self.__cv:
-            if self.__cv.wait_for(lambda: key in self.__packets, timeout):
-                packet = self.__packets[key]
-                if packet.error != Packet.Error.success:
-                    raise CommandExecuteError(packet.error)
-                return packet
-        raise CommandTimeoutException
+        future = futures.Future()
+        self.__waiting[key].put(future)
+        packet = future.result(timeout)
+        if packet.error != Packet.Error.success:
+            raise CommandExecuteError(packet.error)
+        return packet
+
+    def _add_notifier(self, key, notifier: Callable[[Packet], None]):
+        self.__notifiers[key].add(notifier)
+
+    def _remove_notifier(self, key, notifier: Callable[[Packet], None]):
+        self.__notifiers[key].remove(notifier)
 
     def __api_read(self, char, data):
         self.__decoder.add(data)
 
     def __new_packet(self, packet: Packet):
-        print('response ' + ' '.join([hex(c) for c in packet.build()]))
-        with self.__cv:
-            self.__packets[packet.id] = packet
-            self.__cv.notify_all()
-
-
-@dataclass
-class ToySensor:
-    bit: int
-    min_value: float
-    max_value: float
-    modifier: str = None
+        # print('response ' + ' '.join([hex(c) for c in packet.build()]))
+        key = packet.id
+        queue = self.__waiting[key]
+        while not queue.empty():
+            queue.get().set_result(packet)
+        for f in self.__notifiers[key]:
+            threading.Thread(target=f, args=(packet,)).start()
