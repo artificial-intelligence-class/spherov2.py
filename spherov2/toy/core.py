@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from queue import SimpleQueue
 from typing import Callable
 
-from spherov2.adapter.bleak import BleakAdaptor
 from spherov2.packet import Packet, Collector
 from spherov2.toy.consts import CharacteristicUUID
 from spherov2.types import ToyType
@@ -29,7 +28,7 @@ class Toy:
     sensors = OrderedDict()
     extended_sensors = OrderedDict()
 
-    def __init__(self, mac_address, adapter_cls=BleakAdaptor):
+    def __init__(self, mac_address, adapter_cls):
         self.mac_address = mac_address
 
         self.__adapter = None
