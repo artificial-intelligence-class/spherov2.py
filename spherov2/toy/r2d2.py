@@ -650,16 +650,16 @@ class R2D2(Toy):
         self._remove_listener(Sensor.collision_detected_notify, listener)
 
     @property
-    @lru_cache
+    @lru_cache(None)
     def drive_control(self) -> DriveControl:
         return DriveControl(self)
 
     @property
-    @lru_cache
+    @lru_cache(None)
     def multi_led_control(self) -> LedControl:
         return LedControl(self)
 
     @property
-    @lru_cache
+    @lru_cache(None)
     def sensor_control(self) -> SensorControl:
         return SensorControl(self)
