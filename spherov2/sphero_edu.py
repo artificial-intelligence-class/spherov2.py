@@ -1,11 +1,15 @@
+import math
 import threading
 import time
 from collections import namedtuple, defaultdict
-from enum import Enum, IntEnum
+from enum import Enum, IntEnum, auto
 from functools import partial
-from typing import Union
+from typing import Union, Callable, Dict
+
+from scipy.spatial.transform import Rotation
 
 from spherov2.command.animatronic import R2LegActions
+from spherov2.command.power import BatteryVoltageAndStateStates
 from spherov2.controls.enums import RawMotorModes
 from spherov2.helper import bound_value, bound_color
 from spherov2.toy.bb8 import BB8
@@ -18,13 +22,24 @@ from spherov2.toy.r2d2 import R2D2
 from spherov2.toy.r2q5 import R2Q5
 from spherov2.toy.rvr import RVR
 from spherov2.toy.sphero import Sphero
-from spherov2.types import Color
-from spherov2.utils import ToyUtil, SensorManager
+from spherov2.types import Color, CollisionArgs
+from spherov2.utils import ToyUtil
 
 
 class Stance(str, Enum):
     Bipod = 'twolegs'
     Tripod = 'threelegs'
+
+
+class EventType(Enum):
+    on_collision = auto()  # [f.Sphero, f.Ollie, f.BB8, f.BB9E, f.R2D2, f.R2Q5, f.BOLT, f.Mini]
+    on_freefall = auto()  # [f.Sphero, f.Ollie, f.BB8, f.BB9E, f.R2D2, f.R2Q5, f.BOLT, f.Mini]
+    on_landing = auto()  # [f.Sphero, f.Ollie, f.BB8, f.BB9E, f.R2D2, f.R2Q5, f.BOLT, f.Mini]
+    on_gyro_max = auto()  # [f.Sphero, f.Mini, f.Ollie, f.BB8, f.BB9E, f.BOLT, f.Mini]
+    on_charging = auto()  # [f.Sphero, f.Ollie, f.BB8, f.BB9E, f.R2D2, f.R2Q5, f.BOLT]
+    on_not_charging = auto()  # [f.Sphero, f.Ollie, f.BB8, f.BB9E, f.R2D2, f.R2Q5, f.BOLT]
+    on_ir_message = auto()  # [f.BOLT, f.RVR] TODO
+    on_color = auto()  # [f.RVR] TODO
 
 
 class SpheroEduAPI:
@@ -38,7 +53,15 @@ class SpheroEduAPI:
         self.__raw_motor = namedtuple('rawMotor', ('left', 'right'))(0, 0)
         self.__leds = defaultdict(partial(Color, 0, 0, 0))
 
-        self.__sensor_manager = SensorManager(toy)
+        self.__sensor_data: Dict[str, Union[float, Dict[str, float]]] = {'distance': 0.}
+        self.__sensor_name_mapping = {}
+        self.__last_location = (0., 0.)
+        self.__last_non_fall = time.time()
+        self.__falling_v = 1.
+        self.__should_land = self.__free_falling = False
+        ToyUtil.add_listeners(toy, self)
+
+        self.__listeners = defaultdict(set)
 
         self.__stopped = threading.Event()
         self.__updating = threading.Lock()
@@ -49,7 +72,7 @@ class SpheroEduAPI:
         self.__thread.start()
         self.__toy.wake()
         ToyUtil.set_robot_state_on_start(self.__toy)
-        self.__sensor_manager.start_capturing_sensor_data()
+        self.__start_capturing_sensor_data()
         return self
 
     def __exit__(self, *args):
@@ -244,7 +267,7 @@ class SpheroEduAPI:
         (red, green, blue) values on a scale of 0 - 255. For example, ``set_main_led(Color(r=90, g=255, b=90))``."""
         self.__leds['main'] = bound_color(color, self.__leds['main'])
         ToyUtil.set_main_led(self.__toy, **self.__leds['main']._asdict(), is_user_color=False)
-        if isinstance(self.__toy, (R2D2, R2Q5)):
+        if isinstance(self.__toy, (R2D2, R2Q5, BOLT)):
             self.__leds['front'] = self.__leds['back'] = self.__leds['main']
         elif isinstance(self.__toy, RVR):
             self.__leds['front'] = \
@@ -358,6 +381,63 @@ class SpheroEduAPI:
             ToyUtil.play_sound(self.__toy, sound, False)
 
     # Sensors: Querying sensor data allows you to react to real-time values coming from the robots' physical sensors.
+    def __start_capturing_sensor_data(self):
+        if isinstance(self.__toy, RVR):
+            sensors = ['accelerometer', 'gyroscope', 'imu', 'locator', 'velocity', 'ambient_light', 'color_detection']
+            self.__sensor_name_mapping['imu'] = 'attitude'
+        elif isinstance(self.__toy, BOLT):
+            sensors = ['accelerometer', 'gyroscope', 'attitude', 'locator', 'velocity', 'ambient_light']
+        else:
+            sensors = ['attitude', 'accelerometer', 'gyroscope', 'locator', 'velocity']
+        ToyUtil.enable_sensors(self.__toy, sensors)
+
+    def _sensor_data_listener(self, sensor_data: Dict[str, Dict[str, float]]):
+        for sensor, data in sensor_data.items():
+            if sensor in self.__sensor_name_mapping:
+                self.__sensor_data[self.__sensor_name_mapping[sensor]] = data
+            else:
+                self.__sensor_data[sensor] = data
+        if 'attitude' in self.__sensor_data and 'accelerometer' in self.__sensor_data:
+            att = self.__sensor_data['attitude']
+            vec = Rotation.from_euler('zxy', (att['roll'], att['pitch'], att['yaw']), degrees=True)
+            acc = self.__sensor_data['accelerometer']
+            self.__sensor_data['vertical_accel'] = -vec.apply((acc['x'], -acc['z'], acc['y']), inverse=True)[1]
+            self.__process_falling(self.__sensor_data['vertical_accel'])
+        if 'locator' in self.__sensor_data:
+            cur_loc = self.__sensor_data['locator']
+            cur_loc = (cur_loc['x'], cur_loc['y'])
+            self.__sensor_data['distance'] += math.hypot(cur_loc[0] - self.__last_location[0],
+                                                         cur_loc[1] - self.__last_location[1])
+            self.__last_location = cur_loc
+
+    def __process_falling(self, a):
+        self.__falling_v = (self.__falling_v + a * 3) / 4
+        cur = time.time()
+        if -.5 < self.__falling_v < .5 if self.__stabilization else -.1 < a < .1:
+            if cur - self.__last_non_fall > .2 and not self.__free_falling:
+                self.__call_event_listener(EventType.on_freefall)
+                self.__free_falling = True
+                self.__should_land = True
+        else:
+            self.__last_non_fall = cur
+            self.__free_falling = False
+        if self.__should_land and (
+                self.__falling_v < -1.1 or self.__falling_v > 1.1 if self.__stabilization else a < -.8 or a > -.8):
+            self.__call_event_listener(EventType.on_landing)
+            self.__should_land = False
+
+    def _collision_detected_notify(self, args: CollisionArgs):
+        self.__call_event_listener(EventType.on_collision)
+
+    def _battery_state_changed_notify(self, state: BatteryVoltageAndStateStates):
+        if state == BatteryVoltageAndStateStates.CHARGED or state == BatteryVoltageAndStateStates.CHARGING:
+            self.__call_event_listener(EventType.on_charging)
+        else:
+            self.__call_event_listener(EventType.on_not_charging)
+
+    def _gyro_max_notify(self, flags):
+        self.__call_event_listener(EventType.on_gyro_max)
+
     def get_acceleration(self):
         """Provides motion acceleration data along a given axis measured by the Accelerometer, in g's, where g =
         9.80665 m/s^2.
@@ -367,8 +447,129 @@ class SpheroEduAPI:
         ``get_acceleration()['y']`` is the forward-to-back acceleration, from of -8 to 8 g's.
 
         ``get_acceleration()['z']`` is the upward-to-downward acceleration, from -8 to 8 g's."""
-        return self.__sensor_manager.accelerometer
+        return self.__sensor_data.get('accelerometer', None)
 
     def get_vertical_acceleration(self):
         """This is the upward or downward acceleration regardless of the robot's orientation, from -8 to 8 g's."""
-        return self.__sensor_manager.vertical_accel
+        return self.__sensor_data.get('vertical_accel', None)
+
+    def get_orientation(self):
+        """Provides the tilt angle along a given axis measured by the Gyroscope, in degrees.
+
+        ``get_orientation()['pitch']`` is the forward or backward tilt angle, from -180° to 180°.
+
+        ``get_orientation()['roll']`` is left or right tilt angle, from -90° to 90°.
+
+        ``get_orientation()['yaw']`` is the spin (twist) angle, from -180° to 180°."""
+        return self.__sensor_data.get('attitude', None)
+
+    def get_gyroscope(self):
+        """Provides the rate of rotation around a given axis measured by the gyroscope, from -2,000° to 2,000°
+        per second.
+
+        ``get_gyroscope().['pitch']`` is the rate of forward or backward spin, from -2,000° to 2,000° per second.
+
+        ``get_gyroscope().['roll']`` is the rate of left or right spin, from -2,000° to 2,000° per second.
+
+        ``get_gyroscope().['yaw']`` is the rate of sideways spin, from -2,000° to 2,000° per second."""
+        return self.__sensor_data.get('gyroscope', None)
+
+    def get_velocity(self):
+        """Provides the velocity along a given axis measured by the motor encoders, in centimeters per second.
+
+        ``get_velocity()['x']`` is the right (+) or left (-) velocity, in centimeters per second.
+
+        ``get_velocity()['y']`` is the forward (+) or back (-) velocity, in centimeters per second."""
+        return self.__sensor_data.get('velocity', None)
+
+    def get_location(self):
+        """Provides the location where the robot is in space (x,y) relative to the origin, in centimeters. This is not
+        the distance traveled during the program, it is the offset from the origin (program start).
+
+        ``get_location()['x']`` is the right (+) or left (-) distance from the origin of the program start, in
+        centimeters.
+
+        ``get_location()['y']`` is the forward (+) or backward (-) distance from the origin of the program start, in
+        centimeters."""
+        return self.__sensor_data.get('locator', None)
+
+    def get_distance(self):
+        """Provides the total distance traveled in the program, in centimeters."""
+        return self.__sensor_data.get('distance', None)
+
+    def get_speed(self):
+        """Provides the current target speed of the robot, from -255 to 255, where positive is forward, negative is
+        backward, and 0 is stopped."""
+        return self.__speed
+
+    def get_heading(self):
+        """Provides the target directional angle, in degrees. Assuming you aim the robot with the tail facing you,
+        then 0° heading is forward, 90° is right, 180° is backward, and 270° is left."""
+        return self.__heading
+
+    def get_main_led(self):
+        """Provides the RGB color of the main LEDs, from 0 to 255 for each color channel.
+
+        ``get_main_led().r`` is the red channel, from 0 - 255.
+
+        ``get_main_led().g`` is the green channel, from 0 - 255.
+
+        ``get_main_led().b`` is the blue channel, from 0 - 255."""
+        return self.__leds.get('main', None)
+
+    # Sphero BOLT Sensors
+    # TODO Compass Direction
+
+    def get_luminosity(self):
+        """Provides the light intensity from 0 - 100,000 lux, where 0 lux is full darkness and 30,000-100,000 lux is
+        direct sunlight. You may need to adjust a condition based on luminosity in different environments as light
+        intensity can vary greatly between rooms."""
+        return self.__sensor_data.get('ambient_light', None)
+
+    # TODO Last Message Received
+    def get_back_led(self):
+        """Provides the RGB color of the back LED, from 0 to 255 for each color channel."""
+        return self.__leds.get('back', None)
+
+    def get_front_led(self):
+        """Provides the RGB color of the front LED, from 0 to 255 for each color channel."""
+        return self.__leds.get('front', None)
+
+    # TODO Sphero RVR Sensors
+
+    # BB-9E Sensors
+    def get_dome_leds(self):
+        """Provides the brightness of the Dome LEDs, from 0 to 15."""
+        return self.__leds.get('dome', None)
+
+    # R2-D2 & R2-Q5 Sensors
+    def get_holo_projector_led(self):
+        """Provides the brightness of the Holographic Projector LED, from 0 to 255."""
+        return self.__leds.get('holo_projector', None)
+
+    def get_logic_display_leds(self):
+        """Provides the brightness of the white Logic Display LEDs, from 0 to 255."""
+        return self.__leds.get('logic_display', None)
+
+    # Communications
+    # TODO BOLT, RVR
+
+    # Events: are predefined robot functions into which you can embed conditional logic. When an event occurs, the
+    # conditional logic is called and then the program returns to the main loop where it left off. The event will
+    # be called every time it occurs by default, unless you customize it.
+    def __call_event_listener(self, event_type: EventType, *args, **kwargs):
+        for f in self.__listeners[event_type]:
+            threading.Thread(target=f, args=args, kwargs=kwargs).start()
+
+    def register_event(self, event_type: EventType, listener: Callable):
+        """Registers the event type with listener. If listener is ``None`` then it removes all listeners of the
+        specified event type.
+
+        Note: listeners will be called in a newly spawned thread, meaning the caller have to deal with concurrency
+        if needed."""
+        if event_type not in EventType:
+            raise ValueError(f'Event type {event_type} does not exist')
+        if listener:
+            self.__listeners[event_type].add(listener)
+        else:
+            del self.__listeners[event_type]

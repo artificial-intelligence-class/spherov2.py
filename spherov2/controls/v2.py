@@ -104,11 +104,11 @@ class SensorControl:
         for f in self.__listeners:
             threading.Thread(target=f, args=(data,)).start()
 
-    def add_sensor_data_listener(self, callback: Callable[[Dict[str, Dict[str, float]]], None]):
-        self.__listeners.add(callback)
+    def add_sensor_data_listener(self, listener: Callable[[Dict[str, Dict[str, float]]], None]):
+        self.__listeners.add(listener)
 
-    def remove_sensor_data_listener(self, callback: Callable[[Dict[str, Dict[str, float]]], None]):
-        self.__listeners.remove(callback)
+    def remove_sensor_data_listener(self, listener: Callable[[Dict[str, Dict[str, float]]], None]):
+        self.__listeners.remove(listener)
 
     def set_count(self, count: int):
         if count > 0:

@@ -13,8 +13,20 @@ class BatteryStates(IntEnum):
     UNKNOWN = 255
 
 
+class BatteryVoltageAndStateStates(IntEnum):
+    CHARGED = 0
+    CHARGING = 1
+    NOT_CHARGING = 2
+    OK = 3
+    LOW = 4
+    CRITICAL = 5
+    RESERVED = 6
+    UNUSED = 7
+
+
 class Power:
     __encode = partial(Packet, device_id=19)
+    battery_state_changed_notify = (19, 6, 0xff)
 
     @staticmethod
     def sleep(target_id=None):
@@ -33,5 +45,5 @@ class Power:
         return Power.__encode(command_id=13, target_id=target_id)
 
     @staticmethod
-    def enable_battery_voltage_state_change_notify(target_id=None):
-        return Power.__encode(command_id=27, target_id=target_id)
+    def enable_battery_voltage_state_change_notify(enable, target_id=None):
+        return Power.__encode(command_id=27, data=[int(enable)], target_id=target_id)

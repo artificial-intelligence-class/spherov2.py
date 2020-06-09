@@ -1,7 +1,7 @@
 from enum import IntEnum
 
 from spherov2.toy.core import Toy
-from spherov2.toy.types import ToyType
+from spherov2.types import ToyType
 
 
 class BOLT(Toy):

@@ -1,6 +1,13 @@
+import importlib
+from functools import partial
 from typing import List, Type
-from spherov2.adapter.bleak import BleakAdaptor
 from spherov2.toy.core import Toy
+from spherov2.toy.r2d2 import R2D2
+from spherov2.toy.r2q5 import R2Q5
+
+
+class ToyNotFoundError(Exception):
+    ...
 
 
 def all_toys(cls=Toy):
@@ -10,8 +17,10 @@ def all_toys(cls=Toy):
         yield from all_toys(sub)
 
 
-def find_toys(timeout=5.0, toy_types: List[Type[Toy]] = None):
-    toys = BleakAdaptor.scan_toys(timeout)
+def find_toys(timeout=5.0, toy_types: List[Type[Toy]] = None, adapter=None):
+    if adapter is None:
+        adapter = importlib.import_module('spherov2.adapter.bleak').BleakAdaptor
+    toys = adapter.scan_toys(timeout)
     if toy_types is None:
         toy_types = all_toys()
     ret = []
@@ -23,3 +32,14 @@ def find_toys(timeout=5.0, toy_types: List[Type[Toy]] = None):
                 ret.append(toy_cls(toy.address))
                 break
     return ret
+
+
+def find_toy(*args, **kwargs):
+    toys = find_toys(*args, **kwargs)
+    if not toys:
+        raise ToyNotFoundError
+    return toys[0]
+
+
+find_R2D2 = partial(find_toy, toy_types=[R2D2])
+find_R2Q5 = partial(find_toy, toy_types=[R2Q5])

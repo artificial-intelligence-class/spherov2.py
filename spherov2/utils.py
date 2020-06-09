@@ -1,4 +1,3 @@
-import math
 from enum import IntEnum
 from typing import Callable, Dict, List
 from spherov2.command.animatronic import R2LegActions
@@ -12,49 +11,6 @@ from spherov2.toy.mini import Mini
 from spherov2.toy.r2d2 import R2D2
 from spherov2.toy.r2q5 import R2Q5
 from spherov2.toy.rvr import RVR
-from scipy.spatial.transform import Rotation
-
-
-class SensorManager:
-    def __init__(self, toy: Toy):
-        self.__toy = toy
-        self.__sensor_data = {'distance': 0.}
-        self.__name_mapping = {}
-        self.__last_location = (0., 0.)
-
-        ToyUtil.add_sensor_data_listener(toy, self.__update_robot_sensors)
-
-    def start_capturing_sensor_data(self):
-        if isinstance(self.__toy, RVR):
-            sensors = ['accelerometer', 'gyroscope', 'imu', 'locator', 'velocity', 'ambient_light', 'color_detection']
-            self.__name_mapping['imu'] = 'attitude'
-        elif isinstance(self.__toy, BOLT):
-            sensors = ['accelerometer', 'gyroscope', 'attitude', 'locator', 'velocity', 'ambient_light']
-        else:
-            sensors = ['attitude', 'accelerometer', 'gyroscope', 'locator', 'velocity']
-        ToyUtil.enable_sensors(self.__toy, sensors)
-
-    def __update_robot_sensors(self, sensor_data: Dict[str, Dict[str, float]]):
-        for sensor, data in sensor_data.items():
-            if sensor in self.__name_mapping:
-                self.__sensor_data[self.__name_mapping[sensor]] = data
-            else:
-                self.__sensor_data[sensor] = data
-        if 'attitude' in self.__sensor_data and 'accelerometer' in self.__sensor_data:
-            att = self.__sensor_data['attitude']
-            vec = Rotation.from_euler('zxy', (att['roll'], att['pitch'], att['yaw']), degrees=True)
-            acc = self.__sensor_data['accelerometer']
-            self.__sensor_data['vertical_accel'] = -vec.apply((acc['x'], -acc['z'], acc['y']), inverse=True)[1]
-            # TODO: free fall & land notifier
-        if 'locator' in self.__sensor_data:
-            cur_loc = self.__sensor_data['locator']
-            cur_loc = (cur_loc['x'], cur_loc['y'])
-            self.__sensor_data['distance'] += math.hypot(cur_loc[0] - self.__last_location[0],
-                                                         cur_loc[1] - self.__last_location[1])
-            self.__last_location = cur_loc
-
-    def __getattr__(self, item):
-        return self.__sensor_data.get(item, None)
 
 
 class ToyUtil:
@@ -294,12 +250,16 @@ class ToyUtil:
             not_supported_handler()
 
     @staticmethod
-    def add_sensor_data_listener(toy: Toy, listener: Callable[[Dict[str, Dict[str, float]]], None],
-                                 not_supported_handler: Callable[[], None] = None):
-        if hasattr(toy, 'sensor_control'):
-            toy.sensor_control.add_sensor_data_listener(listener)
-        elif not_supported_handler:
-            not_supported_handler()
+    def add_listeners(toy: Toy, manager):
+        if hasattr(toy, 'sensor_control') and hasattr(manager, '_sensor_data_listener'):
+            toy.sensor_control.add_sensor_data_listener(manager._sensor_data_listener)
+        if hasattr(toy, 'add_collision_detected_notify_listener') and hasattr(manager, '_collision_detected_notify'):
+            toy.add_collision_detected_notify_listener(manager._collision_detected_notify)
+        if hasattr(toy, 'add_battery_state_changed_notify_listener') and \
+                hasattr(manager, '_battery_state_changed_notify'):
+            toy.add_battery_state_changed_notify_listener(manager._battery_state_changed_notify)
+        if hasattr(toy, 'add_gyro_max_notify_listener') and hasattr(manager, '_gyro_max_notify'):
+            toy.add_gyro_max_notify_listener(manager._gyro_max_notify)
 
     @staticmethod
     def set_locator_flags(toy: Toy, flag: bool, not_supported_handler: Callable[[], None] = None):
@@ -327,12 +287,26 @@ class ToyUtil:
             not_supported_handler()
 
     @staticmethod
+    def set_power_notifications(toy: Toy, enable: bool, not_supported_handler: Callable[[], None] = None):
+        if hasattr(toy, 'enable_charger_state_changed_notify'):
+            toy.enable_charger_state_changed_notify(enable)
+        elif hasattr(toy, 'enable_battery_state_changed_notify'):
+            toy.enable_battery_state_changed_notify(enable)
+        elif hasattr(toy, 'enable_battery_voltage_state_change_notify'):
+            toy.enable_battery_voltage_state_change_notify(enable)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
     def set_robot_state_on_start(toy: Toy):
         # TODO setUserColour
         ToyUtil.set_head_position(toy, 0)
         ToyUtil.perform_leg_action(toy, R2LegActions.THREE_LEGS)
         ToyUtil.set_locator_flags(toy, False)
         ToyUtil.configure_collision_detection(toy)
+        ToyUtil.set_power_notifications(toy, True)
+        if hasattr(toy, 'enable_gyro_max_notify'):
+            toy.enable_gyro_max_notify(True)
         if hasattr(toy, 'sensor_control'):
             toy.sensor_control.set_interval(150)
         ToyUtil.turn_off_leds(toy)

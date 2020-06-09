@@ -9,13 +9,13 @@ from spherov2.command.api_and_shell import APIAndShell
 from spherov2.command.driving import Driving, DriveFlags, StabilizationIndexes, RawMotorModes
 from spherov2.command.firmware import Firmware, PendingUpdateFlags
 from spherov2.command.io import IO, AudioPlaybackModes
-from spherov2.command.power import Power, BatteryStates
+from spherov2.command.power import Power, BatteryStates, BatteryVoltageAndStateStates
 from spherov2.command.sensor import Sensor, CollisionDetectionMethods
 from spherov2.command.system_info import SystemInfo
 from spherov2.controls.v2 import DriveControl, LedControl, SensorControl
 from spherov2.toy.core import Toy, ToySensor
 from spherov2.helper import to_int
-from spherov2.toy.types import ToyType
+from spherov2.types import AppVersion, ToyType, CollisionArgs
 
 
 class R2D2(Toy):
@@ -538,7 +538,7 @@ class R2D2(Toy):
         self._execute(IO.start_idle_led_animation())
 
     def play_audio_file(self, sound: Audio, playback_mode: AudioPlaybackModes):
-        data = self._execute(IO.play_audio_file(sound, playback_mode))
+        self._execute(IO.play_audio_file(sound, playback_mode))
 
     def play_animation(self, animation: Animations, wait=False):
         self._execute(Animatronic.play_animation(animation))
@@ -566,8 +566,8 @@ class R2D2(Toy):
     def sleep(self):
         self._execute(Power.sleep())
 
-    def enable_battery_voltage_state_change_notify(self, callback):  # TODO
-        self._execute(Power.enable_battery_voltage_state_change_notify())
+    def enable_battery_voltage_state_change_notify(self, enable: bool):
+        self._execute(Power.enable_battery_voltage_state_change_notify(enable))
 
     def get_battery_voltage(self):
         return to_int(self._execute(Power.get_battery_voltage()).data) / 100
@@ -575,14 +575,20 @@ class R2D2(Toy):
     def get_battery_state(self):
         return BatteryStates(self._execute(Power.get_battery_state()).data[0])
 
+    def add_battery_state_changed_notify_listener(self, listener: Callable[[BatteryVoltageAndStateStates], None]):
+        self._add_listener(Power.battery_state_changed_notify,
+                           lambda p: listener(BatteryVoltageAndStateStates(p.data[0])))
+
+    def remove_battery_state_changed_notify_listener(self, listener):
+        self._remove_listener(Power.battery_state_changed_notify, listener)
+
     def get_main_app_version(self):
-        data = self._execute(SystemInfo.get_main_app_version()).data
-        return to_int(data[:2]), to_int(data[2:4]), to_int(data[4:])
+        return AppVersion(*struct.unpack('>3H', bytearray(self._execute(SystemInfo.get_main_app_version()).data)))
 
     def get_secondary_main_app_version(self):
         self._execute(SystemInfo.get_secondary_main_app_version())
-        data = self._wait_packet(SystemInfo.secondary_main_app_version_notify).data
-        return to_int(data[:2]), to_int(data[2:4]), to_int(data[4:])
+        return AppVersion(
+            *struct.unpack('>3H', bytearray(self._wait_packet(SystemInfo.secondary_main_app_version_notify).data)))
 
     def get_three_character_sku(self):
         return bytearray(self._execute(SystemInfo.get_three_character_sku()).data)
@@ -596,15 +602,24 @@ class R2D2(Toy):
     def get_pending_update_flags(self):
         return PendingUpdateFlags(to_int(self._execute(Firmware.get_pending_update_flags()).data))
 
-    def enable_gyro_max_notify(self, callback):  # TODO
-        self._execute(Sensor.enable_gyro_max_notify())
+    def enable_gyro_max_notify(self, enable: bool):
+        self._execute(Sensor.enable_gyro_max_notify(enable))
+
+    def add_gyro_max_notify_listener(self, listener: Callable[[int], None]):
+        self._add_listener(Sensor.gyro_max_notify, lambda p: listener(p.data[0]))
+
+    def remove_gyro_max_notify_listener(self, listener):
+        self._remove_listener(Sensor.gyro_max_notify, listener)
 
     def set_locator_flags(self, locator_flags: bool):
         self._execute(Sensor.set_locator_flags(locator_flags))
 
-    def add_sensor_streaming_data_notify_listener(self, callback: Callable[[List[float]], None]):
-        self._add_notifier(Sensor.sensor_streaming_data_notify,
-                           lambda p: callback(list(struct.unpack('>%df' % (len(p.data) // 4), bytearray(p.data)))))
+    def add_sensor_streaming_data_notify_listener(self, listener: Callable[[List[float]], None]):
+        self._add_listener(Sensor.sensor_streaming_data_notify,
+                           lambda p: listener(list(struct.unpack('>%df' % (len(p.data) // 4), bytearray(p.data)))))
+
+    def remove_sensor_streaming_data_notify_listener(self, listener):
+        self._remove_listener(Sensor.sensor_streaming_data_notify, listener)
 
     def set_sensor_streaming_mask(self, interval, count, sensor_masks):
         self._execute(Sensor.set_sensor_streaming_mask(interval, count, sensor_masks))
@@ -620,6 +635,19 @@ class R2D2(Toy):
         self._execute(Sensor.configure_collision_detection(
             collision_detection_method, x_threshold, y_threshold, x_speed, y_speed, dead_time
         ))
+
+    def add_collision_detected_notify_listener(self, listener: Callable[[CollisionArgs], None]):
+        def __process(packet):
+            unpacked = struct.unpack('>3HB3HBL', bytearray(packet.data))
+            listener(CollisionArgs(acceleration_x=unpacked[0] / 4096, acceleration_y=unpacked[1] / 4096,
+                                   acceleration_z=unpacked[2] / 4096, x_axis=bool(unpacked[3] & 1),
+                                   y_axis=bool(unpacked[3] & 2), power_x=unpacked[4], power_y=unpacked[5],
+                                   power_z=unpacked[6], speed=unpacked[7], time=unpacked[8] / 1000))
+
+        self._add_listener(Sensor.collision_detected_notify, __process)
+
+    def remove_collision_detected_notify_listener(self, listener):
+        self._remove_listener(Sensor.collision_detected_notify, listener)
 
     @property
     @lru_cache

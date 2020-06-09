@@ -9,7 +9,7 @@ from typing import Callable
 from spherov2.adapter.bleak import BleakAdaptor
 from spherov2.packet import Packet, Collector
 from spherov2.toy.consts import CharacteristicUUID
-from spherov2.toy.types import ToyType
+from spherov2.types import ToyType
 
 
 class CommandExecuteError(Exception):
@@ -36,7 +36,7 @@ class Toy:
         self.__adapter_cls = adapter_cls
         self.__decoder = Collector(self.__new_packet)
         self.__waiting = defaultdict(SimpleQueue)
-        self.__notifiers = defaultdict(set)
+        self.__listeners = defaultdict(set)
 
         self.__thread = threading.Thread(target=self.__process_packet)
         self.__packet_queue = SimpleQueue()
@@ -80,11 +80,11 @@ class Toy:
             raise CommandExecuteError(packet.error)
         return packet
 
-    def _add_notifier(self, key, notifier: Callable[[Packet], None]):
-        self.__notifiers[key].add(notifier)
+    def _add_listener(self, key, notifier: Callable[[Packet], None]):
+        self.__listeners[key].add(notifier)
 
-    def _remove_notifier(self, key, notifier: Callable[[Packet], None]):
-        self.__notifiers[key].remove(notifier)
+    def _remove_listener(self, key, notifier: Callable[[Packet], None]):
+        self.__listeners[key].remove(notifier)
 
     def __api_read(self, char, data):
         self.__decoder.add(data)
@@ -95,5 +95,5 @@ class Toy:
         queue = self.__waiting[key]
         while not queue.empty():
             queue.get().set_result(packet)
-        for f in self.__notifiers[key]:
+        for f in self.__listeners[key]:
             threading.Thread(target=f, args=(packet,)).start()
