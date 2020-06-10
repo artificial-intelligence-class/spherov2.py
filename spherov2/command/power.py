@@ -1,5 +1,6 @@
 from enum import IntEnum
 from functools import partial
+
 from spherov2.packet import Packet
 
 

@@ -20,7 +20,7 @@ def all_toys(cls=Toy):
 
 def find_toys(timeout=5.0, toy_types: List[Type[Toy]] = None, adapter=None):
     if adapter is None:
-        adapter = importlib.import_module('spherov2.adapter.bleak').BleakAdaptor
+        adapter = importlib.import_module('spherov2.adapter.bleak_adapter').BleakAdaptor
     toys = adapter.scan_toys(timeout)
     if toy_types is None:
         toy_types = all_toys()

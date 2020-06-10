@@ -1,5 +1,6 @@
 from enum import IntEnum
 from typing import Callable, Dict, List
+
 from spherov2.command.animatronic import R2LegActions
 from spherov2.command.io import AudioPlaybackModes
 from spherov2.command.sensor import CollisionDetectionMethods

@@ -44,16 +44,21 @@ class Toy:
         if self.__adapter is not None:
             raise RuntimeError('Toy already in context manager')
         self.__adapter = self.__adapter_cls(self.mac_address)
-        self.__adapter.set_callback(CharacteristicUUID.api_v2.value, self.__api_read)
-        self.__adapter.write(CharacteristicUUID.anti_dos.value, b'usetheforce...band')
-        self.__thread.start()
+        try:
+            self.__adapter.set_callback(CharacteristicUUID.api_v2.value, self.__api_read)
+            self.__adapter.write(CharacteristicUUID.anti_dos.value, b'usetheforce...band')
+            self.__thread.start()
+        except BaseException:
+            self.__exit__(None, None, None)
+            raise
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.__adapter.close()
         self.__adapter = None
-        self.__packet_queue.put(None)
-        self.__thread.join()
+        if self.__thread.is_alive():
+            self.__packet_queue.put(None)
+            self.__thread.join()
         self.__packet_queue = SimpleQueue()
 
     def __process_packet(self):

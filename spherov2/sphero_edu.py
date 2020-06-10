@@ -6,7 +6,8 @@ from enum import Enum, IntEnum, auto
 from functools import partial
 from typing import Union, Callable, Dict
 
-from scipy.spatial.transform import Rotation
+import numpy as np
+from transforms3d.euler import euler2mat
 
 from spherov2.command.animatronic import R2LegActions
 from spherov2.command.power import BatteryVoltageAndStateStates
@@ -399,9 +400,9 @@ class SpheroEduAPI:
                 self.__sensor_data[sensor] = data
         if 'attitude' in self.__sensor_data and 'accelerometer' in self.__sensor_data:
             att = self.__sensor_data['attitude']
-            vec = Rotation.from_euler('zxy', (att['roll'], att['pitch'], att['yaw']), degrees=True)
+            r = euler2mat(*np.deg2rad((att['roll'], att['pitch'], att['yaw'])), axes='szxy')
             acc = self.__sensor_data['accelerometer']
-            self.__sensor_data['vertical_accel'] = -vec.apply((acc['x'], -acc['z'], acc['y']), inverse=True)[1]
+            self.__sensor_data['vertical_accel'] = -np.matmul(np.linalg.inv(r), (acc['x'], -acc['z'], acc['y']))[1]
             self.__process_falling(self.__sensor_data['vertical_accel'])
         if 'locator' in self.__sensor_data:
             cur_loc = self.__sensor_data['locator']

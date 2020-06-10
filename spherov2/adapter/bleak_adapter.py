@@ -1,5 +1,6 @@
 import asyncio
 import threading
+
 import bleak
 
 from spherov2.toy.consts import ServicesUUID

@@ -1,8 +1,8 @@
 import struct
+from collections import OrderedDict
 from enum import IntEnum
 from functools import lru_cache
 from typing import Callable, List
-from collections import OrderedDict
 
 from spherov2.command.animatronic import Animatronic, R2LegActions
 from spherov2.command.api_and_shell import APIAndShell
@@ -13,8 +13,8 @@ from spherov2.command.power import Power, BatteryStates, BatteryVoltageAndStateS
 from spherov2.command.sensor import Sensor, CollisionDetectionMethods
 from spherov2.command.system_info import SystemInfo
 from spherov2.controls.v2 import DriveControl, LedControl, SensorControl
-from spherov2.toy.core import Toy, ToySensor
 from spherov2.helper import to_int
+from spherov2.toy.core import Toy, ToySensor
 from spherov2.types import AppVersion, ToyType, CollisionArgs
 
 

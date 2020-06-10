@@ -3,8 +3,8 @@ from enum import IntEnum
 from typing import Dict, List, Callable
 
 from spherov2.command.driving import DriveFlags
-from spherov2.controls.enums import RawMotorModes
 from spherov2.command.driving import RawMotorModes as DriveRawMotorModes
+from spherov2.controls.enums import RawMotorModes
 from spherov2.toy.core import Toy
 
 
