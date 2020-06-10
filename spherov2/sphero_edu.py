@@ -105,7 +105,7 @@ class SpheroEduAPI:
     def roll(self, heading: int, speed: int, duration: float):
         """Combines heading(0-360°), speed(-255-255), and duration to make the robot roll with one line of code.
         For example, to have the robot roll at 90°, at speed 200 for 2s, use ``roll(90, 200, 2)``"""
-        if isinstance(self.__toy, Mini):
+        if isinstance(self.__toy, Mini) and speed != 0:
             speed = round((speed + 126) * 2 / 3) if speed > 0 else round((speed - 126) * 2 / 3)
         self.__speed = bound_value(-255, speed, 255)
         self.__heading = heading % 360
@@ -125,7 +125,7 @@ class SpheroEduAPI:
         which persists until you set a different speed. You can also read the real-time velocity value in centimeters
         per second reported by the motor encoders.
         """
-        if isinstance(self.__toy, Mini):
+        if isinstance(self.__toy, Mini) and speed != 0:
             speed = round((speed + 126) * 2 / 3) if speed > 0 else round((speed - 126) * 2 / 3)
         self.__speed = bound_value(-255, speed, 255)
         self.__update_speed()
