@@ -59,7 +59,7 @@ def get_tcp_adapter(address: str, port: int = 50004):
             while True:
                 try:
                     code = recvall(self.__socket, 1)
-                except Exception:
+                except:
                     break
                 if code == ResponseOp.OK:
                     self.__sequence_wait.pop(recvall(self.__socket, 1)[0]).set_result(None)

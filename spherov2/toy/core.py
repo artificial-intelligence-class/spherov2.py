@@ -48,7 +48,7 @@ class Toy:
             self.__adapter.set_callback(CharacteristicUUID.api_v2.value, self.__api_read)
             self.__adapter.write(CharacteristicUUID.anti_dos.value, b'usetheforce...band')
             self.__thread.start()
-        except BaseException:
+        except:
             self.__exit__(None, None, None)
             raise
         return self
