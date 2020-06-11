@@ -28,8 +28,9 @@ class Toy:
     sensors = OrderedDict()
     extended_sensors = OrderedDict()
 
-    def __init__(self, mac_address, adapter_cls):
-        self.mac_address = mac_address
+    def __init__(self, toy, adapter_cls):
+        self.address = toy.address
+        self.name = toy.name
 
         self.__adapter = None
         self.__adapter_cls = adapter_cls
@@ -43,7 +44,7 @@ class Toy:
     def __enter__(self):
         if self.__adapter is not None:
             raise RuntimeError('Toy already in context manager')
-        self.__adapter = self.__adapter_cls(self.mac_address)
+        self.__adapter = self.__adapter_cls(self.address)
         try:
             self.__adapter.set_callback(CharacteristicUUID.api_v2.value, self.__api_read)
             self.__adapter.write(CharacteristicUUID.anti_dos.value, b'usetheforce...band')

@@ -41,10 +41,10 @@ def get_tcp_adapter(address: str, port: int = 50004):
                 s.sendall(RequestOp.END)
                 s.close()
 
-        def __init__(self, mac_address):
+        def __init__(self, addr):
             self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.__socket.connect((address, port))
-            mac_address = mac_address.encode('ascii')
+            addr = addr.encode('ascii')
 
             self.__sequence = 0
             self.__sequence_wait = {}
@@ -52,8 +52,11 @@ def get_tcp_adapter(address: str, port: int = 50004):
             self.__callbacks = {}
             self.__thread = threading.Thread(target=self.__recv)
             self.__thread.start()
-
-            self.__send(RequestOp.INIT, to_bytes(len(mac_address), 2) + mac_address)
+            try:
+                self.__send(RequestOp.INIT, to_bytes(len(addr), 2) + addr)
+            except:
+                self.close()
+                raise
 
         def __recv(self):
             while True:

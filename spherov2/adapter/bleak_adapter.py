@@ -11,9 +11,9 @@ class BleakAdaptor:
     def scan_toys(timeout: float = 5.0):
         return asyncio.run(bleak.discover(timeout, filters={'UUIDs': [e.value for e in ServicesUUID]}))
 
-    def __init__(self, mac_address):
+    def __init__(self, address):
         self.__event_loop = asyncio.new_event_loop()
-        self.__device = bleak.BleakClient(mac_address, self.__event_loop)
+        self.__device = bleak.BleakClient(address, self.__event_loop)
         self.__lock = threading.Lock()
         self.__thread = threading.Thread(target=self.__event_loop.run_forever)
         self.__thread.start()
