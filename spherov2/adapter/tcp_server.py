@@ -5,7 +5,7 @@ from typing import Optional
 
 import bleak
 
-from spherov2.adapter.tcp_helper import RequestOp, ResponseOp
+from spherov2.adapter.tcp_consts import RequestOp, ResponseOp
 from spherov2.helper import to_bytes, to_int
 from spherov2.toy.consts import ServicesUUID
 
@@ -14,6 +14,8 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
     peer = writer.get_extra_info('peername')
 
     def callback(char, d):
+        if writer.is_closing():
+            return
         char = char.encode('ascii')
         writer.write(ResponseOp.ON_DATA + to_bytes(len(char), 2) + char + to_bytes(len(d), 1) + d)
         asyncio.ensure_future(writer.drain())
@@ -41,9 +43,6 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
                     writer.write(to_bytes(len(name), 2) + name + to_bytes(len(addr), 2) + addr)
                     await writer.drain()
             elif cmd == RequestOp.END:
-                if adapter:
-                    await adapter.disconnect()
-                    adapter = None
                 break
             else:
                 seq_size = await reader.readexactly(3)
@@ -69,9 +68,9 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
                 writer.write(ResponseOp.OK + bytes([seq]))
                 await writer.drain()
     finally:
-        if adapter:
-            await adapter.disconnect()
         writer.close()
+        if adapter and await adapter.is_connected():
+            await adapter.disconnect()
         await writer.wait_closed()
         print('Disconnected from %s:%d' % peer)
 
@@ -83,9 +82,3 @@ if __name__ == '__main__':
     server = loop.run_until_complete(asyncio.start_server(process_connection, host=address, port=port))
     print('Server listening on %s:%d...' % (address, port))
     loop.run_until_complete(server.wait_closed())
-    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    #     s.bind((address, port))
-    #     s.listen()
-    #     print('Server listening on %s:%d...' % (address, port))
-    #     while True:
-    #         threading.Thread(target=process_socket, args=s.accept()).start()

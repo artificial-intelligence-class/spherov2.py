@@ -4,13 +4,23 @@ import threading
 from concurrent import futures
 from typing import NamedTuple
 
-from spherov2.adapter.tcp_helper import recvall, RequestOp, ResponseOp
+from spherov2.adapter.tcp_consts import RequestOp, ResponseOp
 from spherov2.helper import to_int, to_bytes
 
 
 class MockDevice(NamedTuple):
     name: str
     address: str
+
+
+def recvall(s, size):
+    data = bytes()
+    while len(data) < size:
+        n = s.recv(size - len(data))
+        if not n:
+            raise EOFError
+        data += n
+    return data
 
 
 def get_tcp_adapter(address: str, port: int = 50004):
@@ -70,12 +80,11 @@ def get_tcp_adapter(address: str, port: int = 50004):
                 size = to_int(recvall(self.__socket, 2))
                 data = recvall(self.__socket, size)
                 if code == ResponseOp.ON_DATA:
-                    uuid = data.decode('ascii')
+                    uuid = data.decode('ascii').lower()
                     size = recvall(self.__socket, 1)[0]
                     data = recvall(self.__socket, size)
-                    if uuid in self.__callbacks:
-                        for f in self.__callbacks[uuid]:
-                            threading.Thread(target=f, args=(uuid, data)).start()
+                    for f in self.__callbacks.get(uuid, []):
+                        f(uuid, data)
                 elif code == ResponseOp.ERROR:
                     err = Exception(data.decode('utf_8'))
                     self.__sequence_wait.pop(recvall(self.__socket, 1)[0]).set_exception(err)
