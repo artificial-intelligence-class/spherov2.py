@@ -4,18 +4,20 @@ from enum import IntEnum
 from functools import lru_cache
 from typing import Callable, List
 
-from spherov2.command.animatronic import Animatronic, R2LegActions
-from spherov2.command.api_and_shell import APIAndShell
-from spherov2.command.driving import Driving, DriveFlags, StabilizationIndexes, RawMotorModes
-from spherov2.command.firmware import Firmware, PendingUpdateFlags
-from spherov2.command.io import IO, AudioPlaybackModes
-from spherov2.command.power import Power, BatteryStates, BatteryVoltageAndStateStates
-from spherov2.command.sensor import Sensor, CollisionDetectionMethods
-from spherov2.command.system_info import SystemInfo
+from spherov2.commands.animatronic import Animatronic, R2LegActions
+from spherov2.commands.api_and_shell import APIAndShell
+from spherov2.commands.driving import Driving, DriveFlags, StabilizationIndexes, RawMotorModes
+from spherov2.commands.firmware import Firmware, PendingUpdateFlags
+from spherov2.commands.io import IO, AudioPlaybackModes
+from spherov2.commands.power import Power, BatteryStates, BatteryVoltageAndStateStates
+from spherov2.commands.sensor import Sensor, CollisionDetectionMethods
+from spherov2.commands.system_info import SystemInfo
 from spherov2.controls.v2 import DriveControl, LedControl, SensorControl
 from spherov2.helper import to_int
+from spherov2.listeners.sensor import CollisionDetectedArgs
+from spherov2.listeners.system_info import AppVersionArgs
 from spherov2.toy.core import Toy, ToySensor
-from spherov2.types import AppVersion, ToyType, CollisionArgs
+from spherov2.types import ToyType
 
 
 class R2D2(Toy):
@@ -548,14 +550,19 @@ class R2D2(Toy):
     def set_head_position(self, head_position: float):
         self._execute(Animatronic.set_head_position(head_position))
 
-    def perform_leg_action(self, leg_action: R2LegActions):
+    def perform_leg_action(self, leg_action: R2LegActions, wait=False):
         self._execute(Animatronic.perform_leg_action(leg_action))
+        if wait:
+            self._wait_packet(Animatronic.leg_action_complete_notify)
 
     def set_leg_position(self, leg_position: float):
         self._execute(Animatronic.set_leg_position(leg_position))
 
     def get_leg_position(self):
         return struct.unpack('>f', bytearray(self._execute(Animatronic.get_leg_position()).data))[0]
+
+    def enable_leg_action_notify(self, enable: bool):
+        self._execute(Animatronic.enable_leg_action_notify(enable))
 
     def stop_animation(self):
         self._execute(Animatronic.stop_animation())
@@ -575,6 +582,12 @@ class R2D2(Toy):
     def get_battery_state(self):
         return BatteryStates(self._execute(Power.get_battery_state()).data[0])
 
+    def add_will_sleep_notify_listener(self, listener: Callable[[], None]):
+        self._add_listener(Power.will_sleep_notify, lambda _: listener())
+
+    def remove_will_sleep_notify_listener(self, listener):
+        self._remove_listener(Power.will_sleep_notify, listener)
+
     def add_battery_state_changed_notify_listener(self, listener: Callable[[BatteryVoltageAndStateStates], None]):
         self._add_listener(Power.battery_state_changed_notify,
                            lambda p: listener(BatteryVoltageAndStateStates(p.data[0])))
@@ -583,11 +596,11 @@ class R2D2(Toy):
         self._remove_listener(Power.battery_state_changed_notify, listener)
 
     def get_main_app_version(self):
-        return AppVersion(*struct.unpack('>3H', bytearray(self._execute(SystemInfo.get_main_app_version()).data)))
+        return AppVersionArgs(*struct.unpack('>3H', bytearray(self._execute(SystemInfo.get_main_app_version()).data)))
 
     def get_secondary_main_app_version(self):
         self._execute(SystemInfo.get_secondary_main_app_version())
-        return AppVersion(
+        return AppVersionArgs(
             *struct.unpack('>3H', bytearray(self._wait_packet(SystemInfo.secondary_main_app_version_notify).data)))
 
     def get_three_character_sku(self):
@@ -636,13 +649,13 @@ class R2D2(Toy):
             collision_detection_method, x_threshold, y_threshold, x_speed, y_speed, dead_time
         ))
 
-    def add_collision_detected_notify_listener(self, listener: Callable[[CollisionArgs], None]):
+    def add_collision_detected_notify_listener(self, listener: Callable[[CollisionDetectedArgs], None]):
         def __process(packet):
             unpacked = struct.unpack('>3HB3HBL', bytearray(packet.data))
-            listener(CollisionArgs(acceleration_x=unpacked[0] / 4096, acceleration_y=unpacked[1] / 4096,
-                                   acceleration_z=unpacked[2] / 4096, x_axis=bool(unpacked[3] & 1),
-                                   y_axis=bool(unpacked[3] & 2), power_x=unpacked[4], power_y=unpacked[5],
-                                   power_z=unpacked[6], speed=unpacked[7], time=unpacked[8] / 1000))
+            listener(CollisionDetectedArgs(acceleration_x=unpacked[0] / 4096, acceleration_y=unpacked[1] / 4096,
+                                           acceleration_z=unpacked[2] / 4096, x_axis=bool(unpacked[3] & 1),
+                                           y_axis=bool(unpacked[3] & 2), power_x=unpacked[4], power_y=unpacked[5],
+                                           power_z=unpacked[6], speed=unpacked[7], time=unpacked[8] / 1000))
 
         self._add_listener(Sensor.collision_detected_notify, __process)
 

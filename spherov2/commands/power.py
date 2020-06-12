@@ -27,7 +27,6 @@ class BatteryVoltageAndStateStates(IntEnum):
 
 class Power:
     __encode = partial(Packet, device_id=19)
-    battery_state_changed_notify = (19, 6, 0xff)
 
     @staticmethod
     def sleep(target_id=None):
@@ -41,9 +40,13 @@ class Power:
     def get_battery_state(target_id=None):
         return Power.__encode(command_id=4, target_id=target_id)
 
+    battery_state_changed_notify = (19, 6, 0xff)
+
     @staticmethod
     def wake(target_id=None):
         return Power.__encode(command_id=13, target_id=target_id)
+
+    will_sleep_notify = (19, 25, 0xff)
 
     @staticmethod
     def enable_battery_voltage_state_change_notify(enable, target_id=None):

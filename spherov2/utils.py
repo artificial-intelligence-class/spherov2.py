@@ -1,9 +1,11 @@
 from enum import IntEnum
+from inspect import signature
 from typing import Callable, Dict, List
 
-from spherov2.command.animatronic import R2LegActions
-from spherov2.command.io import AudioPlaybackModes
-from spherov2.command.sensor import CollisionDetectionMethods
+from spherov2.commands.animatronic import R2LegActions
+from spherov2.commands.core import IntervalOptions
+from spherov2.commands.io import AudioPlaybackModes
+from spherov2.commands.sensor import CollisionDetectionMethods
 from spherov2.controls.enums import RawMotorModes
 from spherov2.toy.bb9e import BB9E
 from spherov2.toy.bolt import BOLT
@@ -15,6 +17,29 @@ from spherov2.toy.rvr import RVR
 
 
 class ToyUtil:
+    @staticmethod
+    def sleep(toy: Toy, not_supported_handler: Callable[[], None] = None):
+        if hasattr(toy, 'sleep'):
+            if len(signature(toy.sleep).parameters) == 0:
+                toy.sleep()
+            else:
+                toy.sleep(IntervalOptions.NONE, 0, 0)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def ping(toy: Toy, not_supported_handler: Callable[[], None] = None):
+        if hasattr(toy, 'ping'):
+            le = len(signature(toy.ping).parameters)
+            if le == 0:
+                toy.ping()
+            elif le == 1:
+                toy.ping(None)
+            # elif l == 2: TODO
+            #     toy.ping(None, ToyUtil.getPrimaryTargetId(toy))
+        elif not_supported_handler:
+            not_supported_handler()
+
     @staticmethod
     def roll_start(toy: Toy, heading: int, speed: int, not_supported_handler: Callable[[], None] = None):
         if hasattr(toy, 'drive_control'):
@@ -261,6 +286,8 @@ class ToyUtil:
             toy.add_battery_state_changed_notify_listener(manager._battery_state_changed_notify)
         if hasattr(toy, 'add_gyro_max_notify_listener') and hasattr(manager, '_gyro_max_notify'):
             toy.add_gyro_max_notify_listener(manager._gyro_max_notify)
+        if hasattr(toy, 'add_will_sleep_notify_listener') and hasattr(manager, '_will_sleep_notify'):
+            toy.add_will_sleep_notify_listener(manager._will_sleep_notify)
 
     @staticmethod
     def set_locator_flags(toy: Toy, flag: bool, not_supported_handler: Callable[[], None] = None):

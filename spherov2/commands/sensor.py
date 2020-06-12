@@ -14,9 +14,6 @@ class CollisionDetectionMethods(IntEnum):
 
 class Sensor:
     __encode = partial(Packet, device_id=24)
-    sensor_streaming_data_notify = (24, 2, 0xff)
-    gyro_max_notify = (24, 16, 0xff)
-    collision_detected_notify = (24, 18, 0xff)
 
     @staticmethod
     def set_sensor_streaming_mask(interval, count, sensor_masks, target_id=None):
@@ -26,6 +23,8 @@ class Sensor:
             target_id=target_id
         )
 
+    sensor_streaming_data_notify = (24, 2, 0xff)
+
     @staticmethod
     def set_extended_sensor_streaming_mask(sensor_masks, target_id=None):
         return Sensor.__encode(command_id=12, data=to_bytes(sensor_masks, 4), target_id=target_id)
@@ -34,12 +33,16 @@ class Sensor:
     def enable_gyro_max_notify(enable, target_id=None):
         return Sensor.__encode(command_id=15, data=[int(enable)], target_id=target_id)
 
+    gyro_max_notify = (24, 16, 0xff)
+
     @staticmethod
     def configure_collision_detection(collision_detection_method: CollisionDetectionMethods,
                                       x_threshold, y_threshold, x_speed, y_speed, dead_time, target_id=None):
         return Sensor.__encode(command_id=17,
                                data=[collision_detection_method, x_threshold, y_threshold, x_speed, y_speed, dead_time],
                                target_id=target_id)
+
+    collision_detected_notify = (24, 18, 0xff)
 
     @staticmethod
     def reset_locator_x_and_y(target_id=None):

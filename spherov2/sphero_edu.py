@@ -9,10 +9,11 @@ from typing import Union, Callable, Dict
 import numpy as np
 from transforms3d.euler import euler2mat
 
-from spherov2.command.animatronic import R2LegActions
-from spherov2.command.power import BatteryVoltageAndStateStates
+from spherov2.commands.animatronic import R2LegActions
+from spherov2.commands.power import BatteryVoltageAndStateStates
 from spherov2.controls.enums import RawMotorModes
 from spherov2.helper import bound_value, bound_color
+from spherov2.listeners.sensor import CollisionDetectedArgs
 from spherov2.toy.bb8 import BB8
 from spherov2.toy.bb9e import BB9E
 from spherov2.toy.bolt import BOLT
@@ -23,7 +24,7 @@ from spherov2.toy.r2d2 import R2D2
 from spherov2.toy.r2q5 import R2Q5
 from spherov2.toy.rvr import RVR
 from spherov2.toy.sphero import Sphero
-from spherov2.types import Color, CollisionArgs
+from spherov2.types import Color
 from spherov2.utils import ToyUtil
 
 
@@ -79,13 +80,16 @@ class SpheroEduAPI:
     def __exit__(self, *args):
         self.__stopped.set()
         self.__thread.join()
-        self.__toy.sleep()
+        ToyUtil.sleep(self.__toy)
         self.__toy.__exit__(*args)
 
     def __background(self):
         while not self.__stopped.wait(0.8):
             with self.__updating:
                 self.__update_speeds()
+
+    def _will_sleep_notify(self):
+        ToyUtil.ping(self.__toy)
 
     # Movements: control the robot's motors and control system.
     def __update_speeds(self):
@@ -427,7 +431,7 @@ class SpheroEduAPI:
             self.__call_event_listener(EventType.on_landing)
             self.__should_land = False
 
-    def _collision_detected_notify(self, args: CollisionArgs):
+    def _collision_detected_notify(self, args: CollisionDetectedArgs):
         self.__call_event_listener(EventType.on_collision)
 
     def _battery_state_changed_notify(self, state: BatteryVoltageAndStateStates):
