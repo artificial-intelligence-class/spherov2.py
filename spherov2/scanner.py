@@ -18,10 +18,10 @@ def all_toys(cls=Toy):
         yield from all_toys(sub)
 
 
-def find_toys(timeout=5.0, toy_types: List[Type[Toy]] = None, toy_names: List[str] = None, adapter=None):
+async def find_toys(timeout=5.0, toy_types: List[Type[Toy]] = None, toy_names: List[str] = None, adapter=None):
     if adapter is None:
         adapter = importlib.import_module('spherov2.adapter.bleak_adapter').BleakAdaptor
-    toys = adapter.scan_toys(timeout)
+    toys = await adapter.scan_toys(timeout)
     if toy_types is None:
         toy_types = list(all_toys())
     ret = []
@@ -39,8 +39,8 @@ def find_toys(timeout=5.0, toy_types: List[Type[Toy]] = None, toy_names: List[st
     return ret
 
 
-def find_toy(*args, toy_name: str = None, **kwargs):
-    toys = find_toys(*args, toy_names=[toy_name] if toy_name else None, **kwargs)
+async def find_toy(*args, toy_name: str = None, **kwargs):
+    toys = await find_toys(*args, toy_names=[toy_name] if toy_name else None, **kwargs)
     if not toys:
         raise ToyNotFoundError
     return toys[0]

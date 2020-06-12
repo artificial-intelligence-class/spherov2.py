@@ -1,3 +1,4 @@
+import asyncio
 from enum import IntFlag, IntEnum
 from typing import List, Tuple
 
@@ -200,4 +201,4 @@ class Collector:
                 self.__data = []
                 if len(pkt) < 6:
                     raise PacketDecodingException(f'Very small packet {[hex(x) for x in pkt]}')
-                self.__callback(Packet.from_response(pkt))
+                asyncio.ensure_future(self.__callback(Packet.from_response(pkt)))

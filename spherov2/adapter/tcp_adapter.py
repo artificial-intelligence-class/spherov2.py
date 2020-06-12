@@ -113,6 +113,6 @@ def get_tcp_adapter(address: str, port: int = 50004):
 
         def write(self, uuid, data):
             uuid = uuid.encode('ascii')
-            self.__send(RequestOp.WRITE, to_bytes(len(uuid), 2) + uuid + to_bytes(len(data), 2) + bytes(data))
+            self.__send(RequestOp.WRITE, to_bytes(len(uuid), 2) + uuid + to_bytes(len(data), 2) + data)
 
     return TCPAdapter

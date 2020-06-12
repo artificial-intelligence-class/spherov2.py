@@ -1,6 +1,6 @@
-import threading
+import asyncio
 from enum import IntEnum
-from typing import Dict, List, Callable
+from typing import Dict, List, Callable, Coroutine
 
 from spherov2.commands.driving import DriveFlags
 from spherov2.commands.driving import RawMotorModes as DriveRawMotorModes
@@ -13,7 +13,7 @@ class DriveControl:
         self.__toy = toy
         self.__is_boosting = False
 
-    def roll_start(self, heading, speed):
+    async def roll_start(self, heading, speed):
         flag = DriveFlags.FORWARD
         if speed < 0:
             flag = DriveFlags.BACKWARD
@@ -22,15 +22,15 @@ class DriveControl:
             flag |= DriveFlags.TURBO
         speed = min(255, abs(speed))
         heading %= 360
-        self.__toy.drive_with_heading(speed, heading, flag)
+        await self.__toy.drive_with_heading(speed, heading, flag)
 
-    def roll_stop(self, heading):
-        self.roll_start(heading, 0)
+    async def roll_stop(self, heading):
+        await self.roll_start(heading, 0)
 
-    def set_stabilization(self, stabilize):
-        self.__toy.set_stabilization(stabilize)
+    async def set_stabilization(self, stabilize):
+        await self.__toy.set_stabilization(stabilize)
 
-    def set_raw_motors(self, left_mode, left_speed, right_mode, right_speed):
+    async def set_raw_motors(self, left_mode, left_speed, right_mode, right_speed):
         if left_mode == RawMotorModes.FORWARD:
             left_drive_mode = DriveRawMotorModes.FORWARD
         elif left_mode == RawMotorModes.REVERSE:
@@ -45,17 +45,17 @@ class DriveControl:
         else:
             right_drive_mode = DriveRawMotorModes.OFF
 
-        self.__toy.set_raw_motors(left_drive_mode, left_speed, right_drive_mode, right_speed)
+        await self.__toy.set_raw_motors(left_drive_mode, left_speed, right_drive_mode, right_speed)
 
-    def reset_header(self):
-        self.__toy.reset_yaw()
+    async def reset_heading(self):
+        await self.__toy.reset_yaw()
 
 
 class LedControl:
     def __init__(self, toy: Toy):
         self.__toy = toy
 
-    def set_leds(self, mapping: Dict[IntEnum, int]):
+    async def set_leds(self, mapping: Dict[IntEnum, int]):
         mask = 0
         led_values = []
         for e in self.__toy.LEDs:
@@ -64,11 +64,11 @@ class LedControl:
                 led_values.append(mapping[e])
         if mask:
             if hasattr(self.__toy, 'set_all_leds_with_32_bit_mask'):
-                self.__toy.set_all_leds_with_32_bit_mask(mask, led_values)
+                await self.__toy.set_all_leds_with_32_bit_mask(mask, led_values)
             elif hasattr(self.__toy, 'set_all_leds_with_16_bit_mask'):
-                self.__toy.set_all_leds_with_16_bit_mask(mask, led_values)
+                await self.__toy.set_all_leds_with_16_bit_mask(mask, led_values)
             elif hasattr(self.__toy, 'set_all_leds_with_8_bit_mask'):
-                self.__toy.set_all_leds_with_8_bit_mask(mask, led_values)
+                await self.__toy.set_all_leds_with_8_bit_mask(mask, led_values)
 
 
 class SensorControl:
@@ -82,7 +82,7 @@ class SensorControl:
         self.__enabled_extended = {}
         self.__listeners = set()
 
-    def __process_sensor_stream_data(self, sensor_data: List[float]):
+    async def __process_sensor_stream_data(self, sensor_data: List[float]):
         data = {}
 
         def __new_data():
@@ -102,25 +102,25 @@ class SensorControl:
                 __new_data()
 
         for f in self.__listeners:
-            threading.Thread(target=f, args=(data,)).start()
+            asyncio.ensure_future(f(data))
 
-    def add_sensor_data_listener(self, listener: Callable[[Dict[str, Dict[str, float]]], None]):
+    def add_sensor_data_listener(self, listener: Callable[[Dict[str, Dict[str, float]]], Coroutine]):
         self.__listeners.add(listener)
 
-    def remove_sensor_data_listener(self, listener: Callable[[Dict[str, Dict[str, float]]], None]):
+    def remove_sensor_data_listener(self, listener: Callable[[Dict[str, Dict[str, float]]], Coroutine]):
         self.__listeners.remove(listener)
 
-    def set_count(self, count: int):
+    async def set_count(self, count: int):
         if count > 0:
             self.__count = count
-            self.update()
+            await self.update()
 
-    def set_interval(self, interval: int):
+    async def set_interval(self, interval: int):
         if interval >= 0:
             self.__interval = interval
-            self.update()
+            await self.update()
 
-    def update(self):
+    async def update(self):
         sensors_mask = extended_sensors_mask = 0
         for sensor in self.__enabled.values():
             for component in sensor.values():
@@ -128,25 +128,25 @@ class SensorControl:
         for sensor in self.__enabled_extended.values():
             for component in sensor.values():
                 extended_sensors_mask |= component.bit
-        self.__toy.set_sensor_streaming_mask(0, self.__count, sensors_mask)
-        self.__toy.set_extended_sensor_streaming_mask(extended_sensors_mask)
-        self.__toy.set_sensor_streaming_mask(self.__interval, self.__count, sensors_mask)
+        await self.__toy.set_sensor_streaming_mask(0, self.__count, sensors_mask)
+        await self.__toy.set_extended_sensor_streaming_mask(extended_sensors_mask)
+        await self.__toy.set_sensor_streaming_mask(self.__interval, self.__count, sensors_mask)
 
-    def enable(self, *sensors):
+    async def enable(self, *sensors):
         for sensor in sensors:
             if sensor in self.__toy.sensors:
                 self.__enabled[sensor] = self.__toy.sensors[sensor]
             elif sensor in self.__toy.extended_sensors:
                 self.__enabled_extended[sensor] = self.__toy.extended_sensors[sensor]
-        self.update()
+        await self.update()
 
-    def disable(self, *sensors):
+    async def disable(self, *sensors):
         for sensor in sensors:
             self.__enabled.pop(sensor, None)
             self.__enabled_extended.pop(sensor, None)
-        self.update()
+        await self.update()
 
-    def disable_all(self):
+    async def disable_all(self):
         self.__enabled.clear()
         self.__enabled_extended.clear()
-        self.update()
+        await self.update()
