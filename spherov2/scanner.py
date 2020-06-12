@@ -1,10 +1,15 @@
-import importlib
 from functools import partial
 from typing import List, Type
 
 from spherov2.toy.core import Toy
 from spherov2.toy.r2d2 import R2D2
 from spherov2.toy.r2q5 import R2Q5
+
+import_err = None
+try:
+    from spherov2.adapter.bleak_adapter import BleakAdapter
+except ImportError as e:
+    import_err = e
 
 
 class ToyNotFoundError(Exception):
@@ -20,7 +25,9 @@ def all_toys(cls=Toy):
 
 async def find_toys(timeout=5.0, toy_types: List[Type[Toy]] = None, toy_names: List[str] = None, adapter=None):
     if adapter is None:
-        adapter = importlib.import_module('spherov2.adapter.bleak_adapter').BleakAdaptor
+        if import_err is not None:
+            raise import_err
+        adapter = BleakAdapter
     toys = await adapter.scan_toys(timeout)
     if toy_types is None:
         toy_types = list(all_toys())

@@ -5,7 +5,7 @@ from bleak import discover, BleakClient
 from spherov2.toy.consts import ServicesUUID
 
 
-class BleakAdaptor(BleakClient):
+class BleakAdapter(BleakClient):
     scan_toys = partial(discover, filters={'UUIDs': [e.value for e in ServicesUUID]})
     set_callback = BleakClient.start_notify
 
