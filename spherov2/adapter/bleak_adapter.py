@@ -7,7 +7,6 @@ from spherov2.toy.consts import ServicesUUID
 
 class BleakAdapter(BleakClient):
     scan_toys = partial(discover, filters={'UUIDs': [e.value for e in ServicesUUID]})
-    set_callback = BleakClient.start_notify
 
     async def write(self, uuid, data):
         await self.write_gatt_char(uuid, bytearray(data), True)

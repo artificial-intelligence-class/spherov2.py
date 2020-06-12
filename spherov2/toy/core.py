@@ -43,7 +43,7 @@ class Toy:
         await self.__adapter.connect()
         asyncio.ensure_future(self.__process_packet())
         try:
-            await self.__adapter.set_callback(CharacteristicUUID.api_v2.value, self.__api_read)
+            await self.__adapter.start_notify(CharacteristicUUID.api_v2.value, self.__api_read)
             await self.__adapter.write(CharacteristicUUID.anti_dos.value, b'usetheforce...band')
         except:
             await self.__aexit__(None, None, None)

@@ -16,8 +16,7 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
     def callback(char, d):
         if writer.is_closing():
             return
-        char = char.encode('ascii')
-        writer.write(ResponseOp.ON_DATA + to_bytes(len(char), 2) + char + to_bytes(len(d), 1) + d)
+        writer.write(ResponseOp.ON_DATA + char.encode('ascii') + b'\0' + to_bytes(len(d), 1) + d)
         asyncio.ensure_future(writer.drain())
 
     print('Incoming connection from %s:%d' % peer)
@@ -31,8 +30,7 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
                 try:
                     toys = await bleak.discover(timeout, filters={'UUIDs': [e.value for e in ServicesUUID]})
                 except BaseException as e:
-                    err = str(e)[:0xffff].encode('utf_8')
-                    writer.write(ResponseOp.ERROR + to_bytes(len(err), 2) + err)
+                    writer.write(ResponseOp.ERROR + str(e).encode('utf_8') + b'\0')
                     await writer.drain()
                     continue
                 writer.write(ResponseOp.OK + to_bytes(len(toys), 2))
@@ -40,14 +38,13 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
                 for toy in toys:
                     name = toy.name.encode('utf_8')
                     addr = toy.address.encode('ascii')
-                    writer.write(to_bytes(len(name), 2) + name + to_bytes(len(addr), 2) + addr)
+                    writer.write(name + b'\0' + addr + b'\0')
                     await writer.drain()
             elif cmd == RequestOp.END:
                 break
             else:
-                seq_size = await reader.readexactly(3)
-                seq, size = seq_size[0], to_int(seq_size[1:])
-                data = (await reader.readexactly(size)).decode('ascii')
+                seq = (await reader.readexactly(1))[0]
+                data = (await reader.readuntil(b'\0'))[:-1].decode('ascii')
                 try:
                     if cmd == RequestOp.INIT:
                         adapter = bleak.BleakClient(data)
@@ -61,8 +58,7 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
                 except EOFError:
                     raise
                 except BaseException as e:
-                    err = str(e)[:0xffff].encode('utf_8')
-                    writer.write(ResponseOp.ERROR + to_bytes(len(err), 2) + err + bytes([seq]))
+                    writer.write(ResponseOp.ERROR + str(e).encode('utf_8') + b'\0' + bytes([seq]))
                     await writer.drain()
                     continue
                 writer.write(ResponseOp.OK + bytes([seq]))

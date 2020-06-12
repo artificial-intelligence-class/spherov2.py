@@ -4,7 +4,7 @@ import time
 from collections import namedtuple, defaultdict
 from enum import Enum, IntEnum, auto
 from functools import partial
-from typing import Union, Callable, Dict
+from typing import Union, Callable, Dict, Optional
 
 import numpy as np
 from transforms3d.euler import euler2mat
@@ -570,17 +570,14 @@ class SpheroEduAPI:
         for f in self.__listeners[event_type]:
             asyncio.ensure_future(f(*args, **kwargs))
 
-    def register_event(self, event_type: EventType, listener: Callable):
+    def register_event(self, event_type: EventType, listener: Optional[Callable]):
         """Registers the event type with listener. If listener is ``None`` then it removes all listeners of the
-        specified event type.
-
-        Note: listeners will be called in a newly spawned thread, meaning the caller have to deal with concurrency
-        if needed."""
+        specified event type."""
         if event_type not in EventType:
             raise ValueError(f'Event type {event_type} does not exist')
-        if not asyncio.iscoroutinefunction(listener):
-            raise ValueError(f'Listener {listener} is not a coroutine function')
         if listener:
+            if not asyncio.iscoroutinefunction(listener):
+                raise ValueError(f'Listener {listener} is not a coroutine function')
             self.__listeners[event_type].add(listener)
         else:
             del self.__listeners[event_type]
