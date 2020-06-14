@@ -32,7 +32,7 @@ with scanner.find_toy() as toy:
     ...
 ```
 
-`TCPAdapter` allows the user to send and receive Bluetooth packets connected to another host via a server running on that host as a relay. To start the server, run `python3 -m spherov2.adapter.tcp_server [host] [port]`, with `host` and `port` by default being `0.0.0.0` and `50004`. To use the adapter, for example:
+`TCPAdapter` allows the user to send and receive Bluetooth packets connected to another host via a server running on that host as a relay. To start the server, run `python -m spherov2.adapter.tcp_server [host] [port]`, with `host` and `port` by default being `0.0.0.0` and `50004`. To use the adapter, for example:
 
 ```python
 from spherov2 import scanner
@@ -43,6 +43,8 @@ with scanner.find_toy(adapter=get_tcp_adapter('localhost')) as toy:
 ```
 
 The TCP server is written in asynchronous fashion using `asyncio`, so that it supports `bleak` on all platforms. Therefore, a temporary solution for the library to run solely on MacOS could be to start a TCP server on `localhost` and connects to the server using a `TCPAdapter`. 
+
+On whichever device you decide to connect to the toys, you have to first install the BLE library by `pip install bleak`.
 
 ### Scanner
 
