@@ -1,5 +1,7 @@
 # spherov2.py
 
+![status](https://img.shields.io/pypi/status/spherov2?style=for-the-badge) ![python version](https://img.shields.io/pypi/pyversions/spherov2?style=for-the-badge) [![pypi](https://img.shields.io/pypi/v/spherov2?style=for-the-badge)](https://pypi.org/project/spherov2/) [![license](https://img.shields.io/pypi/l/spherov2?style=for-the-badge)](LICENSE) ![last commit](https://img.shields.io/github/last-commit/artificial-intelligence-class/spherov2.py?style=for-the-badge)
+
 ***This library is still in early development&hellip;***
 
 An unofficial library written in Python for [Sphero](https://sphero.com/) toys that supports its Version 2 Bluetooth low energy API described [here](https://sdk.sphero.com/docs/api_spec/general_api/). Toys that are supported includes (implemented ones are checked):
