@@ -38,13 +38,14 @@ class Toy:
         self.__waiting = defaultdict(SimpleQueue)
         self.__listeners = defaultdict(set)
 
-        self.__thread = threading.Thread(target=self.__process_packet)
+        self.__thread = None
         self.__packet_queue = SimpleQueue()
 
     def __enter__(self):
         if self.__adapter is not None:
             raise RuntimeError('Toy already in context manager')
         self.__adapter = self.__adapter_cls(self.address)
+        self.__thread = threading.Thread(target=self.__process_packet)
         try:
             self.__adapter.set_callback(CharacteristicUUID.api_v2.value, self.__api_read)
             self.__adapter.write(CharacteristicUUID.anti_dos.value, b'usetheforce...band')

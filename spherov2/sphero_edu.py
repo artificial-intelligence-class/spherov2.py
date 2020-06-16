@@ -66,21 +66,31 @@ class SpheroEduAPI:
         self.__listeners = defaultdict(set)
 
         self.__stopped = threading.Event()
+        self.__stopped.set()
         self.__updating = threading.Lock()
-        self.__thread = threading.Thread(target=self.__background)
+        self.__thread = None
 
     def __enter__(self):
+        self.__stopped.clear()
+        self.__thread = threading.Thread(target=self.__background)
         self.__toy.__enter__()
-        self.__thread.start()
-        self.__toy.wake()
-        ToyUtil.set_robot_state_on_start(self.__toy)
-        self.__start_capturing_sensor_data()
+        try:
+            self.__thread.start()
+            self.__toy.wake()
+            ToyUtil.set_robot_state_on_start(self.__toy)
+            self.__start_capturing_sensor_data()
+        except:
+            self.__exit__(None, None, None)
+            raise
         return self
 
     def __exit__(self, *args):
         self.__stopped.set()
         self.__thread.join()
-        ToyUtil.sleep(self.__toy)
+        try:
+            ToyUtil.sleep(self.__toy)
+        except:
+            pass
         self.__toy.__exit__(*args)
 
     def __background(self):
@@ -138,6 +148,7 @@ class SpheroEduAPI:
         """Sets the speed to zero to stop the robot, effectively the same as the ``set_speed(0)`` command."""
         if heading is not None:
             self.__heading = heading % 360
+        self.__speed = 0
         ToyUtil.roll_stop(self.__toy, self.__heading, False)
 
     def set_heading(self, heading: int):
