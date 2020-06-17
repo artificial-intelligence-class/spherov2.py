@@ -5,7 +5,7 @@ with open('README.md', 'rt', encoding='utf_8') as f:
 
 setup(
     name='spherov2',
-    version='0.1a2',
+    version='0.2a',
     author='Hanbang Wang',
     author_email='hanbangw@cis.upenn.edu',
     license='MIT',
@@ -21,6 +21,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8'
     ],
     keywords='robotics Sphero toy bluetooth ble',
     python_requires='>=3.7',

@@ -30,7 +30,7 @@ def get_tcp_adapter(address: str, port: int = 50004):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((address, port))
             try:
-                s.sendall(RequestOp.SCAN + struct.pack('f', timeout))
+                s.sendall(RequestOp.SCAN + struct.pack('!f', timeout))
                 code = recvall(s, 1)
                 if code == ResponseOp.ERROR:
                     size = to_int(recvall(s, 2))

@@ -1,7 +1,7 @@
 from typing import NamedTuple
 
 
-class CollisionDetectedArgs(NamedTuple):
+class CollisionDetected(NamedTuple):
     acceleration_x: float
     acceleration_y: float
     acceleration_z: float
@@ -12,3 +12,9 @@ class CollisionDetectedArgs(NamedTuple):
     power_z: int
     speed: int
     time: float
+
+
+class SensorStreamingMask(NamedTuple):
+    interval: int
+    packet_count: int
+    data_mask: int

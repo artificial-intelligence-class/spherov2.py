@@ -13,7 +13,7 @@ from spherov2.commands.animatronic import R2LegActions
 from spherov2.commands.power import BatteryVoltageAndStateStates
 from spherov2.controls.enums import RawMotorModes
 from spherov2.helper import bound_value, bound_color
-from spherov2.listeners.sensor import CollisionDetectedArgs
+from spherov2.listeners.sensor import CollisionDetected
 from spherov2.toy.bb8 import BB8
 from spherov2.toy.bb9e import BB9E
 from spherov2.toy.bolt import BOLT
@@ -442,7 +442,7 @@ class SpheroEduAPI:
             self.__call_event_listener(EventType.on_landing)
             self.__should_land = False
 
-    def _collision_detected_notify(self, args: CollisionDetectedArgs):
+    def _collision_detected_notify(self, args: CollisionDetected):
         self.__call_event_listener(EventType.on_collision)
 
     def _battery_state_changed_notify(self, state: BatteryVoltageAndStateStates):

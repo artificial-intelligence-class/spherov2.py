@@ -6,8 +6,8 @@ from spherov2.commands.async_ import Async
 from spherov2.commands.core import Core, PowerStates, IntervalOptions
 from spherov2.commands.sphero import Sphero as SpheroCmd, CollisionDetectionMethods, RollModes, ReverseFlags, \
     RawMotorModes
-from spherov2.listeners.core import VersionsArgs, BluetoothInfoArgs, PowerStateArgs
-from spherov2.listeners.sensor import CollisionDetectedArgs
+from spherov2.listeners.core import Versions, BluetoothInfo, PowerState
+from spherov2.listeners.sensor import CollisionDetected
 from spherov2.toy.core import Toy, ToySensor
 from spherov2.types import ToyType
 
@@ -59,9 +59,9 @@ class Sphero(Toy):
     def ping(self):
         self._execute(Core.ping())
 
-    def get_versions(self) -> VersionsArgs:
+    def get_versions(self) -> Versions:
         unpacked = struct.unpack('>8B', bytearray(self._execute(Core.get_versions()).data))
-        return VersionsArgs(
+        return Versions(
             record_version=unpacked[0], model_number=unpacked[1], hardware_version_code=unpacked[2],
             main_app_version_major=unpacked[3], main_app_version_minor=unpacked[4],
             bootloader_version='%d.%d' % (unpacked[5] >> 4, unpacked[5] & 0xf),
@@ -72,7 +72,7 @@ class Sphero(Toy):
     def set_bluetooth_name(self, name: str):
         self._execute(Core.set_bluetooth_name(name))
 
-    def get_bluetooth_info(self) -> BluetoothInfoArgs:
+    def get_bluetooth_info(self) -> BluetoothInfo:
         data = self._execute(Core.get_bluetooth_info()).data
         name = ''
         i = 0
@@ -85,12 +85,12 @@ class Sphero(Toy):
         while i < len(data) and data[i] != 0:
             address += chr(data[i])
             i += 1
-        return BluetoothInfoArgs(name=name, address=address)
+        return BluetoothInfo(name=name, address=address)
 
-    def get_power_state(self) -> PowerStateArgs:
+    def get_power_state(self) -> PowerState:
         unpacked = struct.unpack('>2B3H', bytearray(self._execute(Core.get_power_state()).data))
-        return PowerStateArgs(record_version=unpacked[0], state=PowerStates(unpacked[1]), voltage=unpacked[2] / 100,
-                              number_of_charges=unpacked[3], time_since_last_charge=unpacked[4])
+        return PowerState(record_version=unpacked[0], state=PowerStates(unpacked[1]), voltage=unpacked[2] / 100,
+                          number_of_charges=unpacked[3], time_since_last_charge=unpacked[4])
 
     def enable_battery_state_changed_notify(self, enable: bool):
         self._execute(Core.enable_battery_state_changed_notify(enable))
@@ -160,13 +160,13 @@ class Sphero(Toy):
     def remove_will_sleep_notify_listener(self, listener):
         self._remove_listener(Async.will_sleep_notify, listener)
 
-    def add_collision_detected_notify_listener(self, listener: Callable[[CollisionDetectedArgs], None]):
+    def add_collision_detected_notify_listener(self, listener: Callable[[CollisionDetected], None]):
         def __process(packet):
             unpacked = struct.unpack('>3HB3HBL', bytearray(packet.data))
-            listener(CollisionDetectedArgs(acceleration_x=unpacked[0] / 4096, acceleration_y=unpacked[1] / 4096,
-                                           acceleration_z=unpacked[2] / 4096, x_axis=bool(unpacked[3] & 1),
-                                           y_axis=bool(unpacked[3] & 2), power_x=unpacked[4], power_y=unpacked[5],
-                                           power_z=unpacked[6], speed=unpacked[7], time=unpacked[8] / 1000))
+            listener(CollisionDetected(acceleration_x=unpacked[0] / 4096, acceleration_y=unpacked[1] / 4096,
+                                       acceleration_z=unpacked[2] / 4096, x_axis=bool(unpacked[3] & 1),
+                                       y_axis=bool(unpacked[3] & 2), power_x=unpacked[4], power_y=unpacked[5],
+                                       power_z=unpacked[6], speed=unpacked[7], time=unpacked[8] / 1000))
 
         self._add_listener(Async.collision_detected_notify, __process)
 

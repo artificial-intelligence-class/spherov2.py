@@ -89,7 +89,7 @@ class Toy:
     def _add_listener(self, key, notifier: Callable[[Packet], None]):
         self.__listeners[key].add(notifier)
 
-    def _remove_listener(self, key, notifier: Callable[[Packet], None]):
+    def _remove_listener(self, key, notifier: Callable):
         self.__listeners[key].remove(notifier)
 
     def __api_read(self, char, data):

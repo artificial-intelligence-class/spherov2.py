@@ -20,10 +20,23 @@ class StabilizationIndexes(IntEnum):
     SPEED_AND_YAW_CONTROL_SYSTEM = 5
 
 
-class RawMotorModes(IntFlag):
-    OFF = 0b0
-    FORWARD = 0b1
-    REVERSE = 0b10
+class RawMotorModes(IntEnum):
+    OFF = 0
+    FORWARD = 1
+    REVERSE = 2
+
+
+class GenericRawMotorIndexes(IntEnum):
+    LEFT_DRIVE = 0
+    RIGHT_DRIVE = 1
+    HEAD = 2
+    LEG = 3
+
+
+class GenericRawMotorModes(IntEnum):
+    MOTOR_OFF = 0
+    FORWARD = 1
+    REVERSE = 2
 
 
 class Driving:
@@ -41,6 +54,10 @@ class Driving:
     @staticmethod
     def drive_with_heading(speed, heading, drive_flags: DriveFlags, target_id=None):
         return Driving.__encode(command_id=7, data=[speed, *to_bytes(heading, 2), drive_flags], target_id=target_id)
+
+    @staticmethod
+    def generic_raw_motor(index: GenericRawMotorIndexes, mode: GenericRawMotorModes, speed, target_id=None):
+        return Driving.__encode(command_id=11, data=[index, mode, *speed], target_id=target_id)
 
     @staticmethod
     def set_stabilization(stabilization_index: StabilizationIndexes, target_id=None):

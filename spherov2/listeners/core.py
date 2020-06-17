@@ -3,7 +3,7 @@ from typing import NamedTuple
 from spherov2.commands.core import PowerStates
 
 
-class VersionsArgs(NamedTuple):
+class Versions(NamedTuple):
     record_version: int
     model_number: int
     hardware_version_code: int
@@ -14,12 +14,12 @@ class VersionsArgs(NamedTuple):
     overlay_version: str
 
 
-class BluetoothInfoArgs(NamedTuple):
+class BluetoothInfo(NamedTuple):
     name: str
     address: str
 
 
-class PowerStateArgs(NamedTuple):
+class PowerState(NamedTuple):
     record_version: int
     state: PowerStates
     voltage: float

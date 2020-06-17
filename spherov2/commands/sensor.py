@@ -1,3 +1,4 @@
+import struct
 from enum import IntEnum
 from functools import partial
 
@@ -23,11 +24,19 @@ class Sensor:
             target_id=target_id
         )
 
+    @staticmethod
+    def get_sensor_streaming_mask(target_id=None):
+        return Sensor.__encode(command_id=1, target_id=target_id)
+
     sensor_streaming_data_notify = (24, 2, 0xff)
 
     @staticmethod
     def set_extended_sensor_streaming_mask(sensor_masks, target_id=None):
         return Sensor.__encode(command_id=12, data=to_bytes(sensor_masks, 4), target_id=target_id)
+
+    @staticmethod
+    def get_extended_sensor_streaming_mask(target_id=None):
+        return Sensor.__encode(command_id=13, target_id=target_id)
 
     @staticmethod
     def enable_gyro_max_notify(enable, target_id=None):
@@ -51,3 +60,23 @@ class Sensor:
     @staticmethod
     def set_locator_flags(locator_flags: bool, target_id=None):
         return Sensor.__encode(command_id=23, data=[int(locator_flags)], target_id=target_id)
+
+    @staticmethod
+    def set_accelerometer_activity_threshold(threshold: float, target_id=None):
+        return Sensor.__encode(command_id=24, data=struct.pack('>f', threshold), target_id=target_id)
+
+    @staticmethod
+    def enable_accelerometer_activity_notify(enable: bool, target_id=None):
+        return Sensor.__encode(command_id=25, data=[int(enable)], target_id=target_id)
+
+    accelerometer_activity_notify = (24, 26, 0xff)
+
+    @staticmethod
+    def set_gyro_activity_threshold(threshold: float, target_id=None):
+        return Sensor.__encode(command_id=27, data=struct.pack('>f', threshold), target_id=target_id)
+
+    @staticmethod
+    def enable_gyro_activity_notify(enable: bool, target_id=None):
+        return Sensor.__encode(command_id=28, data=[int(enable)], target_id=target_id)
+
+    gyro_activity_notify = (24, 29, 0xff)

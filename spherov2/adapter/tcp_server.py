@@ -27,7 +27,7 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
         while True:
             cmd = await reader.readexactly(1)
             if cmd == RequestOp.SCAN:
-                timeout = struct.unpack('f', await reader.readexactly(4))[0]
+                timeout = struct.unpack('!f', await reader.readexactly(4))[0]
                 try:
                     toys = await bleak.discover(timeout, filters={'UUIDs': [e.value for e in ServicesUUID]})
                 except BaseException as e:

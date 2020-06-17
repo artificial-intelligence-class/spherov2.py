@@ -23,6 +23,10 @@ class IO:
         return IO.__encode(command_id=8, data=[volume], target_id=target_id)
 
     @staticmethod
+    def get_audio_volume(target_id=None):
+        return IO.__encode(command_id=9, target_id=target_id)
+
+    @staticmethod
     def stop_all_audio(target_id=None):
         return IO.__encode(command_id=10, target_id=target_id)
 

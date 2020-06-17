@@ -1,6 +1,6 @@
 import importlib
 from functools import partial
-from typing import List, Type
+from typing import List, Type, Callable
 
 from spherov2.toy.core import Toy
 from spherov2.toy.r2d2 import R2D2
@@ -18,7 +18,8 @@ def all_toys(cls=Toy):
         yield from all_toys(sub)
 
 
-def find_toys(timeout=5.0, toy_types: List[Type[Toy]] = None, toy_names: List[str] = None, adapter=None):
+def find_toys(*, timeout=5.0, toy_types: List[Type[Toy]] = None,
+              toy_names: List[str] = None, adapter=None) -> List[Toy]:
     if adapter is None:
         adapter = importlib.import_module('spherov2.adapter.bleak_adapter').BleakAdaptor
     toys = adapter.scan_toys(timeout)
@@ -39,12 +40,12 @@ def find_toys(timeout=5.0, toy_types: List[Type[Toy]] = None, toy_names: List[st
     return ret
 
 
-def find_toy(*args, toy_name: str = None, **kwargs):
-    toys = find_toys(*args, toy_names=[toy_name] if toy_name else None, **kwargs)
+def find_toy(*, toy_name: str = None, **kwargs) -> Toy:
+    toys = find_toys(toy_names=[toy_name] if toy_name else None, **kwargs)
     if not toys:
         raise ToyNotFoundError
     return toys[0]
 
 
-find_R2D2 = partial(find_toy, toy_types=[R2D2])
-find_R2Q5 = partial(find_toy, toy_types=[R2Q5])
+find_R2D2: Callable[..., R2D2] = partial(find_toy, toy_types=[R2D2])
+find_R2Q5: Callable[..., R2Q5] = partial(find_toy, toy_types=[R2Q5])
