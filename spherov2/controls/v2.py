@@ -2,8 +2,8 @@ import threading
 from enum import IntEnum
 from typing import Dict, List, Callable
 
-from spherov2.commands.driving import DriveFlags
-from spherov2.commands.driving import RawMotorModes as DriveRawMotorModes
+from spherov2.commands.drive import DriveFlags
+from spherov2.commands.drive import RawMotorModes as DriveRawMotorModes
 from spherov2.controls.enums import RawMotorModes
 from spherov2.toy.core import Toy
 

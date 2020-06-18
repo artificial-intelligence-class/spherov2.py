@@ -7,8 +7,8 @@ from typing import Callable, List
 from spherov2.commands.animatronic import Animatronic, R2LegActions, R2DoLegActions
 from spherov2.commands.api_and_shell import ApiAndShell
 from spherov2.commands.connection import Connection
-from spherov2.commands.driving import Driving, DriveFlags, StabilizationIndexes, RawMotorModes, \
-    GenericRawMotorIndexes, GenericRawMotorModes
+from spherov2.commands.drive import Drive, DriveFlags, StabilizationIndexes, RawMotorModes, GenericRawMotorIndexes, \
+    GenericRawMotorModes
 from spherov2.commands.factory_test import FactoryTest
 from spherov2.commands.firmware import Firmware, PendingUpdateFlags
 from spherov2.commands.io import IO, AudioPlaybackModes
@@ -575,8 +575,8 @@ class R2D2(Toy):
     def get_battery_state(self) -> BatteryStates:
         return BatteryStates(self._execute(Power.get_battery_state()).data[0])
 
-    def enable_battery_state_changed_notify(self):
-        self._execute(Power.enable_battery_state_changed_notify())
+    def enable_battery_state_changed_notify(self, enable: bool):
+        self._execute(Power.enable_battery_state_changed_notify(enable))
 
     def add_battery_state_changed_notify_listener(self, listener: Callable[[BatteryVoltageAndStateStates], None]):
         self._add_listener(Power.battery_state_changed_notify,
@@ -602,19 +602,19 @@ class R2D2(Toy):
                            lambda p: listener(BatteryVoltageStates(p.data[0])))
 
     def set_raw_motors(self, left_mode: RawMotorModes, left_speed, right_mode: RawMotorModes, right_speed):
-        self._execute(Driving.set_raw_motors(left_mode, left_speed, right_mode, right_speed))
+        self._execute(Drive.set_raw_motors(left_mode, left_speed, right_mode, right_speed))
 
     def reset_yaw(self):
-        self._execute(Driving.reset_yaw())
+        self._execute(Drive.reset_yaw())
 
     def drive_with_heading(self, speed, heading, drive_flags=DriveFlags.FORWARD):
-        self._execute(Driving.drive_with_heading(speed, heading, drive_flags))
+        self._execute(Drive.drive_with_heading(speed, heading, drive_flags))
 
     def generic_raw_motor(self, index: GenericRawMotorIndexes, mode: GenericRawMotorModes, speed):
-        self._execute(Driving.generic_raw_motor(index, mode, speed))
+        self._execute(Drive.generic_raw_motor(index, mode, speed))
 
     def set_stabilization(self, stabilization_index: StabilizationIndexes):
-        self._execute(Driving.set_stabilization(stabilization_index))
+        self._execute(Drive.set_stabilization(stabilization_index))
 
     def play_animation(self, animation: Animations, wait=False):
         self._execute(Animatronic.play_animation(animation))

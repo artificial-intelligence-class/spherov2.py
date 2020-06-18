@@ -39,26 +39,26 @@ class GenericRawMotorModes(IntEnum):
     REVERSE = 2
 
 
-class Driving:
+class Drive:
     __encode = partial(Packet, device_id=22)
 
     @staticmethod
     def set_raw_motors(left_mode: RawMotorModes, left_speed, right_mode: RawMotorModes, right_speed, target_id=None):
-        return Driving.__encode(command_id=1, data=[left_mode, left_speed, right_mode, right_speed],
-                                target_id=target_id)
+        return Drive.__encode(command_id=1, data=[left_mode, left_speed, right_mode, right_speed],
+                              target_id=target_id)
 
     @staticmethod
     def reset_yaw(target_id=None):
-        return Driving.__encode(command_id=6, target_id=target_id)
+        return Drive.__encode(command_id=6, target_id=target_id)
 
     @staticmethod
     def drive_with_heading(speed, heading, drive_flags: DriveFlags, target_id=None):
-        return Driving.__encode(command_id=7, data=[speed, *to_bytes(heading, 2), drive_flags], target_id=target_id)
+        return Drive.__encode(command_id=7, data=[speed, *to_bytes(heading, 2), drive_flags], target_id=target_id)
 
     @staticmethod
     def generic_raw_motor(index: GenericRawMotorIndexes, mode: GenericRawMotorModes, speed, target_id=None):
-        return Driving.__encode(command_id=11, data=[index, mode, *speed], target_id=target_id)
+        return Drive.__encode(command_id=11, data=[index, mode, *speed], target_id=target_id)
 
     @staticmethod
     def set_stabilization(stabilization_index: StabilizationIndexes, target_id=None):
-        return Driving.__encode(command_id=12, data=[stabilization_index], target_id=target_id)
+        return Drive.__encode(command_id=12, data=[stabilization_index], target_id=target_id)

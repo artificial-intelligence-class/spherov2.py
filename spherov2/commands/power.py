@@ -52,8 +52,8 @@ class Power:
         return Power.__encode(command_id=4, target_id=target_id)
 
     @staticmethod
-    def enable_battery_state_changed_notify(target_id=None):
-        return Power.__encode(command_id=5, target_id=target_id)
+    def enable_battery_state_changed_notify(enable: bool, target_id=None):
+        return Power.__encode(command_id=5, data=[int(enable)], target_id=target_id)
 
     battery_state_changed_notify = (19, 6, 0xff)
 
