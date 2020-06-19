@@ -4,7 +4,7 @@
 
 ***This library is still in early development&hellip;***
 
-An unofficial library written in Python for [Sphero](https://sphero.com/) toys that supports its Version 2 Bluetooth low energy API described [here](https://sdk.sphero.com/docs/api_spec/general_api/). Toys that are supported includes (implemented ones are checked):
+An unofficial Python library for [Sphero](https://sphero.com/) toys that supports its Version 2 Bluetooth low energy API described [here](https://sdk.sphero.com/docs/api_spec/general_api/). Toys that are supported includes (implemented ones are checked):
 
 - [ ] Sphero 1.0
 - [ ] Sphero 2.0 / SPRK
@@ -17,9 +17,9 @@ An unofficial library written in Python for [Sphero](https://sphero.com/) toys t
 - [ ] Sphero Mini
 - [ ] Sphero RVR
 
-The logic is written based on reverse-engineering the official [Sphero Edu for Android](https://play.google.com/store/apps/details?id=com.sphero.sprk), with the help from available documentations and existing libraries such as [igbopie/spherov2.js](https://github.com/igbopie/spherov2.js) and [EnotYoyo/pysphero](https://github.com/EnotYoyo/pysphero).
+The logic is written based on reverse-engineering the official [Sphero Edu for Android](https://play.google.com/store/apps/details?id=com.sphero.sprk), with the help from available documentation and other unofficial community-based Sphero libraries like [igbopie/spherov2.js](https://github.com/igbopie/spherov2.js) and [EnotYoyo/pysphero](https://github.com/EnotYoyo/pysphero).
 
-This project uses the [hbldh/bleak](https://github.com/hbldh/bleak) Bluetooth Low Energy library, which supports all platforms, with some restrictions explained below.
+This project uses the [hbldh/bleak](https://github.com/hbldh/bleak) Bluetooth Low Energy library, which works on most platforms, with some restrictions on MacOS that are explained below.
 
 ## Usage
 
@@ -31,6 +31,7 @@ The library currently has two adapters, `BleakAdapter` and `TCPAdapter`. `BleakA
 from spherov2 import scanner
 
 with scanner.find_toy() as toy:
+    api.spin(360, 1)
     ...
 ```
 
@@ -41,6 +42,7 @@ from spherov2 import scanner
 from spherov2.adapter.tcp_adapter import get_tcp_adapter
 
 with scanner.find_toy(adapter=get_tcp_adapter('localhost')) as toy:
+    api.spin(360, 1) 
     ...
 ```
 
@@ -69,7 +71,7 @@ with SpheroEduAPI(toy) as api:
 
 ## Acknowledgments
 
-This library is made for educational purposes, to assist the use of Sphero robots by students in [CIS 521 - Artificial Intelligence](http://artificial-intelligence-class.org/) at the University of Pennsylvania.
+This library is made for educational purposes.  It is used by students in [CIS 521 - Artificial Intelligence](http://artificial-intelligence-class.org/) at the University of Pennsylvania, where we use Sphero robots to help teach the foundations of AI.
 
 It is published as an open-source library under the [MIT License](LICENSE).
 
