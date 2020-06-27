@@ -23,12 +23,13 @@ def recvall(s, size):
     return data
 
 
-def get_tcp_adapter(address: str, port: int = 50004):
+def get_tcp_adapter(host: str, port: int = 50004):
+    """Gets an anonymous ``TCPAdapter`` with the given address and port."""
     class TCPAdapter:
         @staticmethod
         def scan_toys(timeout=5.0):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect((address, port))
+            s.connect((host, port))
             try:
                 s.sendall(RequestOp.SCAN + struct.pack('!f', timeout))
                 code = recvall(s, 1)
@@ -51,10 +52,10 @@ def get_tcp_adapter(address: str, port: int = 50004):
                 s.sendall(RequestOp.END)
                 s.close()
 
-        def __init__(self, addr):
+        def __init__(self, address):
             self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.__socket.connect((address, port))
-            addr = addr.encode('ascii')
+            self.__socket.connect((host, port))
+            address = address.encode('ascii')
 
             self.__sequence = 0
             self.__sequence_wait = {}
@@ -63,7 +64,7 @@ def get_tcp_adapter(address: str, port: int = 50004):
             self.__thread = threading.Thread(target=self.__recv)
             self.__thread.start()
             try:
-                self.__send(RequestOp.INIT, to_bytes(len(addr), 2) + addr)
+                self.__send(RequestOp.INIT, to_bytes(len(address), 2) + address)
             except:
                 self.close()
                 raise

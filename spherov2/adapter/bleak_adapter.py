@@ -6,7 +6,7 @@ import bleak
 from spherov2.toy.consts import ServicesUUID
 
 
-class BleakAdaptor:
+class BleakAdapter:
     @staticmethod
     def scan_toys(timeout: float = 5.0):
         return asyncio.run(bleak.discover(timeout, filters={'UUIDs': [e.value for e in ServicesUUID]}))

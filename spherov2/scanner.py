@@ -18,13 +18,27 @@ def all_toys(cls=Toy):
         yield from all_toys(sub)
 
 
+ALL_TOYS = list(all_toys())
+
+
 def find_toys(*, timeout=5.0, toy_types: List[Type[Toy]] = None,
               toy_names: List[str] = None, adapter=None) -> List[Toy]:
+    """Find toys that matches the criteria given.
+
+    :param timeout: Device scanning timeout, in seconds.
+    :param toy_types: List of toy types (subclasses of :class:`Toy`) that needs to be scanned. Set to ``None`` to scan
+                      all toy types available.
+    :param toy_names: List of strings of toy names that needs to be scanned. Set to ``None`` to scan toys with all
+                      kinds of names.
+    :param adapter: Kind of adapter to use for scanning bluetooth devices. Set to ``None`` to use default
+                    :class:`BleakAdapter`.
+    :return: A list of toys that are scanned.
+    """
     if adapter is None:
-        adapter = importlib.import_module('spherov2.adapter.bleak_adapter').BleakAdaptor
+        adapter = importlib.import_module('spherov2.adapter.bleak_adapter').BleakAdapter
     toys = adapter.scan_toys(timeout)
     if toy_types is None:
-        toy_types = list(all_toys())
+        toy_types = ALL_TOYS
     ret = []
     if toy_names is not None:
         toy_names = set(toy_names)
@@ -41,6 +55,17 @@ def find_toys(*, timeout=5.0, toy_types: List[Type[Toy]] = None,
 
 
 def find_toy(*, toy_name: str = None, **kwargs) -> Toy:
+    """Find a single toy that matches the criteria given.
+
+    :param toy_name: A string of toy name that needs to be scanned. Set to ``None`` to scan toy with all kinds of names.
+    :param timeout: Device scanning timeout, in seconds.
+    :param toy_types: List of toy types (subclasses of :class:`Toy`) that needs to be scanned. Set to ``None`` to scan
+                      all toy types available.
+    :param adapter: Kind of adapter to use for scanning bluetooth devices. Set to ``None`` to use default
+                    :class:`BleakAdapter`.
+    :return: A toy that is scanned.
+    :raise ToyNotFoundError: If no toys could be found
+    """
     toys = find_toys(toy_names=[toy_name] if toy_name else None, **kwargs)
     if not toys:
         raise ToyNotFoundError

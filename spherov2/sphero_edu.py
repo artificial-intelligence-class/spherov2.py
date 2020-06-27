@@ -271,7 +271,7 @@ class SpheroEduAPI:
                 raise ValueError(f'Stance {stance} is not supported')
 
     def set_waddle(self, waddle: bool):
-        """Turns the waddle walk on using ``set_waddle(true)`` and off using ``set_waddle(false)``."""
+        """Turns the waddle walk on using `set_waddle(True)`` and off using ``set_waddle(False)``."""
         if isinstance(self.__toy, (R2D2, R2Q5)):
             with self.__updating:
                 self.__stop_all()
@@ -350,7 +350,7 @@ class SpheroEduAPI:
         single blink; cycles is the total number of blinks. The time for a single cycle is twice the period
         (time for a blink plus the same amount of time for the light to be off). Another way to say this is the period
         is 1/2 the time it takes for a single cycle. So, to strobe red 15 times in 3 seconds, use:
-        ``strobe(Color(255, 57, 66), 3 / 15 / 2, 15)``."""
+        ``strobe(Color(255, 57, 66), (3 / 15) * .5, 15)``."""
         for i in range(count * 2):
             if i & 1:
                 self.set_main_led(color)
@@ -581,8 +581,8 @@ class SpheroEduAPI:
         """Registers the event type with listener. If listener is ``None`` then it removes all listeners of the
         specified event type.
 
-        Note: listeners will be called in a newly spawned thread, meaning the caller have to deal with concurrency
-        if needed."""
+        **Note**: listeners will be called in a newly spawned thread, meaning the caller have to deal with concurrency
+        if needed. This library is thread-safe."""
         if event_type not in EventType:
             raise ValueError(f'Event type {event_type} does not exist')
         if listener:

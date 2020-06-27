@@ -1,8 +1,8 @@
 # spherov2.py
 
-![status](https://img.shields.io/pypi/status/spherov2?style=for-the-badge) ![python version](https://img.shields.io/pypi/pyversions/spherov2?style=for-the-badge) [![pypi](https://img.shields.io/pypi/v/spherov2?style=for-the-badge)](https://pypi.org/project/spherov2/) [![license](https://img.shields.io/pypi/l/spherov2?style=for-the-badge)](LICENSE) ![last commit](https://img.shields.io/github/last-commit/artificial-intelligence-class/spherov2.py?style=for-the-badge)
+![status](https://img.shields.io/pypi/status/spherov2?style=for-the-badge) ![python version](https://img.shields.io/pypi/pyversions/spherov2?style=for-the-badge) [![pypi](https://img.shields.io/pypi/v/spherov2?style=for-the-badge)](https://pypi.org/project/spherov2/) [![docs](https://img.shields.io/readthedocs/spherov2?style=for-the-badge)](https://spherov2.readthedocs.io/en/latest/) [![license](https://img.shields.io/pypi/l/spherov2?style=for-the-badge)](LICENSE) ![last commit](https://img.shields.io/github/last-commit/artificial-intelligence-class/spherov2.py?style=for-the-badge)
 
-***This library is still in early development&hellip;***
+**This library is still in early development...**
 
 An unofficial Python library for [Sphero](https://sphero.com/) toys that supports its Version 2 Bluetooth low energy API described [here](https://sdk.sphero.com/docs/api_spec/general_api/). Toys that are supported includes (implemented ones are checked):
 
@@ -31,7 +31,6 @@ The library currently has two adapters, `BleakAdapter` and `TCPAdapter`. `BleakA
 from spherov2 import scanner
 
 with scanner.find_toy() as toy:
-    api.spin(360, 1)
     ...
 ```
 
@@ -42,7 +41,6 @@ from spherov2 import scanner
 from spherov2.adapter.tcp_adapter import get_tcp_adapter
 
 with scanner.find_toy(adapter=get_tcp_adapter('localhost')) as toy:
-    api.spin(360, 1) 
     ...
 ```
 
@@ -52,19 +50,21 @@ On whichever device you decide to connect to the toys, you have to first install
 
 ### Scanner
 
-TODO
+You can scan the toys around you using the scanner helper. To find all possible toys, simply call `scanner.find_toys()`. To find only a single toy, use `scanner.find_toy()`.
+
+You can also find toys using specific filters. Please refer to the document for more information.
 
 ### APIs
 
 There are two ways you can interact with the toys, one is to use the low-level APIs implemented for each toy with the commands they support. Low-level APIs can be found for each toy under `spherov2.toy.*`, and is not documented.
 
-The other and recommended way is to use the high level API `spherov2.sphero_edu.SpheroEduAPI`, which is an implementation of the official [Sphero Edu APIs](https://sphero.docsapp.io/docs/get-started). Documentations can be found inside the source files with the docstrings, or [here](#TODO) as an HTML rendered version. For example:
+The other and recommended way is to use the high level API `spherov2.sphero_edu.SpheroEduAPI`, which is an implementation of the official [Sphero Edu APIs](https://sphero.docsapp.io/docs/get-started). Documentations can be found inside the source files with the docstrings, or [here](https://spherov2.readthedocs.io/en/latest/sphero_edu.html) as an HTML rendered version. For example:
 
 ```python
 from spherov2 import scanner
 from spherov2.sphero_edu import SpheroEduAPI
 
-toy = scanner.find_R2Q5()
+toy = scanner.find_toy()
 with SpheroEduAPI(toy) as api:
     api.spin(360, 1)
 ```
