@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from spherov2.types import Color
 
 
@@ -7,6 +9,11 @@ def to_int(ba):
 
 def to_bytes(i: int, size):
     return i.to_bytes(size, byteorder='big')
+
+
+@lru_cache(None)
+def nibble_to_byte(high, low):
+    return (high << 4) | low
 
 
 def bound_value(lower, value, upper):

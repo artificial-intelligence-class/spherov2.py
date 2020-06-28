@@ -7,7 +7,7 @@ from typing import Callable, List
 from spherov2.commands.animatronic import Animatronic, R2LegActions, R2DoLegActions
 from spherov2.commands.api_and_shell import ApiAndShell
 from spherov2.commands.connection import Connection
-from spherov2.commands.drive import Drive, DriveFlags, StabilizationIndexes, RawMotorModes, GenericRawMotorIndexes, \
+from spherov2.commands.drive import Drive, StabilizationIndexes, RawMotorModes, GenericRawMotorIndexes, \
     GenericRawMotorModes
 from spherov2.commands.factory_test import FactoryTest
 from spherov2.commands.firmware import Firmware, PendingUpdateFlags
@@ -20,6 +20,7 @@ from spherov2.helper import to_int
 from spherov2.listeners.api_and_shell import ApiProtocolVersion
 from spherov2.listeners.sensor import CollisionDetected, SensorStreamingMask
 from spherov2.listeners.system_info import Version
+from spherov2.toy.consts import CharacteristicUUID
 from spherov2.toy.core import Toy, ToySensor
 from spherov2.types import ToyType
 
@@ -519,6 +520,8 @@ class R2D2(Toy):
         )
     )
 
+    _handshake = [(CharacteristicUUID.anti_dos.value, b'usetheforce...band')]
+
     def ping(self, data):
         return bytearray(self._execute(ApiAndShell.ping(data)).data)
 
@@ -563,8 +566,8 @@ class R2D2(Toy):
     def get_three_character_sku(self):
         return bytearray(self._execute(SystemInfo.get_three_character_sku()).data)
 
-    def enter_deep_sleep(self):
-        self._execute(Power.enter_deep_sleep())
+    def enter_deep_sleep(self, s):
+        self._execute(Power.enter_deep_sleep(s))
 
     def sleep(self):
         self._execute(Power.sleep())
@@ -607,7 +610,7 @@ class R2D2(Toy):
     def reset_yaw(self):
         self._execute(Drive.reset_yaw())
 
-    def drive_with_heading(self, speed, heading, drive_flags=DriveFlags.FORWARD):
+    def drive_with_heading(self, speed, heading, drive_flags):
         self._execute(Drive.drive_with_heading(speed, heading, drive_flags))
 
     def generic_raw_motor(self, index: GenericRawMotorIndexes, mode: GenericRawMotorModes, speed):

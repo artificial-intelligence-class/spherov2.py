@@ -1,3 +1,4 @@
+import struct
 from enum import IntFlag, IntEnum
 from functools import partial
 
@@ -39,6 +40,11 @@ class GenericRawMotorModes(IntEnum):
     REVERSE = 2
 
 
+class MotorIndexes(IntEnum):
+    LEFT_MOTOR_INDEX = 0
+    RIGHT_MOTOR_INDEX = 1
+
+
 class Drive:
     __encode = partial(Packet, device_id=22)
 
@@ -62,3 +68,36 @@ class Drive:
     @staticmethod
     def set_stabilization(stabilization_index: StabilizationIndexes, target_id=None):
         return Drive.__encode(command_id=12, data=[stabilization_index], target_id=target_id)
+
+    @staticmethod
+    def set_control_system_type(s, s2, target_id=None):
+        return Drive.__encode(command_id=14, data=[s, s2], target_id=target_id)
+
+    @staticmethod
+    def set_component_parameters(s, s2, f_arr, target_id=None):
+        return Drive.__encode(command_id=32, data=[s, s2, *struct.pack('>%df' % len(f_arr), *f_arr)],
+                              target_id=target_id)
+
+    @staticmethod
+    def get_component_parameters(s, s2, target_id=None):
+        return Drive.__encode(command_id=33, data=[s, s2], target_id=target_id)
+
+    @staticmethod
+    def set_custom_control_system_timeout(timeout, target_id=None):
+        return Drive.__encode(command_id=34, data=to_bytes(timeout, 2), target_id=target_id)
+
+    @staticmethod
+    def enable_motor_stall_notify(enable, target_id=None):
+        return Drive.__encode(command_id=37, data=[int(enable)], target_id=target_id)
+
+    motor_stall_notify = (22, 38, 0xff)
+
+    @staticmethod
+    def enable_motor_fault_notify(enable, target_id=None):
+        return Drive.__encode(command_id=39, data=[int(enable)], target_id=target_id)
+
+    motor_fault_notify = (22, 40, 0xff)
+
+    @staticmethod
+    def get_motor_fault_state(target_id=None):
+        return Drive.__encode(command_id=41, target_id=target_id)

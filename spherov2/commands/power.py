@@ -32,12 +32,27 @@ class BatteryStates(IntEnum):
     UNKNOWN = 255
 
 
+class BatteryVoltageReadingTypes(IntEnum):
+    CALIBRATED_AND_FILTERED = 0
+    CALIBRATED_AND_UNFILTERED = 1
+    UNCALIBRATED_AND_UNFILTERED = 2
+
+
+class AmplifierIds(IntEnum):
+    LEFT_MOTOR = 0
+    RIGHT_MOTOR = 1
+
+
+class EfuseIds(IntEnum):
+    PRIMARY_EFUSE = 0
+
+
 class Power:
     __encode = partial(Packet, device_id=19)
 
     @staticmethod
-    def enter_deep_sleep(target_id=None):
-        return Power.__encode(command_id=0, target_id=target_id)
+    def enter_deep_sleep(s, target_id=None):
+        return Power.__encode(command_id=0, data=[s], target_id=target_id)
 
     @staticmethod
     def sleep(target_id=None):
@@ -58,8 +73,16 @@ class Power:
     battery_state_changed_notify = (19, 6, 0xff)
 
     @staticmethod
+    def force_battery_refresh(target_id=None):
+        return Power.__encode(command_id=12, target_id=target_id)
+
+    @staticmethod
     def wake(target_id=None):
         return Power.__encode(command_id=13, target_id=target_id)
+
+    @staticmethod
+    def get_battery_percentage(target_id=None):
+        return Power.__encode(command_id=16, target_id=target_id)
 
     @staticmethod
     def get_battery_voltage_state(target_id=None):
@@ -73,3 +96,25 @@ class Power:
         return Power.__encode(command_id=27, data=[int(enable)], target_id=target_id)
 
     battery_voltage_state_change_notify = (19, 28, 0xff)
+
+    @staticmethod
+    def get_battery_voltage_in_volts(reading_type, target_id=None):
+        return Power.__encode(command_id=37, data=[reading_type], target_id=target_id)
+
+    @staticmethod
+    def get_battery_voltage_state_thresholds(target_id=None):
+        return Power.__encode(command_id=38, target_id=target_id)
+
+    @staticmethod
+    def get_current_sense_amplifier_current(amplifier_id, target_id=None):
+        return Power.__encode(command_id=39, data=[amplifier_id], target_id=target_id)
+
+    @staticmethod
+    def get_efuse_fault_status(efuse_id, target_id=None):
+        return Power.__encode(command_id=40, data=[efuse_id], target_id=target_id)
+
+    efuse_fault_occurred_notify = (19, 41, 0xff)
+
+    @staticmethod
+    def enable_efuse(efuse_id, target_id=None):
+        return Power.__encode(command_id=42, data=[efuse_id], target_id=target_id)

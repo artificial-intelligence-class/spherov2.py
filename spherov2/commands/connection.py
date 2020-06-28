@@ -13,3 +13,7 @@ class Connection:
     @staticmethod
     def get_bluetooth_name(target_id=None):
         return Connection.__encode(command_id=4, target_id=target_id)
+
+    @staticmethod
+    def get_bluetooth_advertising_name(target_id=None):
+        return Connection.__encode(command_id=5, target_id=target_id)

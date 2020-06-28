@@ -19,3 +19,11 @@ class ApiAndShell:
         return ApiAndShell.__encode(command_id=2, data=[*command, 0], target_id=target_id)
 
     send_string_to_console = (16, 3, 0xff)
+
+    @staticmethod
+    def get_supported_dids(target_id=None):
+        return ApiAndShell.__encode(command_id=5, target_id=target_id)
+
+    @staticmethod
+    def get_supported_cids(s, target_id=None):
+        return ApiAndShell.__encode(command_id=6, data=[s], target_id=target_id)

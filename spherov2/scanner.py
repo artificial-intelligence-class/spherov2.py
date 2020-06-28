@@ -5,6 +5,7 @@ from typing import List, Type, Callable
 from spherov2.toy.core import Toy
 from spherov2.toy.r2d2 import R2D2
 from spherov2.toy.r2q5 import R2Q5
+from spherov2.toy.rvr import RVR
 
 
 class ToyNotFoundError(Exception):
@@ -74,3 +75,4 @@ def find_toy(*, toy_name: str = None, **kwargs) -> Toy:
 
 find_R2D2: Callable[..., R2D2] = partial(find_toy, toy_types=[R2D2])
 find_R2Q5: Callable[..., R2Q5] = partial(find_toy, toy_types=[R2Q5])
+find_RVR: Callable[..., RVR] = partial(find_toy, toy_types=[RVR])

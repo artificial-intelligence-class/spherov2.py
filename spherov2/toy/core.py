@@ -28,6 +28,8 @@ class Toy:
     sensors = OrderedDict()
     extended_sensors = OrderedDict()
 
+    _handshake = []
+
     def __init__(self, toy, adapter_cls):
         self.address = toy.address
         self.name = toy.name
@@ -48,7 +50,8 @@ class Toy:
         self.__thread = threading.Thread(target=self.__process_packet)
         try:
             self.__adapter.set_callback(CharacteristicUUID.api_v2.value, self.__api_read)
-            self.__adapter.write(CharacteristicUUID.anti_dos.value, b'usetheforce...band')
+            for uuid, data in self._handshake:
+                self.__adapter.write(uuid, data)
             self.__thread.start()
         except:
             self.__exit__(None, None, None)
