@@ -25,7 +25,7 @@ This project uses the [hbldh/bleak](https://github.com/hbldh/bleak) Bluetooth Lo
 
 To install the library, run `pip install spherov2`. Python version `>= 3.7` are supported.
 
-The library currently has two adapters, `BleakAdapter` and `TCPAdapter`. `BleakAdapter` is used by default when adapter is not specified, which connects to toys using the local Bluetooth adapter. Due to issue mentioned in [hbldh/bleak#206](https://github.com/hbldh/bleak/issues/206), `BleakAdapter` does not yet work on MacOS as the library uses multiple threads to handle events. For example:
+The library currently has two adapters, `BleakAdapter` and `TCPAdapter`. `BleakAdapter` is used by default when adapter is not specified, which connects to toys using the local Bluetooth adapter. For example:
 
 ```python
 from spherov2 import scanner
@@ -44,7 +44,7 @@ with scanner.find_toy(adapter=get_tcp_adapter('localhost')) as toy:
     ...
 ```
 
-The TCP server is written in asynchronous fashion using `asyncio`, so that it supports `bleak` on all platforms. Therefore, a temporary solution for the library to run solely on MacOS could be to start a TCP server on `localhost` and connects to the server using a `TCPAdapter`. 
+The TCP server is written in asynchronous fashion using `asyncio`, so that it supports `bleak` on all platforms.
 
 On whichever device you decide to connect to the toys, you have to first install the BLE library by `pip install bleak`.
 
@@ -52,7 +52,7 @@ On whichever device you decide to connect to the toys, you have to first install
 
 You can scan the toys around you using the scanner helper. To find all possible toys, simply call `scanner.find_toys()`. To find only a single toy, use `scanner.find_toy()`.
 
-You can also find toys using specific filters. Please refer to the document for more information.
+You can also find toys using specific filters. Please refer to the [document](https://spherov2.readthedocs.io/en/latest/scanner.html) for more information.
 
 ### APIs
 

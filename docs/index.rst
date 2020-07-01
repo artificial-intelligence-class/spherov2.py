@@ -6,3 +6,4 @@
     scanner
     adapter
     sphero_edu
+    toys
