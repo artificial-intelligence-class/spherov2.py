@@ -9,7 +9,7 @@ from spherov2.commands.sensor import CollisionDetectionMethods
 from spherov2.controls.enums import RawMotorModes
 from spherov2.toy.bb9e import BB9E
 from spherov2.toy.bolt import BOLT
-from spherov2.toy.core import Toy
+from spherov2.toy.core import Toy, CommandExecuteError
 from spherov2.toy.mini import Mini
 from spherov2.toy.r2d2 import R2D2
 from spherov2.toy.r2q5 import R2Q5
@@ -104,7 +104,7 @@ class ToyUtil:
     def set_main_led(toy: Toy, r: int, g: int, b: int, is_user_color: bool,
                      not_supported_handler: Callable[[], None] = None):
         def _fallback():
-            # TODO toys other than R2Q5
+            # TODO other toys
             if isinstance(toy, (R2D2, R2Q5)):
                 mapping = {
                     toy.LEDs.BACK_RED: r,
@@ -113,6 +113,39 @@ class ToyUtil:
                     toy.LEDs.FRONT_RED: r,
                     toy.LEDs.FRONT_GREEN: g,
                     toy.LEDs.FRONT_BLUE: b
+                }
+            elif isinstance(toy, RVR):
+                mapping = {
+                    toy.LEDs.RIGHT_HEADLIGHT_RED: r,
+                    toy.LEDs.RIGHT_HEADLIGHT_GREEN: g,
+                    toy.LEDs.RIGHT_HEADLIGHT_BLUE: b,
+                    toy.LEDs.LEFT_HEADLIGHT_RED: r,
+                    toy.LEDs.LEFT_HEADLIGHT_GREEN: g,
+                    toy.LEDs.LEFT_HEADLIGHT_BLUE: b,
+                    toy.LEDs.LEFT_STATUS_INDICATION_RED: r,
+                    toy.LEDs.LEFT_STATUS_INDICATION_GREEN: g,
+                    toy.LEDs.LEFT_STATUS_INDICATION_BLUE: b,
+                    toy.LEDs.RIGHT_STATUS_INDICATION_RED: r,
+                    toy.LEDs.RIGHT_STATUS_INDICATION_GREEN: g,
+                    toy.LEDs.RIGHT_STATUS_INDICATION_BLUE: b,
+                    toy.LEDs.BATTERY_DOOR_FRONT_RED: r,
+                    toy.LEDs.BATTERY_DOOR_FRONT_GREEN: g,
+                    toy.LEDs.BATTERY_DOOR_FRONT_BLUE: b,
+                    toy.LEDs.BATTERY_DOOR_REAR_RED: r,
+                    toy.LEDs.BATTERY_DOOR_REAR_GREEN: g,
+                    toy.LEDs.BATTERY_DOOR_REAR_BLUE: b,
+                    toy.LEDs.POWER_BUTTON_FRONT_RED: r,
+                    toy.LEDs.POWER_BUTTON_FRONT_GREEN: g,
+                    toy.LEDs.POWER_BUTTON_FRONT_BLUE: b,
+                    toy.LEDs.POWER_BUTTON_REAR_RED: r,
+                    toy.LEDs.POWER_BUTTON_REAR_GREEN: g,
+                    toy.LEDs.POWER_BUTTON_REAR_BLUE: b,
+                    toy.LEDs.LEFT_BRAKELIGHT_RED: r,
+                    toy.LEDs.LEFT_BRAKELIGHT_GREEN: g,
+                    toy.LEDs.LEFT_BRAKELIGHT_BLUE: b,
+                    toy.LEDs.RIGHT_BRAKELIGHT_RED: r,
+                    toy.LEDs.RIGHT_BRAKELIGHT_GREEN: g,
+                    toy.LEDs.RIGHT_BRAKELIGHT_BLUE: b
                 }
             else:
                 mapping = None
@@ -209,6 +242,50 @@ class ToyUtil:
         ToyUtil.set_multiple_leds(toy, mapping, _fallback)
 
     @staticmethod
+    def set_left_front_led(toy: Toy, r: int, g: int, b: int, not_supported_handler: Callable[[], None] = None):
+        mapping = None
+        if isinstance(toy, RVR):
+            mapping = {
+                RVR.LEDs.LEFT_HEADLIGHT_RED: r,
+                RVR.LEDs.LEFT_HEADLIGHT_GREEN: g,
+                RVR.LEDs.LEFT_HEADLIGHT_BLUE: b
+            }
+        ToyUtil.set_multiple_leds(toy, mapping, not_supported_handler)
+
+    @staticmethod
+    def set_right_front_led(toy: Toy, r: int, g: int, b: int, not_supported_handler: Callable[[], None] = None):
+        mapping = None
+        if isinstance(toy, RVR):
+            mapping = {
+                RVR.LEDs.RIGHT_HEADLIGHT_RED: r,
+                RVR.LEDs.RIGHT_HEADLIGHT_GREEN: g,
+                RVR.LEDs.RIGHT_HEADLIGHT_BLUE: b
+            }
+        ToyUtil.set_multiple_leds(toy, mapping, not_supported_handler)
+
+    @staticmethod
+    def set_battery_side_led(toy: Toy, r: int, g: int, b: int, not_supported_handler: Callable[[], None] = None):
+        mapping = None
+        if isinstance(toy, RVR):
+            mapping = {
+                RVR.LEDs.BATTERY_DOOR_FRONT_RED: r,
+                RVR.LEDs.BATTERY_DOOR_FRONT_GREEN: g,
+                RVR.LEDs.BATTERY_DOOR_FRONT_BLUE: b
+            }
+        ToyUtil.set_multiple_leds(toy, mapping, not_supported_handler)
+
+    @staticmethod
+    def set_power_side_led(toy: Toy, r: int, g: int, b: int, not_supported_handler: Callable[[], None] = None):
+        mapping = None
+        if isinstance(toy, RVR):
+            mapping = {
+                RVR.LEDs.POWER_BUTTON_FRONT_RED: r,
+                RVR.LEDs.POWER_BUTTON_FRONT_GREEN: g,
+                RVR.LEDs.POWER_BUTTON_FRONT_BLUE: b
+            }
+        ToyUtil.set_multiple_leds(toy, mapping, not_supported_handler)
+
+    @staticmethod
     def set_holo_projector(toy: Toy, brightness: int, not_supported_handler: Callable[[], None] = None):
         if isinstance(toy, (R2D2, R2Q5)):
             mapping = {toy.LEDs.HOLO_PROJECTOR: brightness}
@@ -244,6 +321,12 @@ class ToyUtil:
             mapping = dict((e, 0) for e in toy.LEDs)
         else:
             mapping = None
+
+        if isinstance(toy, RVR):
+            mapping.pop(RVR.LEDs.UNDERCARRIAGE_WHITE)
+
+        # elif isinstance(toy, Mini): TODO
+        #     mapping.pop
 
         def __fallback():
             ToyUtil.set_main_led(toy, 0, 0, 0, False)
@@ -326,6 +409,13 @@ class ToyUtil:
             not_supported_handler()
 
     @staticmethod
+    def set_color_detection(toy: Toy, enable: bool, not_supported_handler: Callable[[], None] = None):
+        if hasattr(toy, 'enable_color_detection'):
+            toy.enable_color_detection(enable)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
     def set_robot_state_on_start(toy: Toy):
         # TODO setUserColour
         ToyUtil.set_head_position(toy, 0)
@@ -336,10 +426,12 @@ class ToyUtil:
         if hasattr(toy, 'enable_gyro_max_notify'):
             toy.enable_gyro_max_notify(True)
         if hasattr(toy, 'sensor_control'):
-            toy.sensor_control.set_interval(150)
+            try:
+                toy.sensor_control.set_interval(150)
+            except CommandExecuteError:
+                pass
         ToyUtil.turn_off_leds(toy)
-        '''if (toy instanceof HasSpheroRVRToy) {
-                setColorDetection$default(toy, true, (Function0) null, 2, (Object) null);
-                resetHeading$default(toy, (Function0) null, 1, (Object) null);
-            }'''
+        if isinstance(toy, RVR):
+            ToyUtil.set_color_detection(toy, True)
+            ToyUtil.reset_heading(toy)
         ToyUtil.reset_locator(toy)

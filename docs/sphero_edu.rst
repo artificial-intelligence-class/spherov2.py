@@ -98,9 +98,14 @@ Sphero RVR Lights
 -----------------
 .. class:: SpheroEduAPI
 
+    .. automethod:: set_left_headlight_led
+    .. automethod:: set_right_headlight_led
+    .. automethod:: set_left_led
+    .. automethod:: set_right_led
+
     .. method:: set_front_led(color: spherov2.types.Color)
 
-        Changes the color of RVR's front two LED headlights together. Set this using RGB (red, green, blue) values on a scale of 0 - 255. For example, the magenta color is expressed as ``set_front_color(Color(239, 0, 255))``
+        Changes the color of RVR's front two LED headlights together. Set this using RGB (red, green, blue) values on a scale of 0 - 255. For example, the magenta color is expressed as ``set_front_color(Color(239, 0, 255))``.
 
     .. method:: set_back_led(color: spherov2.types.Color)
 
@@ -169,6 +174,9 @@ Sphero BOLT Sensors
 
 Sphero RVR Sensors
 ------------------
+.. class:: SpheroEduAPI
+
+    .. automethod:: get_color
 
 R2-D2 & R2-Q5 Sensors
 ---------------------

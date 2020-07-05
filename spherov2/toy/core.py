@@ -2,9 +2,8 @@ import threading
 import time
 from collections import defaultdict, OrderedDict
 from concurrent import futures
-from dataclasses import dataclass
 from queue import SimpleQueue
-from typing import Callable
+from typing import Callable, NamedTuple
 
 from spherov2.packet import Packet, Collector
 from spherov2.toy.consts import CharacteristicUUID
@@ -15,8 +14,7 @@ class CommandExecuteError(Exception):
     ...
 
 
-@dataclass
-class ToySensor:
+class ToySensor(NamedTuple):
     bit: int
     min_value: float
     max_value: float
@@ -72,7 +70,9 @@ class Toy:
             if payload is None:
                 break
             # print('request ' + ' '.join([hex(c) for c in payload]))
-            self.__adapter.write(CharacteristicUUID.api_v2.value, payload)
+            while payload:
+                self.__adapter.write(CharacteristicUUID.api_v2.value, payload[:20])
+                payload = payload[20:]
             time.sleep(self.toy_type.cmd_safe_interval)
 
     def _execute(self, packet: Packet) -> Packet:

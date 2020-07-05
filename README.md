@@ -15,7 +15,7 @@ An unofficial Python library for [Sphero](https://sphero.com/) toys that support
 - [ ] Sphero BOLT
 - [ ] Sphero SPRK+ / SPRK 2.0
 - [ ] Sphero Mini
-- [ ] Sphero RVR
+- [x] Sphero RVR
 
 The logic is written based on reverse-engineering the official [Sphero Edu for Android](https://play.google.com/store/apps/details?id=com.sphero.sprk), with the help from available documentation and other unofficial community-based Sphero libraries like [igbopie/spherov2.js](https://github.com/igbopie/spherov2.js) and [EnotYoyo/pysphero](https://github.com/EnotYoyo/pysphero).
 

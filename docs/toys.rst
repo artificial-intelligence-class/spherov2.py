@@ -10,16 +10,16 @@ Sphero
     :show-inheritance:
     :member-order: bysource
 
-R2D2
-====
+R2-D2
+=====
 .. autoclass:: spherov2.toy.r2d2.R2D2
     :members:
     :undoc-members:
     :show-inheritance:
     :member-order: bysource
 
-R2Q5
-====
+R2-Q5
+=====
 .. autoclass:: spherov2.toy.r2q5.R2Q5
     :members:
     :undoc-members:

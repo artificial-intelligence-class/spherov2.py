@@ -50,7 +50,7 @@ class DriveControl:
 
         self.__toy.set_raw_motors(left_drive_mode, left_speed, right_drive_mode, right_speed)
 
-    def reset_header(self):
+    def reset_heading(self):
         self.__toy.reset_yaw()
 
 
@@ -288,8 +288,7 @@ class StreamingControl:
             self.__toy.stop_streaming_service(target)
             if state == StreamingServiceState.Stop:
                 self.__toy.clear_streaming_service(target)
-                return
-            if state == StreamingServiceState.Start:
+            elif state == StreamingServiceState.Start:
                 self.__toy.clear_streaming_service(target)
                 slots = self.__slots[target]
                 slots.clear()
@@ -303,8 +302,8 @@ class StreamingControl:
                             data.extend(to_bytes(index, 2))
                             data.append(sensor.data_size)
                         self.__toy.configure_streaming_service(slot, data, target)
-                    state = StreamingServiceState.Restart
-            if state == StreamingServiceState.Restart:
+                    self.__toy.start_streaming_service(self.__interval, target)
+            elif state == StreamingServiceState.Restart:
                 self.__toy.start_streaming_service(self.__interval, target)
 
     def __streaming_service_data(self, source_id, data: StreamingServiceData):

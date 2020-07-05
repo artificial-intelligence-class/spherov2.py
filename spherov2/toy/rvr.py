@@ -317,7 +317,6 @@ class RVR(Toy):
         self._execute(Sensor.enable_color_detection(enable))
 
     def configure_streaming_service(self, token, configuration: List[int], target: Processors):
-        print(token, configuration, target)
         self._execute(Sensor.configure_streaming_service(token, configuration, nibble_to_byte(1, target)))
 
     def start_streaming_service(self, period, target: Processors):
@@ -388,7 +387,7 @@ class RVR(Toy):
         return bytes(self._execute(Connection.get_bluetooth_advertising_name(nibble_to_byte(1, 1))).data).rstrip(b'\0')
 
     def set_all_leds_with_32_bit_mask(self, mask, values):
-        self._execute(IO.set_all_leds_with_32_bit_mask(mask, values))
+        self._execute(IO.set_all_leds_with_32_bit_mask(mask, values, nibble_to_byte(1, 1)))
 
     def set_compressed_frame_player_one_color(self, s, s2, s3):  # unknown names
         self._execute(IO.set_compressed_frame_player_one_color(s, s2, s3, nibble_to_byte(1, 1)))

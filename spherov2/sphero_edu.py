@@ -44,6 +44,35 @@ class EventType(Enum):
     on_color = auto()  # [f.RVR] TODO
 
 
+class LedManager:
+    def __init__(self, cls):
+        if cls is RVR:
+            self.__mapping = {
+                'front': ('left_headlight', 'right_headlight'),
+                'main': ('left', 'right', 'front', 'back')
+            }
+        elif cls in (R2D2, R2Q5, BOLT):
+            self.__mapping = {'main': ('front', 'back')}
+        self.__leds = defaultdict(partial(Color, 0, 0, 0))
+
+    def __setitem__(self, key, value):
+        if key in self.__mapping:
+            for led in self.__mapping[key]:
+                self.__setitem__(led, value)
+        else:
+            self.__leds[key] = value
+
+    def __getitem__(self, item):
+        if item in self.__mapping:
+            return self.__getitem__(self.__mapping[item][0])
+        return self.__leds[item]
+
+    def get(self, item, default):
+        if item in self.__mapping:
+            return self.get(self.__mapping[item][0], default)
+        return self.__leds.get(item, default)
+
+
 class SpheroEduAPI:
     """Implementation of Sphero Edu Javascript APIs: https://sphero.docsapp.io/docs/get-started"""
 
@@ -53,7 +82,7 @@ class SpheroEduAPI:
         self.__speed = 0
         self.__stabilization = True
         self.__raw_motor = namedtuple('rawMotor', ('left', 'right'))(0, 0)
-        self.__leds = defaultdict(partial(Color, 0, 0, 0))
+        self.__leds = LedManager(toy.__class__)
 
         self.__sensor_data: Dict[str, Union[float, Dict[str, float]]] = {'distance': 0.}
         self.__sensor_name_mapping = {}
@@ -283,14 +312,6 @@ class SpheroEduAPI:
         (red, green, blue) values on a scale of 0 - 255. For example, ``set_main_led(Color(r=90, g=255, b=90))``."""
         self.__leds['main'] = bound_color(color, self.__leds['main'])
         ToyUtil.set_main_led(self.__toy, **self.__leds['main']._asdict(), is_user_color=False)
-        if isinstance(self.__toy, (R2D2, R2Q5, BOLT)):
-            self.__leds['front'] = self.__leds['back'] = self.__leds['main']
-        elif isinstance(self.__toy, RVR):
-            self.__leds['front'] = \
-                self.__leds['left_status_indication'] = self.__leds['right_status_indication'] = \
-                self.__leds['battery_door_rear'] = self.__leds['battery_door_front'] = \
-                self.__leds['power_button_front'] = self.__leds['power_button_rear'] = \
-                self.__leds['back'] = self.__leds['main']
 
     def set_front_led(self, color: Color):
         """For Sphero RVR: Changes the color of RVR's front two LED headlights together.
@@ -322,7 +343,7 @@ class SpheroEduAPI:
         Changes the color of the left and right breaklight LED light. Set this using RGB (red, green, blue) values
         on a scale of 0 - 255."""
         if isinstance(color, int):
-            self.__leds['back'] = Color(r=0, g=0, b=bound_value(0, color, 255))
+            self.__leds['back'] = Color(0, 0, bound_value(0, color, 255))
             ToyUtil.set_back_led_brightness(self.__toy, self.__leds['back'].b)
         elif isinstance(self.__toy, (R2D2, R2Q5, BOLT, RVR)):
             self.__leds['back'] = bound_color(color, self.__leds['back'])
@@ -360,7 +381,38 @@ class SpheroEduAPI:
 
     # TODO Sphero BOLT Lights
 
-    # TODO Sphero RVR Lights
+    # Sphero RVR Lights
+    def set_left_headlight_led(self, color: Color):
+        """Changes the color of the front left headlight LED on RVR. Set this using RGB (red, green, blue) values on a
+        scale of 0 - 255. For example, the pink color is expressed as
+        ``set_left_headlight_led(Color(253, 159, 255))``."""
+        if isinstance(self.__toy, RVR):
+            self.__leds['left_headlight'] = bound_color(color, self.__leds['left_headlight'])
+            ToyUtil.set_left_front_led(self.__toy, **self.__leds['left_headlight']._asdict())
+
+    def set_right_headlight_led(self, color: Color):
+        """Changes the color of the front right headlight LED on RVR. Set this using RGB (red, green, blue) values on a
+        scale of 0 - 255. For example, the blue color is expressed as
+        ``set_right_headlight_led(0, 28, 255)``."""
+        if isinstance(self.__toy, RVR):
+            self.__leds['right_headlight'] = bound_color(color, self.__leds['right_headlight'])
+            ToyUtil.set_right_front_led(self.__toy, **self.__leds['right_headlight']._asdict())
+
+    def set_left_led(self, color: Color):
+        """Changes the color of the LED on RVR's left side (which is the side with RVR's battery bay door). Set this
+        using RGB (red, green, blue) values on a scale of 0 - 255. For example, the green color is expressed as
+        ``set_left_led(Color(0, 255, 34))``."""
+        if isinstance(self.__toy, RVR):
+            self.__leds['left'] = bound_color(color, self.__leds['left'])
+            ToyUtil.set_battery_side_led(self.__toy, **self.__leds['left']._asdict())
+
+    def set_right_led(self, color: Color):
+        """Changes the color of the LED on RVR's right side (which is the side with RVR's power button). Set this using
+        RGB (red, green, blue) values on a scale of 0 - 255. For example, the red color is expressed as
+        ``set_right_led(Color(255, 18, 0))``."""
+        if isinstance(self.__toy, RVR):
+            self.__leds['right'] = bound_color(color, self.__leds['right'])
+            ToyUtil.set_power_side_led(self.__toy, **self.__leds['right']._asdict())
 
     # BB-9E Lights
     def set_dome_leds(self, brightness: int):
@@ -551,7 +603,19 @@ class SpheroEduAPI:
         """Provides the RGB color of the front LED, from 0 to 255 for each color channel."""
         return self.__leds.get('front', None)
 
-    # TODO Sphero RVR Sensors
+    # Sphero RVR Sensors
+    def get_color(self):
+        """Provides the RGB color, from 0 to 255 for each color channel, that is returned from RVR's color sensor.
+
+        ``get_color().r`` is the red channel, from 0 - 255, that is returned from RVR's color sensor.
+
+        ``get_color().g`` is the green channel, from 0 - 255, that is returned from RVR's color sensor.
+
+        ``get_color().b`` is the blue channel, from 0 - 255, that is returned from RVR's color sensor."""
+        if 'color_detection' in self.__sensor_data:
+            color = self.__sensor_data['color_detection']
+            return Color(round(color['r']), round(color['g']), round(color['b']))
+        return None
 
     # BB-9E Sensors
     def get_dome_leds(self):
