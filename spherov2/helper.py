@@ -26,3 +26,7 @@ def bound_color(color: Color, default_color: Color):
         g=default_color.g if color.g is None else bound_value(0, color.g, 255),
         b=default_color.b if color.b is None else bound_value(0, color.b, 255)
     )
+
+
+def packet_chk(payload):
+    return 0xff - (sum(payload) & 0xff)

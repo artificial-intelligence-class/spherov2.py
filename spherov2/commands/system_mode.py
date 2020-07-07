@@ -1,15 +1,13 @@
-from functools import partial
-
-from spherov2.packet import Packet
+from spherov2.commands import Commands
 
 
-class SystemMode:
-    __encode = partial(Packet, device_id=18)
+class SystemMode(Commands):
+    _did = 18
 
     @staticmethod
-    def get_out_of_box_state(target_id=None):
-        return SystemMode.__encode(command_id=43, target_id=target_id)
+    def get_out_of_box_state(toy, proc=None):
+        return bool(toy._execute(SystemMode._encode(toy, 43, proc)).data[0])
 
     @staticmethod
-    def enable_out_of_box_state(enable: bool, target_id=None):
-        return SystemMode.__encode(command_id=44, data=[int(enable)], target_id=target_id)
+    def enable_out_of_box_state(toy, enable: bool, proc=None):
+        toy._execute(SystemMode.__encode(toy, 44, proc, [int(enable)]))

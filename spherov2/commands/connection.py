@@ -1,19 +1,17 @@
-from functools import partial
-
-from spherov2.packet import Packet
+from spherov2.commands import Commands
 
 
-class Connection:
-    __encode = partial(Packet, device_id=25)
+class Connection(Commands):
+    _did = 25
 
     @staticmethod
-    def set_bluetooth_name(name: bytes, target_id=None):
-        return Connection.__encode(command_id=3, data=[*name, 0], target_id=target_id)
+    def set_bluetooth_name(toy, name: bytes, proc=None):
+        toy._execute(Connection._encode(toy, 3, proc, [*name, 0]))
 
     @staticmethod
-    def get_bluetooth_name(target_id=None):
-        return Connection.__encode(command_id=4, target_id=target_id)
+    def get_bluetooth_name(toy, proc=None):
+        return toy._execute(Connection._encode(toy, 4, proc)).data.rstrip(b'\0')
 
     @staticmethod
-    def get_bluetooth_advertising_name(target_id=None):
-        return Connection.__encode(command_id=5, target_id=target_id)
+    def get_bluetooth_advertising_name(toy, proc=None):
+        return toy._execute(Connection._encode(toy, 5, proc)).data.rstrip(b'\0')

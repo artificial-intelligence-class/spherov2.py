@@ -1,7 +1,7 @@
 from enum import IntFlag, IntEnum
-from functools import partial
 
-from spherov2.packet import Packet
+from spherov2.commands import Commands
+from spherov2.helper import to_int
 
 
 class PendingUpdateFlags(IntFlag):
@@ -23,37 +23,37 @@ class ResetStrategies(IntEnum):
     RESET_INTO_OR_JUMP_TO_BOOTLOADER = 2
 
 
-class Firmware:
-    __encode = partial(Packet, device_id=29)
+class Firmware(Commands):
+    _did = 29
 
     @staticmethod
-    def get_pending_update_flags(target_id=None):
-        return Firmware.__encode(command_id=13, target_id=target_id)
+    def get_pending_update_flags(toy, proc=None):
+        return PendingUpdateFlags(to_int(toy._execute(Firmware._encode(toy, 13, proc)).data))
 
     @staticmethod
-    def get_current_application_id(target_id=None):
-        return Firmware.__encode(command_id=21, target_id=target_id)
+    def get_current_application_id(toy, proc=None):
+        return ApplicationIds(toy._execute(Firmware._encode(toy, 21, proc)).data[0])
 
     @staticmethod
-    def get_all_updatable_processors(target_id=None):
-        return Firmware.__encode(command_id=22, target_id=target_id)
+    def get_all_updatable_processors(toy, proc=None):
+        toy._execute(Firmware._encode(toy, 22, proc))
 
     @staticmethod
-    def get_version_for_updatable_processors(target_id=None):
-        return Firmware.__encode(command_id=24, target_id=target_id)
+    def get_version_for_updatable_processors(toy, proc=None):
+        toy._execute(Firmware._encode(toy, 24, proc))
 
     @staticmethod
-    def set_pending_update_for_processors(data, target_id=None):
-        return Firmware.__encode(command_id=26, data=data, target_id=target_id)
+    def set_pending_update_for_processors(toy, data, proc=None):  # unknown names
+        return ResetStrategies(toy._execute(Firmware._encode(toy, 26, proc, data)).data[0])
 
     @staticmethod
-    def get_pending_update_for_processors(target_id=None):
-        return Firmware.__encode(command_id=27, target_id=target_id)
+    def get_pending_update_for_processors(toy, proc=None):
+        return toy._execute(Firmware._encode(toy, 27, proc)).data
 
     @staticmethod
-    def reset_with_parameters(strategy, target_id=None):
-        return Firmware.__encode(command_id=28, data=[strategy], target_id=target_id)
+    def reset_with_parameters(toy, strategy, proc=None):
+        toy._execute(Firmware._encode(toy, 28, proc, [strategy]))
 
     @staticmethod
-    def clear_pending_update_processors(data, target_id=None):
-        return Firmware.__encode(command_id=38, data=data, target_id=target_id)
+    def clear_pending_update_processors(toy, data, proc=None):  # unknown names
+        toy._execute(Firmware._encode(toy, 38, proc, data))

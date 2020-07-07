@@ -1,15 +1,19 @@
 from enum import IntEnum
-from inspect import signature
 from typing import Callable, Dict, List
 
-from spherov2.commands.animatronic import R2LegActions
-from spherov2.commands.core import IntervalOptions
-from spherov2.commands.io import AudioPlaybackModes
-from spherov2.commands.sensor import CollisionDetectionMethods
+from spherov2.commands.animatronic import R2LegActions, Animatronic
+from spherov2.commands.api_and_shell import ApiAndShell
+from spherov2.commands.core import IntervalOptions, Core
+from spherov2.commands.io import AudioPlaybackModes, IO
+from spherov2.commands.power import Power
+from spherov2.commands.sensor import CollisionDetectionMethods, Sensor, SensitivityBasedCollisionDetectionMethods, \
+    SensitivityLevels
+from spherov2.commands.sphero import CollisionDetectionMethods as SpheroCollisionDetectionMethods, Sphero
 from spherov2.controls.enums import RawMotorModes
+from spherov2.controls.v2 import Processors
 from spherov2.toy.bb9e import BB9E
 from spherov2.toy.bolt import BOLT
-from spherov2.toy.core import Toy, CommandExecuteError
+from spherov2.toy.core import Toy
 from spherov2.toy.mini import Mini
 from spherov2.toy.r2d2 import R2D2
 from spherov2.toy.r2q5 import R2Q5
@@ -19,24 +23,21 @@ from spherov2.toy.rvr import RVR
 class ToyUtil:
     @staticmethod
     def sleep(toy: Toy, not_supported_handler: Callable[[], None] = None):
-        if hasattr(toy, 'sleep'):
-            if len(signature(toy.sleep).parameters) == 0:
-                toy.sleep()
-            else:
-                toy.sleep(IntervalOptions.NONE, 0, 0)
+        if toy.implements(Core.sleep):
+            toy.sleep(IntervalOptions.NONE, 0, 0)
+        elif toy.implements(Power.sleep):
+            toy.sleep()
         elif not_supported_handler:
             not_supported_handler()
 
     @staticmethod
     def ping(toy: Toy, not_supported_handler: Callable[[], None] = None):
-        if hasattr(toy, 'ping'):
-            le = len(signature(toy.ping).parameters)
-            if le == 0:
-                toy.ping()
-            elif le == 1:
-                toy.ping(None)
-            # elif l == 2: TODO
-            #     toy.ping(None, ToyUtil.getPrimaryTargetId(toy))
+        if toy.implements(Core.ping):
+            toy.ping()
+        elif toy.implements(ApiAndShell.ping):
+            toy.ping(None)
+        elif toy.implements(ApiAndShell.ping, True):
+            toy.ping(None, Processors.PRIMARY)
         elif not_supported_handler:
             not_supported_handler()
 
@@ -58,7 +59,7 @@ class ToyUtil:
 
     @staticmethod
     def perform_leg_action(toy: Toy, leg_action: R2LegActions, not_supported_handler: Callable[[], None] = None):
-        if hasattr(toy, 'perform_leg_action'):
+        if toy.implements(Animatronic.perform_leg_action):
             toy.perform_leg_action(leg_action)
         elif not_supported_handler:
             not_supported_handler()
@@ -88,14 +89,14 @@ class ToyUtil:
     @staticmethod
     def play_animation(toy: Toy, animation: IntEnum, wait: bool = False,
                        not_supported_handler: Callable[[], None] = None):
-        if hasattr(toy, 'play_animation'):
+        if toy.implements(Animatronic.play_animation):
             toy.play_animation(animation, wait)
         elif not_supported_handler:
             not_supported_handler()
 
     @staticmethod
     def set_head_position(toy: Toy, head_position: float, not_supported_handler: Callable[[], None] = None):
-        if hasattr(toy, 'set_head_position'):
+        if toy.implements(Animatronic.set_head_position):
             toy.set_head_position(head_position)
         elif not_supported_handler:
             not_supported_handler()
@@ -151,7 +152,7 @@ class ToyUtil:
                 mapping = None
 
             def __fallback():
-                if hasattr(toy, 'set_main_led'):
+                if toy.implements(Sphero.set_main_led):
                     toy.set_main_led(r, g, b)
                 elif not_supported_handler:
                     not_supported_handler()
@@ -234,7 +235,7 @@ class ToyUtil:
             mapping = None
 
         def _fallback():
-            if hasattr(toy, 'set_back_led_brightness'):
+            if toy.implements(Sphero.set_back_led_brightness):
                 toy.set_back_led_brightness(brightness)
             elif not_supported_handler:
                 not_supported_handler()
@@ -310,7 +311,7 @@ class ToyUtil:
 
     @staticmethod
     def set_led_matrix_one_colour(toy: Toy, r: int, g: int, b: int, not_supported_handler: Callable[[], None] = None):
-        if hasattr(toy, 'set_compressed_frame_player_one_color'):
+        if toy.implements(IO.set_compressed_frame_player_one_color):
             toy.set_compressed_frame_player_one_color(r, g, b)
         elif not_supported_handler:
             not_supported_handler()
@@ -337,7 +338,7 @@ class ToyUtil:
 
     @staticmethod
     def play_sound(toy: Toy, sound: IntEnum, force_play: bool, not_supported_handler: Callable[[], None] = None):
-        if hasattr(toy, 'play_audio_file'):
+        if toy.implements(IO.play_audio_file):
             toy.play_audio_file(sound,
                                 AudioPlaybackModes.PLAY_IMMEDIATELY if force_play
                                 else AudioPlaybackModes.PLAY_ONLY_IF_NOT_PLAYING)
@@ -374,16 +375,16 @@ class ToyUtil:
 
     @staticmethod
     def set_locator_flags(toy: Toy, flag: bool, not_supported_handler: Callable[[], None] = None):
-        if hasattr(toy, 'set_locator_flags'):
+        if toy.implements(Sensor.set_locator_flags):
             toy.set_locator_flags(flag)
         elif not_supported_handler:
             not_supported_handler()
 
     @staticmethod
     def reset_locator(toy: Toy, not_supported_handler: Callable[[], None] = None):
-        if hasattr(toy, 'configure_locator'):
+        if toy.implements(Sphero.configure_locator):
             toy.configure_locator(0, 0, 0, 0)
-        elif hasattr(toy, 'reset_locator_x_and_y'):
+        elif toy.implements(Sensor.reset_locator_x_and_y):
             toy.reset_locator_x_and_y()
         elif not_supported_handler:
             not_supported_handler()
@@ -391,26 +392,30 @@ class ToyUtil:
     @staticmethod
     def configure_collision_detection(toy: Toy, not_supported_handler: Callable[[], None] = None):
         x, y, t = 90, 130, 1
-        if hasattr(toy, 'configure_collision_detection'):
+        if toy.implements(Sensor.configure_collision_detection):
             toy.configure_collision_detection(CollisionDetectionMethods.ACCELEROMETER_BASED_DETECTION, x, y, x, y, t)
-        # TODO other toys
+        elif toy.implements(Sphero.configure_collision_detection):
+            toy.configure_collision_detection(SpheroCollisionDetectionMethods.DEFAULT, x, y, x, y, t)
+        elif toy.implements(Sensor.configure_sensitivity_based_collision_detection):
+            toy.configure_sensitivity_based_collision_detection(
+                SensitivityBasedCollisionDetectionMethods.ACCELEROMETER_BASED_DETECTION, SensitivityLevels.VERY_HIGH, t)
         elif not_supported_handler:
             not_supported_handler()
 
     @staticmethod
     def set_power_notifications(toy: Toy, enable: bool, not_supported_handler: Callable[[], None] = None):
-        if hasattr(toy, 'enable_charger_state_changed_notify'):
+        if toy.implements(Power.enable_charger_state_changed_notify):
             toy.enable_charger_state_changed_notify(enable)
-        elif hasattr(toy, 'enable_battery_state_changed_notify'):
+        elif toy.implements(Power.enable_battery_state_changed_notify):
             toy.enable_battery_state_changed_notify(enable)
-        elif hasattr(toy, 'enable_battery_voltage_state_change_notify'):
+        elif toy.implements(Power.enable_battery_voltage_state_change_notify):
             toy.enable_battery_voltage_state_change_notify(enable)
         elif not_supported_handler:
             not_supported_handler()
 
     @staticmethod
     def set_color_detection(toy: Toy, enable: bool, not_supported_handler: Callable[[], None] = None):
-        if hasattr(toy, 'enable_color_detection'):
+        if toy.implements(Sensor.enable_color_detection):
             toy.enable_color_detection(enable)
         elif not_supported_handler:
             not_supported_handler()
@@ -423,13 +428,10 @@ class ToyUtil:
         ToyUtil.set_locator_flags(toy, False)
         ToyUtil.configure_collision_detection(toy)
         ToyUtil.set_power_notifications(toy, True)
-        if hasattr(toy, 'enable_gyro_max_notify'):
+        if toy.implements(Sensor.enable_gyro_max_notify):
             toy.enable_gyro_max_notify(True)
         if hasattr(toy, 'sensor_control'):
-            try:
-                toy.sensor_control.set_interval(150)
-            except CommandExecuteError:
-                pass
+            toy.sensor_control.set_interval(150)
         ToyUtil.turn_off_leds(toy)
         if isinstance(toy, RVR):
             ToyUtil.set_color_detection(toy, True)

@@ -7,3 +7,11 @@ class RawMotorModes(Enum):
     REVERSE = auto()
     BREAK = auto()
     IGNORE = auto()
+
+
+class PacketDecodingException(Exception):
+    ...
+
+
+class CommandExecuteError(Exception):
+    ...

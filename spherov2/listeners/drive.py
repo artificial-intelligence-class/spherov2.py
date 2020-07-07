@@ -1,6 +1,10 @@
+from enum import IntEnum
 from typing import NamedTuple
 
-from spherov2.commands.drive import MotorIndexes
+
+class MotorIndexes(IntEnum):
+    LEFT_MOTOR_INDEX = 0
+    RIGHT_MOTOR_INDEX = 1
 
 
 class MotorStall(NamedTuple):

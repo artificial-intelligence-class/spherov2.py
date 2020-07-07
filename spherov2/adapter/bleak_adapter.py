@@ -3,13 +3,11 @@ import threading
 
 import bleak
 
-from spherov2.toy.consts import ServicesUUID
-
 
 class BleakAdapter:
     @staticmethod
     def scan_toys(timeout: float = 5.0):
-        return asyncio.run(bleak.discover(timeout, filters={'UUIDs': [e.value for e in ServicesUUID]}))
+        return asyncio.run(bleak.discover(timeout))
 
     def __init__(self, address):
         self.__event_loop = asyncio.new_event_loop()
@@ -39,4 +37,4 @@ class BleakAdapter:
         self.__execute(self.__device.start_notify(uuid, cb))
 
     def write(self, uuid, data):
-        self.__execute(self.__device.write_gatt_char(uuid, bytearray(data), True))
+        self.__execute(self.__device.write_gatt_char(uuid, data, True))

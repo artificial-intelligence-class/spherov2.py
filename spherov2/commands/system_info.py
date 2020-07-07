@@ -1,8 +1,9 @@
+import struct
 from enum import IntEnum
-from functools import partial
 
-from spherov2.helper import to_bytes
-from spherov2.packet import Packet
+from spherov2.commands import Commands
+from spherov2.helper import to_bytes, to_int
+from spherov2.listeners.system_info import Version, LastErrorInfo, ConfigBlock, ManufacturingDate, EventLogStatus
 
 
 class SosMessages(IntEnum):
@@ -19,115 +20,118 @@ class BootReasons(IntEnum):
     PROCESSOR_IS_RESETTING_FOR_SOME_NON_ERROR_REASON = 5
 
 
-class SystemInfo:
-    __encode = partial(Packet, device_id=17)
+class SystemInfo(Commands):
+    _did = 17
 
     @staticmethod
-    def get_main_app_version(target_id=None):
-        return SystemInfo.__encode(command_id=0, target_id=target_id)
+    def get_main_app_version(toy, proc=None):
+        return Version(*struct.unpack('>3H', toy._execute(SystemInfo._encode(toy, 0, proc)).data))
 
     @staticmethod
-    def get_bootloader_version(target_id=None):
-        return SystemInfo.__encode(command_id=1, target_id=target_id)
+    def get_bootloader_version(toy, proc=None):
+        return Version(*struct.unpack('>3H', toy._execute(SystemInfo._encode(toy, 1, proc)).data))
 
     @staticmethod
-    def get_board_revision(target_id=None):
-        return SystemInfo.__encode(command_id=3, target_id=target_id)
+    def get_board_revision(toy, proc=None):
+        return toy._execute(SystemInfo._encode(toy, 3, proc)).data[0]
 
     @staticmethod
-    def get_mac_address(target_id=None):
-        return SystemInfo.__encode(command_id=6, target_id=target_id)
+    def get_mac_address(toy, proc=None):
+        return toy._execute(SystemInfo._encode(toy, 6, proc)).data
 
     @staticmethod
-    def get_stats_id(target_id=None):
-        return SystemInfo.__encode(command_id=19, target_id=target_id)
+    def get_stats_id(toy, proc=None):
+        return toy._execute(SystemInfo._encode(toy, 19, proc)).data
 
     @staticmethod
-    def get_secondary_main_app_version(target_id=None):
-        return SystemInfo.__encode(command_id=23, target_id=target_id)
+    def get_secondary_main_app_version(toy, proc=None):
+        toy._execute(SystemInfo._encode(toy, 23, proc))
+        return Version(
+            *struct.unpack('>3H', toy._wait_packet(SystemInfo.secondary_main_app_version_notify).data))
 
     secondary_main_app_version_notify = (17, 24, 0xff)
 
     @staticmethod
-    def get_processor_name(target_id=None):
-        return SystemInfo.__encode(command_id=31, target_id=target_id)
+    def get_processor_name(toy, proc=None):
+        return toy._execute(SystemInfo._encode(toy, 31, proc)).data.rstrip(b'\0')
 
     @staticmethod
-    def get_boot_reason(target_id=None):
-        return SystemInfo.__encode(command_id=32, target_id=target_id)
+    def get_boot_reason(toy, proc=None):
+        return BootReasons(toy._execute(SystemInfo._encode(toy, 32, proc)).data[0])
 
     @staticmethod
-    def get_last_error_info(target_id=None):
-        return SystemInfo.__encode(command_id=33, target_id=target_id)
+    def get_last_error_info(toy, proc=None):
+        return LastErrorInfo(
+            *struct.unpack('>32sH12s', toy._execute(SystemInfo._encode(toy, 33, proc)).data))
 
     @staticmethod
-    def get_secondary_mcu_bootloader_version(target_id=None):
-        return SystemInfo.__encode(command_id=36, target_id=target_id)
+    def get_secondary_mcu_bootloader_version(toy, proc=None):
+        toy._execute(SystemInfo._encode(toy, 36, proc))
+        return Version(*struct.unpack('>3H', toy._wait_packet(SystemInfo.secondary_mcu_bootloader_version_notify).data))
 
     secondary_mcu_bootloader_version_notify = (17, 37, 0xff)
 
     @staticmethod
-    def get_three_character_sku(target_id=None):
-        return SystemInfo.__encode(command_id=40, target_id=target_id)
+    def get_three_character_sku(toy, proc=None):
+        return toy._execute(SystemInfo._encode(toy, 40, proc)).data
 
     @staticmethod
-    def write_config_block(target_id=None):
-        return SystemInfo.__encode(command_id=43, target_id=target_id)
+    def write_config_block(toy, proc=None):
+        toy._execute(SystemInfo._encode(toy, 43, proc))
 
     @staticmethod
-    def get_config_block(target_id=None):
-        return SystemInfo.__encode(command_id=44, target_id=target_id)
+    def get_config_block(toy, proc=None):
+        data = toy._execute(SystemInfo.get_config_block(SystemInfo._encode(toy, 44, proc).data))
+        return ConfigBlock(*struct.unpack('>2I', data[:8]), data[8:])
 
     @staticmethod
-    def set_config_block(metadata_version, config_block_version, application_data, target_id=None):
-        return SystemInfo.__encode(
-            command_id=45,
-            data=[*to_bytes(metadata_version, 4), *to_bytes(config_block_version, 4), *application_data],
-            target_id=target_id
-        )
+    def set_config_block(toy, metadata_version, config_block_version, application_data, proc=None):
+        toy._execute(SystemInfo._encode(
+            45, proc, [*to_bytes(metadata_version, 4), *to_bytes(config_block_version, 4), *application_data]))
 
     @staticmethod
-    def erase_config_block(j, target_id=None):
-        return SystemInfo.__encode(command_id=46, data=to_bytes(j, 4), target_id=target_id)
+    def erase_config_block(toy, j, proc=None):
+        toy._execute(SystemInfo._encode(toy, 46, proc, to_bytes(j, 4)))
 
     @staticmethod
-    def get_swd_locking_status(target_id=None):
-        return SystemInfo.__encode(command_id=48, target_id=target_id)
+    def get_swd_locking_status(toy, proc=None):
+        return bool(toy._execute(SystemInfo._encode(toy, 48, proc)).data[0])
 
     @staticmethod
-    def get_manufacturing_date(target_id=None):
-        return SystemInfo.__encode(command_id=51, target_id=target_id)
+    def get_manufacturing_date(toy, proc=None):
+        return ManufacturingDate(
+            *struct.unpack('>HBB', toy._execute(SystemInfo._encode(toy, 51, proc)).data))
 
     @staticmethod
-    def get_sku(target_id=None):
-        return SystemInfo.__encode(command_id=56, target_id=target_id)
+    def get_sku(toy, proc=None):
+        return toy._execute(SystemInfo._encode(toy, 56, proc)).data.rstrip(b'\0')
 
     @staticmethod
-    def get_core_up_time_in_milliseconds(target_id=None):
-        return SystemInfo.__encode(command_id=57, target_id=target_id)
+    def get_core_up_time_in_milliseconds(toy, proc=None):
+        return to_int(toy._execute(SystemInfo._encode(toy, 57, proc)).data)
 
     @staticmethod
-    def get_event_log_status(target_id=None):
-        return SystemInfo.__encode(command_id=58, target_id=target_id)
+    def get_event_log_status(toy, proc=None):
+        return EventLogStatus(*struct.unpack('>3I', toy._execute(SystemInfo._encode(toy, 58, proc)).data))
 
     @staticmethod
-    def get_event_log_data(j, j2, target_id=None):
-        return SystemInfo.__encode(command_id=59, data=to_bytes(j, 4) + to_bytes(j2, 4), target_id=target_id)
+    def get_event_log_data(toy, j, j2, proc=None):  # unknown name
+        return toy._execute(SystemInfo._encode(toy, 59, proc, to_bytes(j, 4) + to_bytes(j2, 4))).data
 
     @staticmethod
-    def clear_event_log(target_id=None):
-        return SystemInfo.__encode(command_id=60, target_id=target_id)
+    def clear_event_log(toy, proc=None):
+        toy._execute(SystemInfo._encode(toy, 60, proc))
 
     @staticmethod
-    def enable_sos_message_notify(enable: bool, target_id=None):
-        return SystemInfo.__encode(command_id=61, data=[int(enable)], target_id=target_id)
+    def enable_sos_message_notify(toy, enable: bool, proc=None):
+        toy._execute(SystemInfo._encode(toy, 61, proc, [int(enable)]))
 
-    sos_message_notify = (17, 62, 0xff)
-
-    @staticmethod
-    def get_sos_message(target_id=None):
-        return SystemInfo.__encode(command_id=63, target_id=target_id)
+    sos_message_notify = (17, 62, 0xff), lambda listener, p: listener(SosMessages(p.data[0]))
 
     @staticmethod
-    def clear_sos_message(target_id=None):
-        return SystemInfo.__encode(command_id=68, target_id=target_id)
+    def get_sos_message(toy, proc=None):
+        toy._execute(SystemInfo._encode(toy, 63, proc))
+
+    @staticmethod
+    def clear_sos_message(toy, proc=None):
+        toy._execute(SystemInfo._encode(toy, 68, proc))

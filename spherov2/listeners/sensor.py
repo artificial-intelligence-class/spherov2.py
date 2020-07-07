@@ -1,6 +1,5 @@
+from enum import IntEnum
 from typing import NamedTuple
-
-from spherov2.commands.sensor import ThermalProtectionStatus
 
 
 class CollisionDetected(NamedTuple):
@@ -58,6 +57,12 @@ class MotorCurrent(NamedTuple):
 class MotorTemperature(NamedTuple):
     case_temperature: float
     winding_coil_temperature: float
+
+
+class ThermalProtectionStatus(IntEnum):
+    OK = 0
+    WARN = 1
+    CRITICAL = 2
 
 
 class MotorThermalProtectionStatus(NamedTuple):

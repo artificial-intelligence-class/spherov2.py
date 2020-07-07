@@ -1,18 +1,176 @@
 import threading
 from collections import OrderedDict, defaultdict
-from enum import IntEnum, Enum, auto
-from typing import Dict, List, Callable, NamedTuple
+from enum import IntEnum, Enum, auto, IntFlag
+from typing import Dict, List, Callable, NamedTuple, Tuple, IO
 
 from spherov2.commands.drive import DriveFlags
 from spherov2.commands.drive import RawMotorModes as DriveRawMotorModes
-from spherov2.controls.enums import RawMotorModes
-from spherov2.helper import to_bytes, to_int
+from spherov2.controls.enums import RawMotorModes, PacketDecodingException
+from spherov2.helper import to_bytes, to_int, packet_chk
 from spherov2.listeners.sensor import StreamingServiceData
-from spherov2.toy.core import Toy
+
+
+class Packet(NamedTuple):
+    """Packet protocol v2, from https://sdk.sphero.com/docs/api_spec/general_api
+    [SOP, FLAGS, TID (optional), SID (optional), DID, CID, SEQ, ERR (at response), DATA..., CHK, EOP]"""
+
+    flags: 'Packet.Flags'
+    did: int
+    cid: int
+    seq: int
+    tid: int
+    sid: int
+    data: bytearray
+    err: 'Packet.Error' = None
+
+    class Flags(IntFlag):
+        is_response = 0b1
+        requests_response = 0b10
+        requests_only_error_response = 0b100
+        is_activity = 0b1000
+        has_target_id = 0b10000
+        has_source_id = 0b100000
+        unused = 0b1000000
+        extended_flags = 0b10000000
+
+    class Encoding(IntEnum):
+        escape = 0xAB
+        start = 0x8D
+        end = 0xD8
+        escaped_escape = 0x23
+        escaped_start = 0x05
+        escaped_end = 0x50
+
+    class Error(IntEnum):
+        success = 0x00
+        bad_device_id = 0x01
+        bad_command_id = 0x02
+        not_yet_implemented = 0x03
+        command_is_restricted = 0x04
+        bad_data_length = 0x05
+        command_failed = 0x06
+        bad_parameter_value = 0x07
+        busy = 0x08
+        bad_target_id = 0x09
+        target_unavailable = 0x0a
+
+    @staticmethod
+    def parse_response(data) -> 'Packet':
+        sop, *data, eop = data
+        if sop != Packet.Encoding.start:
+            raise PacketDecodingException('Unexpected start of packet')
+        if eop != Packet.Encoding.end:
+            raise PacketDecodingException('Unexpected end of packet')
+        *data, chk = Packet.__unescape_data(data)
+        if packet_chk(data) != chk:
+            raise PacketDecodingException('Bad response checksum')
+
+        flags = data.pop(0)
+
+        tid = None
+        if flags & Packet.Flags.has_target_id:
+            tid = data.pop(0)
+
+        sid = None
+        if flags & Packet.Flags.has_source_id:
+            sid = data.pop(0)
+
+        did, cid, seq, *data = data
+
+        err = Packet.Error.success
+        if flags & Packet.Flags.is_response:
+            err = Packet.Error(data.pop(0))
+
+        return Packet(flags, did, cid, seq, tid, sid, bytearray(data), err)
+
+    @staticmethod
+    def __unescape_data(response_data) -> List[int]:
+        raw_data = []
+
+        iter_response_data = iter(response_data)
+        for b in iter_response_data:
+            if b == Packet.Encoding.escape:
+                b = next(iter_response_data, None)
+                if b == Packet.Encoding.escaped_escape:
+                    b = Packet.Encoding.escape
+                elif b == Packet.Encoding.escaped_start:
+                    b = Packet.Encoding.start
+                elif b == Packet.Encoding.escaped_end:
+                    b = Packet.Encoding.end
+                else:
+                    raise PacketDecodingException('Unexpected escaping byte')
+
+            raw_data.append(b)
+
+        return raw_data
+
+    @property
+    def id(self) -> Tuple:
+        return self.did, self.cid, self.seq
+
+    def build(self) -> bytearray:
+        packet = bytearray([self.flags])
+
+        if self.flags & Packet.Flags.has_target_id:
+            packet.append(self.tid)
+
+        if self.flags & Packet.Flags.has_source_id:
+            packet.append(self.sid)
+
+        packet.extend(self.id)
+
+        if self.flags & Packet.Flags.is_response:
+            packet.append(self.err)
+
+        packet.extend(self.data)
+        packet.append(packet_chk(packet))
+
+        escaped_packet = bytearray([Packet.Encoding.start])
+        for c in packet:
+            if c == Packet.Encoding.escape:
+                escaped_packet.extend((Packet.Encoding.escape, Packet.Encoding.escaped_escape))
+            elif c == Packet.Encoding.start:
+                escaped_packet.extend((Packet.Encoding.escape, Packet.Encoding.escaped_start))
+            elif c == Packet.Encoding.end:
+                escaped_packet.extend((Packet.Encoding.escape, Packet.Encoding.escaped_end))
+            else:
+                escaped_packet.append(c)
+        escaped_packet.append(Packet.Encoding.end)
+
+        return escaped_packet
+
+    class Manager:
+        def __init__(self):
+            self.__seq = 0
+
+        def new_packet(self, did, cid, tid=None, data=None):
+            flags = Packet.Flags.requests_response | Packet.Flags.is_activity
+            sid = None
+            if tid is not None:
+                flags |= Packet.Flags.has_source_id | Packet.Flags.has_target_id
+                sid = 0x1
+            packet = Packet(flags, did, cid, self.__seq, tid, sid, bytearray(data or []))
+            self.__seq = (self.__seq + 1) % 0xff
+            return packet
+
+    class Collector:
+        def __init__(self, callback):
+            self.__callback = callback
+            self.__data = []
+
+        def add(self, data):
+            for b in data:
+                self.__data.append(b)
+                if b == Packet.Encoding.end:
+                    pkt = self.__data
+                    self.__data = []
+                    if len(pkt) < 6:
+                        raise PacketDecodingException(f'Very small packet {[hex(x) for x in pkt]}')
+                    self.__callback(Packet.parse_response(pkt))
 
 
 class DriveControl:
-    def __init__(self, toy: Toy):
+    def __init__(self, toy):
         self.__toy = toy
         self.__is_boosting = False
 
@@ -55,7 +213,7 @@ class DriveControl:
 
 
 class LedControl:
-    def __init__(self, toy: Toy):
+    def __init__(self, toy):
         self.__toy = toy
 
     def set_leds(self, mapping: Dict[IntEnum, int]):
@@ -66,16 +224,16 @@ class LedControl:
                 mask |= 1 << e
                 led_values.append(mapping[e])
         if mask:
-            if hasattr(self.__toy, 'set_all_leds_with_32_bit_mask'):
+            if self.__toy.implements(IO.set_all_leds_with_32_bit_mask):
                 self.__toy.set_all_leds_with_32_bit_mask(mask, led_values)
-            elif hasattr(self.__toy, 'set_all_leds_with_16_bit_mask'):
+            elif self.__toy.implements(IO.set_all_leds_with_16_bit_mask):
                 self.__toy.set_all_leds_with_16_bit_mask(mask, led_values)
             elif hasattr(self.__toy, 'set_all_leds_with_8_bit_mask'):
                 self.__toy.set_all_leds_with_8_bit_mask(mask, led_values)
 
 
 class SensorControl:
-    def __init__(self, toy: Toy):
+    def __init__(self, toy):
         toy.add_sensor_streaming_data_notify_listener(self.__process_sensor_stream_data)
 
         self.__toy = toy
@@ -281,7 +439,8 @@ class StreamingControl:
         if interval < 0:
             raise ValueError('Interval attempted to be set with negative value')
         self.__interval = interval
-        self.__configure(StreamingServiceState.Restart)
+        if self.__enabled:
+            self.__configure(StreamingServiceState.Restart)
 
     def __configure(self, state: StreamingServiceState):
         for target in [Processors.PRIMARY, Processors.SECONDARY]:

@@ -1,32 +1,25 @@
-import struct
 from collections import OrderedDict
 from enum import IntEnum
-from functools import lru_cache
-from typing import Callable, List
+from functools import lru_cache, partialmethod
 
-from spherov2.commands.animatronic import Animatronic, R2LegActions, R2DoLegActions
+from spherov2.commands.animatronic import Animatronic, R2LegActions
 from spherov2.commands.api_and_shell import ApiAndShell
 from spherov2.commands.connection import Connection
-from spherov2.commands.drive import Drive, StabilizationIndexes, RawMotorModes, GenericRawMotorIndexes, \
-    GenericRawMotorModes
+from spherov2.commands.drive import Drive
 from spherov2.commands.factory_test import FactoryTest
-from spherov2.commands.firmware import Firmware, PendingUpdateFlags
-from spherov2.commands.io import IO, AudioPlaybackModes
-from spherov2.commands.power import Power, BatteryStates, BatteryVoltageAndStateStates, BatteryVoltageStates
-from spherov2.commands.sensor import Sensor, CollisionDetectionMethods
+from spherov2.commands.firmware import Firmware
+from spherov2.commands.io import IO
+from spherov2.commands.power import Power
+from spherov2.commands.sensor import Sensor
 from spherov2.commands.system_info import SystemInfo
 from spherov2.controls.v2 import DriveControl, LedControl, SensorControl
-from spherov2.helper import to_int
-from spherov2.listeners.api_and_shell import ApiProtocolVersion
-from spherov2.listeners.sensor import CollisionDetected, SensorStreamingMask
-from spherov2.listeners.system_info import Version
-from spherov2.toy.consts import CharacteristicUUID
-from spherov2.toy.core import Toy, ToySensor
+from spherov2.toy.core import ToySensor, Toy, ToyV2
 from spherov2.types import ToyType
 
 
-class R2D2(Toy):
+class R2D2(ToyV2):
     toy_type = ToyType('R2-D2', 'D2-', 'D2', .12)
+    _handshake = [('00020005-574f-4f20-5370-6865726f2121', bytearray(b'usetheforce...band'))]
 
     class LEDs(IntEnum):
         FRONT_RED = 0
@@ -520,261 +513,126 @@ class R2D2(Toy):
         )
     )
 
-    _handshake = [(CharacteristicUUID.anti_dos.value, b'usetheforce...band')]
+    ping = ApiAndShell.ping
+    get_api_protocol_version = ApiAndShell.get_api_protocol_version
+    send_command_to_shell = ApiAndShell.send_command_to_shell
+    add_send_string_to_console_listener = partialmethod(Toy._add_listener, ApiAndShell.send_string_to_console)
+    remove_send_string_to_console_listener = partialmethod(Toy._remove_listener, ApiAndShell.send_string_to_console)
 
-    def ping(self, data):
-        return bytearray(self._execute(ApiAndShell.ping(data)).data)
+    get_main_app_version = SystemInfo.get_main_app_version
+    get_bootloader_version = SystemInfo.get_bootloader_version
+    get_board_revision = SystemInfo.get_board_revision
+    get_mac_address = SystemInfo.get_mac_address
+    get_stats_id = SystemInfo.get_stats_id
+    get_secondary_main_app_version = SystemInfo.get_secondary_main_app_version
+    get_processor_name = SystemInfo.get_processor_name
+    get_secondary_mcu_bootloader_version = SystemInfo.get_secondary_mcu_bootloader_version
+    get_three_character_sku = SystemInfo.get_three_character_sku
 
-    def get_api_protocol_version(self) -> ApiProtocolVersion:
-        data = self._execute(ApiAndShell.get_api_protocol_version()).data
-        return ApiProtocolVersion(major_version=data[0], minor_version=data[1])
+    enter_deep_sleep = Power.enter_deep_sleep
+    sleep = Power.sleep
+    get_battery_voltage = Power.get_battery_voltage
+    get_battery_state = Power.get_battery_state
+    enable_battery_state_changed_notify = Power.enable_battery_state_changed_notify
+    add_battery_state_changed_notify_listener = partialmethod(Toy._add_listener, Power.battery_state_changed_notify)
+    remove_battery_state_changed_notify_listener = partialmethod(Toy._remove_listener,
+                                                                 Power.battery_state_changed_notify)
 
-    def send_command_to_shell(self, command: bytes):
-        self._execute(ApiAndShell.send_command_to_shell(command))
+    wake = Power.wake
+    get_battery_voltage_state = Power.get_battery_voltage_state
+    add_will_sleep_notify_listener = partialmethod(Toy._add_listener, Power.will_sleep_notify)
+    remove_will_sleep_notify_listener = partialmethod(Toy._remove_listener, Power.will_sleep_notify)
+    add_did_sleep_notify_listener = partialmethod(Toy._add_listener, Power.did_sleep_notify)
+    remove_did_sleep_notify_listener = partialmethod(Toy._remove_listener, Power.did_sleep_notify)
+    enable_battery_voltage_state_change_notify = Power.enable_battery_voltage_state_change_notify
+    add_battery_voltage_state_change_notify_listener = partialmethod(Toy._add_listener,
+                                                                     Power.battery_voltage_state_change_notify)
+    remove_battery_voltage_state_change_notify_listener = partialmethod(Toy._remove_listener,
+                                                                        Power.battery_voltage_state_change_notify)
 
-    def add_send_string_to_console_listener(self, listener: Callable[[bytes], None]):
-        self._add_listener(ApiAndShell.send_string_to_console, lambda p: listener(bytes(p.data).rstrip(b'\0')))
-
-    def get_main_app_version(self):
-        return Version(*struct.unpack('>3H', bytearray(self._execute(SystemInfo.get_main_app_version()).data)))
-
-    def get_bootloader_version(self):
-        return Version(*struct.unpack('>3H', bytearray(self._execute(SystemInfo.get_bootloader_version()).data)))
-
-    def get_board_revision(self):
-        return self._execute(SystemInfo.get_board_revision()).data[0]
-
-    def get_mac_address(self):
-        return bytearray(self._execute(SystemInfo.get_mac_address()).data)
-
-    def get_stats_id(self):
-        return self._execute(SystemInfo.get_stats_id()).data
-
-    def get_secondary_main_app_version(self):
-        self._execute(SystemInfo.get_secondary_main_app_version())
-        return Version(
-            *struct.unpack('>3H', bytearray(self._wait_packet(SystemInfo.secondary_main_app_version_notify).data)))
-
-    def get_processor_name(self) -> bytes:
-        return bytes(self._execute(SystemInfo.get_processor_name()).data).rstrip(b'\0')
-
-    def get_secondary_mcu_bootloader_version(self):
-        self._execute(SystemInfo.get_secondary_mcu_bootloader_version())
-        return Version(*struct.unpack('>3H', bytearray(
-            self._wait_packet(SystemInfo.secondary_mcu_bootloader_version_notify).data)))
-
-    def get_three_character_sku(self):
-        return bytearray(self._execute(SystemInfo.get_three_character_sku()).data)
-
-    def enter_deep_sleep(self, s):
-        self._execute(Power.enter_deep_sleep(s))
-
-    def sleep(self):
-        self._execute(Power.sleep())
-
-    def get_battery_voltage(self):
-        return to_int(self._execute(Power.get_battery_voltage()).data) / 100
-
-    def get_battery_state(self) -> BatteryStates:
-        return BatteryStates(self._execute(Power.get_battery_state()).data[0])
-
-    def enable_battery_state_changed_notify(self, enable: bool):
-        self._execute(Power.enable_battery_state_changed_notify(enable))
-
-    def add_battery_state_changed_notify_listener(self, listener: Callable[[BatteryVoltageAndStateStates], None]):
-        self._add_listener(Power.battery_state_changed_notify,
-                           lambda p: listener(BatteryVoltageAndStateStates(p.data[0])))
-
-    def wake(self):
-        self._execute(Power.wake())
-
-    def get_battery_voltage_state(self) -> BatteryVoltageStates:
-        return BatteryVoltageStates(self._execute(Power.get_battery_voltage_state()).data[0])
-
-    def add_will_sleep_notify_listener(self, listener: Callable[[], None]):
-        self._add_listener(Power.will_sleep_notify, lambda _: listener())
-
-    def add_did_sleep_notify_listener(self, listener: Callable[[], None]):
-        self._add_listener(Power.did_sleep_notify, lambda _: listener())
-
-    def enable_battery_voltage_state_change_notify(self, enable: bool):
-        self._execute(Power.enable_battery_voltage_state_change_notify(enable))
-
-    def add_battery_voltage_state_change_notify_listener(self, listener: Callable[[BatteryVoltageStates], None]):
-        self._add_listener(Power.battery_voltage_state_change_notify,
-                           lambda p: listener(BatteryVoltageStates(p.data[0])))
-
-    def set_raw_motors(self, left_mode: RawMotorModes, left_speed, right_mode: RawMotorModes, right_speed):
-        self._execute(Drive.set_raw_motors(left_mode, left_speed, right_mode, right_speed))
-
-    def reset_yaw(self):
-        self._execute(Drive.reset_yaw())
-
-    def drive_with_heading(self, speed, heading, drive_flags):
-        self._execute(Drive.drive_with_heading(speed, heading, drive_flags))
-
-    def generic_raw_motor(self, index: GenericRawMotorIndexes, mode: GenericRawMotorModes, speed):
-        self._execute(Drive.generic_raw_motor(index, mode, speed))
-
-    def set_stabilization(self, stabilization_index: StabilizationIndexes):
-        self._execute(Drive.set_stabilization(stabilization_index))
+    set_raw_motors = Drive.set_raw_motors
+    reset_yaw = Drive.reset_yaw
+    drive_with_heading = Drive.drive_with_heading
+    generic_raw_motor = Drive.generic_raw_motor
+    set_stabilization = Drive.set_stabilization
 
     def play_animation(self, animation: Animations, wait=False):
-        self._execute(Animatronic.play_animation(animation))
+        Animatronic.play_animation(self, animation)
         if wait:
             self._wait_packet(Animatronic.play_animation_complete_notify)
 
     def perform_leg_action(self, leg_action: R2LegActions, wait=False):
-        self._execute(Animatronic.perform_leg_action(leg_action))
+        Animatronic.perform_leg_action(self, leg_action)
         if wait:
             self._wait_packet(Animatronic.leg_action_complete_notify)
 
-    def set_head_position(self, head_position: float):
-        self._execute(Animatronic.set_head_position(head_position))
+    set_head_position = Animatronic.set_head_position
+    get_head_position = Animatronic.get_head_position
+    set_leg_position = Animatronic.set_leg_position
+    get_leg_position = Animatronic.get_leg_position
+    get_leg_action = Animatronic.get_leg_action
+    enable_leg_action_notify = Animatronic.enable_leg_action_notify
+    stop_animation = Animatronic.stop_animation
+    enable_idle_animations = Animatronic.enable_idle_animations
+    enable_trophy_mode = Animatronic.enable_trophy_mode
+    get_trophy_mode_enabled = Animatronic.get_trophy_mode_enabled
+    enable_head_reset_to_zero_notify = Animatronic.enable_head_reset_to_zero_notify
+    add_head_reset_to_zero_notify_listener = partialmethod(Toy._add_listener, Animatronic.head_reset_to_zero_notify)
+    remove_head_reset_to_zero_notify_listener = partialmethod(Toy._remove_listener,
+                                                              Animatronic.head_reset_to_zero_notify)
 
-    def get_head_position(self):
-        return struct.unpack('>f', bytearray(self._execute(Animatronic.get_head_position()).data))[0]
+    set_sensor_streaming_mask = Sensor.set_sensor_streaming_mask
+    get_sensor_streaming_mask = Sensor.get_sensor_streaming_mask
+    add_sensor_streaming_data_notify_listener = partialmethod(Toy._add_listener, Sensor.sensor_streaming_data_notify)
+    remove_sensor_streaming_data_notify_listener = partialmethod(Toy._remove_listener,
+                                                                 Sensor.sensor_streaming_data_notify)
+    set_extended_sensor_streaming_mask = Sensor.set_extended_sensor_streaming_mask
+    get_extended_sensor_streaming_mask = Sensor.get_extended_sensor_streaming_mask
+    enable_gyro_max_notify = Sensor.enable_gyro_max_notify
+    add_gyro_max_notify_listener = partialmethod(Toy._add_listener, Sensor.gyro_max_notify)
+    remove_gyro_max_notify_listener = partialmethod(Toy._remove_listener, Sensor.gyro_max_notify)
+    configure_collision_detection = Sensor.configure_collision_detection
+    add_collision_detected_notify_listener = partialmethod(Toy._add_listener, Sensor.collision_detected_notify)
+    remove_collision_detected_notify_listener = partialmethod(Toy._remove_listener, Sensor.collision_detected_notify)
+    reset_locator_x_and_y = Sensor.reset_locator_x_and_y
+    set_locator_flags = Sensor.set_locator_flags
+    set_accelerometer_activity_threshold = Sensor.set_accelerometer_activity_threshold
+    enable_accelerometer_activity_notify = Sensor.enable_accelerometer_activity_notify
+    add_accelerometer_activity_notify_listener = partialmethod(Toy._add_listener, Sensor.accelerometer_activity_notify)
+    remove_accelerometer_activity_notify_listener = partialmethod(Toy._remove_listener,
+                                                                  Sensor.accelerometer_activity_notify)
+    set_gyro_activity_threshold = Sensor.set_gyro_activity_threshold
+    enable_gyro_activity_notify = Sensor.enable_gyro_activity_notify
+    add_gyro_activity_notify_listener = partialmethod(Toy._add_listener, Sensor.gyro_activity_notify)
+    remove_gyro_activity_notify_listener = partialmethod(Toy._remove_listener, Sensor.gyro_activity_notify)
 
-    def set_leg_position(self, leg_position: float):
-        self._execute(Animatronic.set_leg_position(leg_position))
+    set_bluetooth_name = Connection.set_bluetooth_name
+    get_bluetooth_name = Connection.get_bluetooth_name
 
-    def get_leg_position(self):
-        return struct.unpack('>f', bytearray(self._execute(Animatronic.get_leg_position()).data))[0]
+    play_audio_file = IO.play_audio_file
+    set_audio_volume = IO.set_audio_volume
+    get_audio_volume = IO.get_audio_volume
+    stop_all_audio = IO.stop_all_audio
+    set_all_leds_with_16_bit_mask = IO.set_all_leds_with_16_bit_mask
+    start_idle_led_animation = IO.start_idle_led_animation
 
-    def get_leg_action(self) -> R2DoLegActions:
-        return R2DoLegActions(self._execute(Animatronic.get_leg_action()).data[0])
+    get_pending_update_flags = Firmware.get_pending_update_flags
 
-    def enable_leg_action_notify(self, enable: bool):
-        self._execute(Animatronic.enable_leg_action_notify(enable))
-
-    def stop_animation(self):
-        self._execute(Animatronic.stop_animation())
-
-    def enable_idle_animations(self, enable: bool):
-        self._execute(Animatronic.enable_idle_animations(enable))
-
-    def enable_trophy_mode(self, enable: bool):
-        self._execute(Animatronic.enable_trophy_mode(enable))
-
-    def get_trophy_mode_enabled(self) -> bool:
-        return bool(self._execute(Animatronic.get_trophy_mode_enabled()).data[0])
-
-    def enable_head_reset_to_zero_notify(self, enable: bool):
-        self._execute(Animatronic.enable_head_reset_to_zero_notify(enable))
-
-    def add_head_reset_to_zero_notify_listener(self, listener: Callable[[], None]):
-        self._add_listener(Animatronic.head_reset_to_zero_notify, lambda _: listener())
-
-    def set_sensor_streaming_mask(self, interval, count, sensor_masks):
-        self._execute(Sensor.set_sensor_streaming_mask(interval, count, sensor_masks))
-
-    def get_sensor_streaming_mask(self) -> SensorStreamingMask:
-        return SensorStreamingMask(
-            *struct.unpack('>HBI', bytearray(self._execute(Sensor.get_sensor_streaming_mask()).data)))
-
-    def add_sensor_streaming_data_notify_listener(self, listener: Callable[[List[float]], None]):
-        self._add_listener(Sensor.sensor_streaming_data_notify,
-                           lambda p: listener(list(struct.unpack('>%df' % (len(p.data) // 4), bytearray(p.data)))))
-
-    def set_extended_sensor_streaming_mask(self, sensor_masks):
-        self._execute(Sensor.set_extended_sensor_streaming_mask(sensor_masks))
-
-    def get_extended_sensor_streaming_mask(self) -> int:
-        return to_int(self._execute(Sensor.get_extended_sensor_streaming_mask()).data)
-
-    def enable_gyro_max_notify(self, enable: bool):
-        self._execute(Sensor.enable_gyro_max_notify(enable))
-
-    def add_gyro_max_notify_listener(self, listener: Callable[[int], None]):
-        self._add_listener(Sensor.gyro_max_notify, lambda p: listener(p.data[0]))
-
-    def configure_collision_detection(self, collision_detection_method: CollisionDetectionMethods,
-                                      x_threshold, y_threshold, x_speed, y_speed, dead_time):
-        self._execute(Sensor.configure_collision_detection(
-            collision_detection_method, x_threshold, y_threshold, x_speed, y_speed, dead_time
-        ))
-
-    def add_collision_detected_notify_listener(self, listener: Callable[[CollisionDetected], None]):
-        def __process(packet):
-            unpacked = struct.unpack('>3HB3HBL', bytearray(packet.data))
-            listener(CollisionDetected(acceleration_x=unpacked[0] / 4096, acceleration_y=unpacked[1] / 4096,
-                                       acceleration_z=unpacked[2] / 4096, x_axis=bool(unpacked[3] & 1),
-                                       y_axis=bool(unpacked[3] & 2), power_x=unpacked[4], power_y=unpacked[5],
-                                       power_z=unpacked[6], speed=unpacked[7], time=unpacked[8] / 1000))
-
-        self._add_listener(Sensor.collision_detected_notify, __process)
-
-    def reset_locator_x_and_y(self):
-        self._execute(Sensor.reset_locator_x_and_y())
-
-    def set_locator_flags(self, locator_flags: bool):
-        self._execute(Sensor.set_locator_flags(locator_flags))
-
-    def set_accelerometer_activity_threshold(self, threshold: float):
-        self._execute(Sensor.set_accelerometer_activity_threshold(threshold))
-
-    def enable_accelerometer_activity_notify(self, enable: bool):
-        self._execute(Sensor.enable_accelerometer_activity_notify(enable))
-
-    def add_accelerometer_activity_notify_listener(self, listener: Callable[[], None]):
-        self._add_listener(Sensor.accelerometer_activity_notify, lambda _: listener())
-
-    def set_gyro_activity_threshold(self, threshold: float):
-        self._execute(Sensor.set_gyro_activity_threshold(threshold))
-
-    def enable_gyro_activity_notify(self, enable: bool):
-        self._execute(Sensor.enable_gyro_activity_notify(enable))
-
-    def add_gyro_activity_notify_listener(self, listener: Callable[[], None]):
-        self._add_listener(Sensor.gyro_activity_notify, lambda _: listener())
-
-    def set_bluetooth_name(self, name: bytes):
-        self._execute(Connection.set_bluetooth_name(name))
-
-    def get_bluetooth_name(self) -> bytes:
-        return bytes(self._execute(Connection.get_bluetooth_name()).data).rstrip(b'\0')
-
-    def play_audio_file(self, sound: Audio, playback_mode: AudioPlaybackModes):
-        self._execute(IO.play_audio_file(sound, playback_mode))
-
-    def set_audio_volume(self, volume: int):
-        self._execute(IO.set_audio_volume(volume))
-
-    def get_audio_volume(self) -> int:
-        return self._execute(IO.get_audio_volume()).data[0]
-
-    def stop_all_audio(self):
-        self._execute(IO.stop_all_audio())
-
-    def set_all_leds_with_16_bit_mask(self, mask, values):
-        self._execute(IO.set_all_leds_with_16_bit_mask(mask, values))
-
-    def start_idle_led_animation(self):
-        self._execute(IO.start_idle_led_animation())
-
-    def get_pending_update_flags(self):
-        return PendingUpdateFlags(to_int(self._execute(Firmware.get_pending_update_flags()).data))
-
-    def get_factory_mode_challenge(self) -> int:
-        return to_int(self._execute(FactoryTest.get_factory_mode_challenge()).data)
-
-    def enter_factory_mode(self, challenge: int):
-        self._execute(FactoryTest.enter_factory_mode(challenge))
-
-    def exit_factory_mode(self):
-        self._execute(FactoryTest.exit_factory_mode())
+    get_factory_mode_challenge = FactoryTest.get_factory_mode_challenge
+    enter_factory_mode = FactoryTest.enter_factory_mode
+    exit_factory_mode = FactoryTest.exit_factory_mode
 
     @property
     @lru_cache(None)
-    def drive_control(self) -> DriveControl:
+    def drive_control(self):
         return DriveControl(self)
 
     @property
     @lru_cache(None)
-    def multi_led_control(self) -> LedControl:
+    def multi_led_control(self):
         return LedControl(self)
 
     @property
     @lru_cache(None)
-    def sensor_control(self) -> SensorControl:
+    def sensor_control(self):
         return SensorControl(self)

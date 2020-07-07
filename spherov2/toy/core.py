@@ -2,16 +2,13 @@ import threading
 import time
 from collections import defaultdict, OrderedDict
 from concurrent import futures
+from functools import partial
 from queue import SimpleQueue
 from typing import Callable, NamedTuple
 
-from spherov2.packet import Packet, Collector
-from spherov2.toy.consts import CharacteristicUUID
+from spherov2.controls.v1 import Packet as PacketV1
+from spherov2.controls.v2 import Packet as PacketV2
 from spherov2.types import ToyType
-
-
-class CommandExecuteError(Exception):
-    ...
 
 
 class ToySensor(NamedTuple):
@@ -26,7 +23,12 @@ class Toy:
     sensors = OrderedDict()
     extended_sensors = OrderedDict()
 
-    _handshake = []
+    _send_uuid = '22bb746f-2ba1-7554-2d6f-726568705327'
+    _response_uuid = '22bb746f-2ba6-7554-2d6f-726568705327'
+    _handshake = [('22bb746f-2bbd-7554-2d6f-726568705327', bytearray(b'011i3')),
+                  ('22bb746f-2bb2-7554-2d6f-726568705327', bytearray([7]))]
+    _packet = PacketV1
+    _require_target = False
 
     def __init__(self, toy, adapter_cls):
         self.address = toy.address
@@ -34,9 +36,10 @@ class Toy:
 
         self.__adapter = None
         self.__adapter_cls = adapter_cls
-        self.__decoder = Collector(self.__new_packet)
+        self._packet_manager = self._packet.Manager()
+        self.__decoder = self._packet.Collector(self.__new_packet)
         self.__waiting = defaultdict(SimpleQueue)
-        self.__listeners = defaultdict(set)
+        self.__listeners = defaultdict(dict)
 
         self.__thread = None
         self.__packet_queue = SimpleQueue()
@@ -47,9 +50,9 @@ class Toy:
         self.__adapter = self.__adapter_cls(self.address)
         self.__thread = threading.Thread(target=self.__process_packet)
         try:
-            self.__adapter.set_callback(CharacteristicUUID.api_v2.value, self.__api_read)
             for uuid, data in self._handshake:
                 self.__adapter.write(uuid, data)
+            self.__adapter.set_callback(self._response_uuid, self.__api_read)
             self.__thread.start()
         except:
             self.__exit__(None, None, None)
@@ -71,11 +74,11 @@ class Toy:
                 break
             # print('request ' + ' '.join([hex(c) for c in payload]))
             while payload:
-                self.__adapter.write(CharacteristicUUID.api_v2.value, payload[:20])
+                self.__adapter.write(self._send_uuid, payload[:20])
                 payload = payload[20:]
             time.sleep(self.toy_type.cmd_safe_interval)
 
-    def _execute(self, packet: Packet) -> Packet:
+    def _execute(self, packet):
         if self.__adapter is None:
             raise RuntimeError('Use toys in context manager')
         self.__packet_queue.put(packet.build())
@@ -85,24 +88,41 @@ class Toy:
         future = futures.Future()
         self.__waiting[key].put(future)
         packet = future.result(timeout)
-        if packet.error != Packet.Error.success:
-            raise CommandExecuteError(packet.error)
+        # if packet.err != Packet.Error.success: FIXME
+        #     raise CommandExecuteError(packet.err)
         return packet
 
-    def _add_listener(self, key, notifier: Callable[[Packet], None]):
-        self.__listeners[key].add(notifier)
+    def _add_listener(self, key, listener: Callable):
+        self.__listeners[key[0]][listener] = partial(key[1], listener)
 
-    def _remove_listener(self, key, notifier: Callable):
-        self.__listeners[key].remove(notifier)
+    def _remove_listener(self, key, listener: Callable):
+        self.__listeners[key[0]].pop(listener)
 
     def __api_read(self, char, data):
         self.__decoder.add(data)
 
-    def __new_packet(self, packet: Packet):
+    def __new_packet(self, packet):
         # print('response ' + ' '.join([hex(c) for c in packet.build()]))
         key = packet.id
         queue = self.__waiting[key]
         while not queue.empty():
             queue.get().set_result(packet)
-        for f in self.__listeners[key]:
+        for f in self.__listeners[key].values():
             threading.Thread(target=f, args=(packet,)).start()
+
+    @classmethod
+    def implements(cls, method, with_target=False):
+        m = getattr(cls, method.__name__, None)
+        if m is method:
+            return with_target == cls._require_target
+        if hasattr(m, '_partialmethod'):
+            f = m._partialmethod
+            return f.func is method and (
+                    ('proc' in f.keywords and not with_target) or with_target == cls._require_target)
+        return False
+
+
+class ToyV2(Toy):
+    _packet = PacketV2
+    _handshake = []
+    _response_uuid = _send_uuid = '00010002-574f-4f20-5370-6865726f2121'

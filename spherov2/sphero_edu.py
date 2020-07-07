@@ -53,6 +53,8 @@ class LedManager:
             }
         elif cls in (R2D2, R2Q5, BOLT):
             self.__mapping = {'main': ('front', 'back')}
+        else:
+            self.__mapping = {}
         self.__leds = defaultdict(partial(Color, 0, 0, 0))
 
     def __setitem__(self, key, value):

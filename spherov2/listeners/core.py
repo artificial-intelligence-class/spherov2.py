@@ -1,6 +1,5 @@
+from enum import IntEnum
 from typing import NamedTuple
-
-from spherov2.commands.core import PowerStates
 
 
 class Versions(NamedTuple):
@@ -15,8 +14,16 @@ class Versions(NamedTuple):
 
 
 class BluetoothInfo(NamedTuple):
-    name: str
-    address: str
+    name: bytes
+    address: bytes
+
+
+class PowerStates(IntEnum):
+    UNKNOWN = 0
+    CHARGING = 1
+    OK = 2
+    LOW = 3
+    CRITICAL = 4
 
 
 class PowerState(NamedTuple):
