@@ -1,10 +1,10 @@
 import threading
 import time
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict
 from concurrent import futures
 from functools import partial
 from queue import SimpleQueue
-from typing import Callable, NamedTuple
+from typing import NamedTuple, Callable
 
 from spherov2.controls.v1 import Packet as PacketV1
 from spherov2.controls.v2 import Packet as PacketV2
@@ -88,8 +88,7 @@ class Toy:
         future = futures.Future()
         self.__waiting[key].put(future)
         packet = future.result(timeout)
-        # if packet.err != Packet.Error.success: FIXME
-        #     raise CommandExecuteError(packet.err)
+        packet.check_error()
         return packet
 
     def _add_listener(self, key, listener: Callable):

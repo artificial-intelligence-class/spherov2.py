@@ -1,8 +1,10 @@
 import importlib
-from functools import partial
+from functools import partial, lru_cache
 from typing import List, Type, Callable
 
-from spherov2.toy.core import Toy
+from spherov2.commands.sphero import Sphero
+from spherov2.toy import Toy
+from spherov2.toy.bb8 import BB8
 from spherov2.toy.ollie import Ollie
 from spherov2.toy.r2d2 import R2D2
 from spherov2.toy.r2q5 import R2Q5
@@ -13,14 +15,12 @@ class ToyNotFoundError(Exception):
     ...
 
 
+@lru_cache(None)
 def all_toys(cls=Toy):
     subtypes = cls.__subclasses__()
     yield cls
     for sub in subtypes:
         yield from all_toys(sub)
-
-
-ALL_TOYS = list(all_toys())
 
 
 def find_toys(*, timeout=5.0, toy_types: List[Type[Toy]] = None,
@@ -40,7 +40,7 @@ def find_toys(*, timeout=5.0, toy_types: List[Type[Toy]] = None,
         adapter = importlib.import_module('spherov2.adapter.bleak_adapter').BleakAdapter
     toys = adapter.scan_toys(timeout)
     if toy_types is None:
-        toy_types = ALL_TOYS
+        toy_types = list(all_toys())
     ret = []
     if toy_names is not None:
         toy_names = set(toy_names)
@@ -74,7 +74,9 @@ def find_toy(*, toy_name: str = None, **kwargs) -> Toy:
     return toys[0]
 
 
+find_Sphero: Callable[..., Sphero] = partial(find_toy, toy_types=[Sphero])
 find_Ollie: Callable[..., Ollie] = partial(find_toy, toy_types=[Ollie])
+find_BB8: Callable[..., BB8] = partial(find_toy, toy_types=[BB8])
 find_R2D2: Callable[..., R2D2] = partial(find_toy, toy_types=[R2D2])
 find_R2Q5: Callable[..., R2Q5] = partial(find_toy, toy_types=[R2Q5])
 find_RVR: Callable[..., RVR] = partial(find_toy, toy_types=[RVR])

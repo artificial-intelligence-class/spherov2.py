@@ -1,7 +1,8 @@
 from enum import IntEnum
 
 from spherov2.commands import Commands
-from spherov2.helper import to_bytes
+from spherov2.helper import to_bytes, to_int
+from spherov2.listeners.sphero import Options
 
 
 class CollisionDetectionMethods(IntEnum):
@@ -32,42 +33,101 @@ class Sphero(Commands):
     _did = 2
 
     @staticmethod
-    def set_heading(toy, heading: int, tid=None):
-        toy._execute(Sphero._encode(toy, 1, tid, to_bytes(heading, 2)))
+    def set_heading(toy, heading: int, proc=None):
+        toy._execute(Sphero._encode(toy, 1, proc, to_bytes(heading, 2)))
 
     @staticmethod
-    def set_stabilization(toy, stabilize: bool, tid=None):
-        toy._execute(Sphero._encode(toy, 2, tid, [int(stabilize)]))
+    def set_stabilization(toy, stabilize: bool, proc=None):
+        toy._execute(Sphero._encode(toy, 2, proc, [int(stabilize)]))
 
     @staticmethod
-    def set_data_streaming(toy, interval, num_samples_per_packet, mask, count, extended_mask, tid=None):
+    def set_rotation_rate(toy, rate: int, proc=None):
+        toy._execute(Sphero._encode(toy, 3, proc, [rate]))
+
+    @staticmethod
+    def get_chassis_id(toy, proc=None):
+        return to_int(toy._execute(Sphero._encode(toy, 7, proc)).data)
+
+    @staticmethod
+    def self_level(toy, opt1: bool, opt2: bool, opt3: bool, opt4: bool, angle_limit, timeout, true_time, proc=None):
+        # unknown names
         toy._execute(Sphero._encode(
-            toy, 17, tid,
+            toy, 9, proc, [opt1 | (opt2 << 1) | (opt3 << 2) | (opt4 << 3), angle_limit, timeout, true_time]))
+
+    @staticmethod
+    def set_data_streaming(toy, interval, num_samples_per_packet, mask, count, extended_mask, proc=None):
+        toy._execute(Sphero._encode(
+            toy, 17, proc,
             [*to_bytes(interval, 2), *to_bytes(num_samples_per_packet, 2), *to_bytes(mask, 4), count & 0xff,
              *to_bytes(extended_mask, 4)]))
 
     @staticmethod
     def configure_collision_detection(toy, collision_detection_method: CollisionDetectionMethods,
-                                      x_threshold, y_threshold, x_speed, y_speed, dead_time, tid=None):
+                                      x_threshold, y_threshold, x_speed, y_speed, dead_time, proc=None):
         toy._execute(Sphero._encode(
-            toy, 18, tid, [collision_detection_method, x_threshold, y_threshold, x_speed, y_speed, dead_time]))
+            toy, 18, proc, [collision_detection_method, x_threshold, y_threshold, x_speed, y_speed, dead_time]))
 
     @staticmethod
-    def configure_locator(toy, flags, x, y, yaw_tare, tid=None):
-        toy._execute(Sphero._encode(toy, 19, tid, [flags, *to_bytes(x, 2), *to_bytes(y, 2), *to_bytes(yaw_tare, 2)]))
+    def configure_locator(toy, flags, x, y, yaw_tare, proc=None):
+        toy._execute(Sphero._encode(toy, 19, proc, [flags, *to_bytes(x, 2), *to_bytes(y, 2), *to_bytes(yaw_tare, 2)]))
 
     @staticmethod
-    def set_main_led(toy, r, g, b, tid=None):
-        toy._execute(Sphero._encode(toy, 32, tid, [r, g, b]))
+    def get_temperature(toy, proc=None):
+        data = toy._execute(Sphero._encode(toy, 22, proc)).data
+        return data[0] + data[1] / 10
 
     @staticmethod
-    def set_back_led_brightness(toy, brightness, tid=None):
-        toy._execute(Sphero._encode(toy, 33, tid, data=[brightness]))
+    def set_main_led(toy, r, g, b, proc=None):
+        toy._execute(Sphero._encode(toy, 32, proc, [r, g, b]))
 
     @staticmethod
-    def roll(toy, speed, heading, roll_mode: RollModes, reverse_flag: ReverseFlags, tid=None):
-        toy._execute(Sphero._encode(toy, 48, tid, [speed, *to_bytes(heading, 2), roll_mode, reverse_flag]))
+    def set_back_led_brightness(toy, brightness, proc=None):
+        toy._execute(Sphero._encode(toy, 33, proc, data=[brightness]))
 
     @staticmethod
-    def set_raw_motors(toy, left_mode: RawMotorModes, left_speed, right_mode: RawMotorModes, right_speed, tid=None):
-        toy._execute(Sphero._encode(toy, 51, tid, [left_mode, left_speed, right_mode, right_speed]))
+    def roll(toy, speed, heading, roll_mode: RollModes, reverse_flag: ReverseFlags, proc=None):
+        toy._execute(Sphero._encode(toy, 48, proc, [speed, *to_bytes(heading, 2), roll_mode, reverse_flag]))
+
+    @staticmethod
+    def boost(toy, s, s2, proc=None):  # unknown names
+        toy._execute(Sphero._encode(toy, 49, proc, [s, *to_bytes(s2, 2)]))
+
+    @staticmethod
+    def set_raw_motors(toy, left_mode: RawMotorModes, left_speed, right_mode: RawMotorModes, right_speed, proc=None):
+        toy._execute(Sphero._encode(toy, 51, proc, [left_mode, left_speed, right_mode, right_speed]))
+
+    @staticmethod
+    def set_motion_timeout(toy, timeout: int, proc=None):
+        toy._execute(Sphero._encode(toy, 52, proc, to_bytes(timeout, 2)))
+
+    @staticmethod
+    def set_persistent_options(toy, options: Options, proc=None):  # unknown names
+        toy._execute(Sphero._encode(toy, 53, proc, to_bytes(
+            options.disable_sleep_in_charger | (options.enable_vector_drive << 1) | (
+                    options.disable_self_level_in_charger << 2) | (options.enable_tail_light_always_on << 3) | (
+                    options.enable_motion_timeout << 4) | (options.enable_gyro_max_notify << 8) | (
+                    options.enable_full_speed << 10), 4)))
+
+    @staticmethod
+    def get_persistent_options(toy, proc=None):
+        data = to_int(toy._execute(Sphero._encode(toy, 54, proc)).data)
+        return Options(bool(data & 1), bool(data & 2), bool(data & 4), bool(data & 8), bool(data & 16),
+                       bool(data & 256), bool(data & 1024))
+
+    @staticmethod
+    def set_temporary_options(toy, options: Options, proc=None):  # unknown names
+        toy._execute(Sphero._encode(toy, 55, proc, to_bytes(
+            options.disable_sleep_in_charger | (options.enable_vector_drive << 1) | (
+                    options.disable_self_level_in_charger << 2) | (options.enable_tail_light_always_on << 3) | (
+                    options.enable_motion_timeout << 4) | (options.enable_gyro_max_notify << 8) | (
+                    options.enable_full_speed << 10), 4)))
+
+    @staticmethod
+    def get_temporary_options(toy, proc=None):
+        data = to_int(toy._execute(Sphero._encode(toy, 56, proc)).data)
+        return Options(bool(data & 1), bool(data & 2), bool(data & 4), bool(data & 8), bool(data & 16),
+                       bool(data & 256), bool(data & 1024))
+
+    @staticmethod
+    def get_sku(toy, proc=None):
+        return reversed(toy._execute(Sphero._encode(toy, 58, proc)).data)

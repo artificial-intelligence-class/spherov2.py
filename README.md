@@ -6,10 +6,9 @@
 
 An unofficial Python library for [Sphero](https://sphero.com/) toys that supports its Version 2 Bluetooth low energy API described [here](https://sdk.sphero.com/docs/api_spec/general_api/). Toys that are supported includes (implemented ones are checked):
 
-- [ ] Sphero 1.0
-- [ ] Sphero 2.0 / SPRK
-- [ ] Sphero Ollie
-- [ ] Sphero BB-8
+- [x] Sphero 2.0 / SPRK
+- [x] Sphero Ollie
+- [x] Sphero BB-8
 - [ ] Sphero BB-9E
 - [x] Sphero R2-D2 / R2-Q5
 - [ ] Sphero BOLT
@@ -19,7 +18,7 @@ An unofficial Python library for [Sphero](https://sphero.com/) toys that support
 
 The logic is written based on reverse-engineering the official [Sphero Edu for Android](https://play.google.com/store/apps/details?id=com.sphero.sprk), with the help from available documentation and other unofficial community-based Sphero libraries like [igbopie/spherov2.js](https://github.com/igbopie/spherov2.js) and [EnotYoyo/pysphero](https://github.com/EnotYoyo/pysphero).
 
-This project uses the [hbldh/bleak](https://github.com/hbldh/bleak) Bluetooth Low Energy library, which works on most platforms, with some restrictions on MacOS that are explained below.
+This project uses the [hbldh/bleak](https://github.com/hbldh/bleak) Bluetooth Low Energy library, which works across all platforms.
 
 ## Usage
 

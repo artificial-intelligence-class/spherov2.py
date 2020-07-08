@@ -12,7 +12,7 @@ from spherov2.commands.sensor import Sensor
 from spherov2.commands.system_info import SystemInfo
 from spherov2.commands.system_mode import SystemMode
 from spherov2.controls.v2 import DriveControl, LedControl, StreamingControl, Processors
-from spherov2.toy.core import Toy, ToyV2
+from spherov2.toy import Toy, ToyV2
 from spherov2.types import ToyType
 
 
@@ -267,8 +267,6 @@ class RVR(ToyV2):
     @lru_cache(None)
     def multi_led_control(self):
         return LedControl(self)
-
-    led_control = multi_led_control
 
     @property
     @lru_cache(None)

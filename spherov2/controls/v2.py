@@ -1,11 +1,12 @@
 import threading
 from collections import OrderedDict, defaultdict
 from enum import IntEnum, Enum, auto, IntFlag
-from typing import Dict, List, Callable, NamedTuple, Tuple, IO
+from typing import Dict, List, Callable, NamedTuple, Tuple
 
 from spherov2.commands.drive import DriveFlags
 from spherov2.commands.drive import RawMotorModes as DriveRawMotorModes
-from spherov2.controls.enums import RawMotorModes, PacketDecodingException
+from spherov2.commands.io import IO
+from spherov2.controls import RawMotorModes, PacketDecodingException, CommandExecuteError
 from spherov2.helper import to_bytes, to_int, packet_chk
 from spherov2.listeners.sensor import StreamingServiceData
 
@@ -139,6 +140,10 @@ class Packet(NamedTuple):
 
         return escaped_packet
 
+    def check_error(self):
+        if self.err != Packet.Error.success:
+            raise CommandExecuteError(self.err)
+
     class Manager:
         def __init__(self):
             self.__seq = 0
@@ -178,15 +183,16 @@ class DriveControl:
         flag = DriveFlags.FORWARD
         if speed < 0:
             flag = DriveFlags.BACKWARD
-            heading += 180
+            heading = (heading + 180) % 360
         if self.__is_boosting:
             flag |= DriveFlags.TURBO
         speed = min(255, abs(speed))
-        heading %= 360
         self.__toy.drive_with_heading(speed, heading, flag)
 
     def roll_stop(self, heading):
         self.roll_start(heading, 0)
+
+    set_heading = roll_stop
 
     def set_stabilization(self, stabilize):
         self.__toy.set_stabilization(stabilize)
@@ -272,12 +278,12 @@ class SensorControl:
         self.__listeners.remove(listener)
 
     def set_count(self, count: int):
-        if count > 0:
+        if count >= 0 and count != self.__count:
             self.__count = count
             self.__update()
 
     def set_interval(self, interval: int):
-        if interval >= 0:
+        if interval >= 0 and interval != self.__interval:
             self.__interval = interval
             self.__update()
 

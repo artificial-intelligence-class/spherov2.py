@@ -11,13 +11,12 @@ from transforms3d.euler import euler2mat
 
 from spherov2.commands.animatronic import R2LegActions
 from spherov2.commands.power import BatteryVoltageAndStateStates
-from spherov2.controls.enums import RawMotorModes
+from spherov2.controls import RawMotorModes
 from spherov2.helper import bound_value, bound_color
-from spherov2.listeners.sensor import CollisionDetected
+from spherov2.toy import Toy
 from spherov2.toy.bb8 import BB8
 from spherov2.toy.bb9e import BB9E
 from spherov2.toy.bolt import BOLT
-from spherov2.toy.core import Toy
 from spherov2.toy.mini import Mini
 from spherov2.toy.ollie import Ollie
 from spherov2.toy.r2d2 import R2D2
@@ -109,7 +108,7 @@ class SpheroEduAPI:
             self.__thread.start()
             self.__toy.wake()
             ToyUtil.set_robot_state_on_start(self.__toy)
-            self.__start_capturing_sensor_data()
+            # self.__start_capturing_sensor_data()
         except:
             self.__exit__(None, None, None)
             raise
@@ -496,7 +495,7 @@ class SpheroEduAPI:
             self.__call_event_listener(EventType.on_landing)
             self.__should_land = False
 
-    def _collision_detected_notify(self, args: CollisionDetected):
+    def _collision_detected_notify(self, args):
         self.__call_event_listener(EventType.on_collision)
 
     def _battery_state_changed_notify(self, state: BatteryVoltageAndStateStates):

@@ -40,7 +40,7 @@ class Sensor(Commands):
         return SensorStreamingMask(*struct.unpack('>HBI', toy._execute(Sensor._encode(toy, 1, proc)).data))
 
     sensor_streaming_data_notify = (
-        24, 2, lambda listener, p: listener(list(struct.unpack('>%df' % (len(p.data) // 4), p.data))))
+        (24, 2, 0xff), lambda listener, p: listener(list(struct.unpack('>%df' % (len(p.data) // 4), p.data))))
 
     @staticmethod
     def set_extended_sensor_streaming_mask(toy, sensor_masks, proc=None):
@@ -64,7 +64,7 @@ class Sensor(Commands):
 
     @staticmethod
     def __collision_detected_notify_helper(listener, packet):
-        unpacked = struct.unpack('>3HB3HBL', packet.data)
+        unpacked = struct.unpack('>3hB3hBL', packet.data)
         listener(CollisionDetected(acceleration_x=unpacked[0] / 4096, acceleration_y=unpacked[1] / 4096,
                                    acceleration_z=unpacked[2] / 4096, x_axis=bool(unpacked[3] & 1),
                                    y_axis=bool(unpacked[3] & 2), power_x=unpacked[4], power_y=unpacked[5],

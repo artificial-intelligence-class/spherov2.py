@@ -1,10 +1,12 @@
 from collections import OrderedDict
-from functools import partialmethod
+from functools import partialmethod, lru_cache
 
 from spherov2.commands.async_ import Async
+from spherov2.commands.bootloader import Bootloader
 from spherov2.commands.core import Core
 from spherov2.commands.sphero import Sphero as SpheroCmd
-from spherov2.toy.core import Toy, ToySensor
+from spherov2.controls.v1 import DriveControl, SensorControl
+from spherov2.toy import ToySensor, Toy
 from spherov2.types import ToyType
 
 
@@ -63,29 +65,32 @@ class Sphero(Toy):
     enable_battery_state_changed_notify = Core.enable_battery_state_changed_notify
     sleep = Core.sleep
     set_inactivity_timeout = Core.set_inactivity_timeout
+    get_charger_state = Core.get_charger_state
+    jump_to_bootloader = Core.jump_to_bootloader
 
-    # TODO: getChargerState, jumpToBootloader, beginReflash, hereIsPage, jumpToMain
+    begin_reflash = Bootloader.begin_reflash
+    here_is_page = Bootloader.here_is_page
+    jump_to_main = Bootloader.jump_to_main
 
     set_heading = SpheroCmd.set_heading
     set_stabilization = SpheroCmd.set_stabilization
-
-    # TODO: setRotationRate, getChassisId, selfLevel
-
+    set_rotation_rate = SpheroCmd.set_rotation_rate
+    get_chassis_id = SpheroCmd.get_chassis_id
+    self_level = SpheroCmd.self_level
     set_data_streaming = SpheroCmd.set_data_streaming
     configure_collision_detection = SpheroCmd.configure_collision_detection
     configure_locator = SpheroCmd.configure_locator
-
-    # TODO: getTemperature
-
+    get_temperature = SpheroCmd.get_temperature
     set_main_led = SpheroCmd.set_main_led
     set_back_led_brightness = SpheroCmd.set_back_led_brightness
     roll = SpheroCmd.roll
-
-    # TODO: boost
-
+    boost = SpheroCmd.boost
     set_raw_motors = SpheroCmd.set_raw_motors
-
-    # TODO: setMotionTimeout, setPersistentOptions, getPersistentOptions, setTemporaryOptions, getTemporaryOptions
+    set_motion_timeout = SpheroCmd.set_motion_timeout
+    set_persistent_options = SpheroCmd.set_persistent_options
+    get_persistent_options = SpheroCmd.get_persistent_options
+    set_temporary_options = SpheroCmd.set_temporary_options
+    get_temporary_options = SpheroCmd.get_temporary_options
 
     add_battery_state_changed_notify_listener = partialmethod(Toy._add_listener, Async.battery_state_changed_notify)
     remove_battery_state_changed_notify_listener = partialmethod(Toy._remove_listener,
@@ -101,3 +106,13 @@ class Sphero(Toy):
     remove_gyro_max_notify_listener = partialmethod(Toy._remove_listener, Async.gyro_max_notify)
     add_did_sleep_notify_listener = partialmethod(Toy._add_listener, Async.did_sleep_notify)
     remove_did_sleep_notify_listener = partialmethod(Toy._remove_listener, Async.did_sleep_notify)
+
+    @property
+    @lru_cache(None)
+    def drive_control(self):
+        return DriveControl(self)
+
+    @property
+    @lru_cache(None)
+    def sensor_control(self):
+        return SensorControl(self)

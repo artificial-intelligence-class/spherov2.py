@@ -9,11 +9,11 @@ from spherov2.commands.power import Power
 from spherov2.commands.sensor import CollisionDetectionMethods, Sensor, SensitivityBasedCollisionDetectionMethods, \
     SensitivityLevels
 from spherov2.commands.sphero import CollisionDetectionMethods as SpheroCollisionDetectionMethods, Sphero
-from spherov2.controls.enums import RawMotorModes
+from spherov2.controls import RawMotorModes
 from spherov2.controls.v2 import Processors
+from spherov2.toy import Toy
 from spherov2.toy.bb9e import BB9E
 from spherov2.toy.bolt import BOLT
-from spherov2.toy.core import Toy
 from spherov2.toy.mini import Mini
 from spherov2.toy.r2d2 import R2D2
 from spherov2.toy.r2q5 import R2Q5
