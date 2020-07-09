@@ -108,7 +108,7 @@ class SpheroEduAPI:
             self.__thread.start()
             self.__toy.wake()
             ToyUtil.set_robot_state_on_start(self.__toy)
-            # self.__start_capturing_sensor_data()
+            self.__start_capturing_sensor_data()
         except:
             self.__exit__(None, None, None)
             raise

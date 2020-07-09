@@ -115,7 +115,7 @@ class Sphero(Commands):
                        bool(data & 256), bool(data & 1024))
 
     @staticmethod
-    def set_temporary_options(toy, options: Options, proc=None):  # unknown names
+    def set_temporary_options(toy, options: Options, proc=None):
         toy._execute(Sphero._encode(toy, 55, proc, to_bytes(
             options.disable_sleep_in_charger | (options.enable_vector_drive << 1) | (
                     options.disable_self_level_in_charger << 2) | (options.enable_tail_light_always_on << 3) | (
