@@ -7,7 +7,6 @@ import bleak
 
 from spherov2.adapter.tcp_consts import RequestOp, ResponseOp
 from spherov2.helper import to_bytes, to_int
-from spherov2.toy.consts import ServicesUUID
 
 
 async def process_connection(reader: asyncio.streams.StreamReader, writer: asyncio.streams.StreamWriter):
@@ -29,7 +28,7 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
             if cmd == RequestOp.SCAN:
                 timeout = struct.unpack('!f', await reader.readexactly(4))[0]
                 try:
-                    toys = await bleak.discover(timeout, filters={'UUIDs': [e.value for e in ServicesUUID]})
+                    toys = await bleak.discover(timeout)
                 except BaseException as e:
                     err = str(e)[:0xffff].encode('utf_8')
                     writer.write(ResponseOp.ERROR + to_bytes(len(err), 2) + err)

@@ -2,7 +2,7 @@ from collections import OrderedDict
 from enum import IntEnum
 from functools import lru_cache, partialmethod
 
-from spherov2.commands.animatronic import Animatronic, R2LegActions
+from spherov2.commands.animatronic import Animatronic
 from spherov2.commands.api_and_shell import ApiAndShell
 from spherov2.commands.connection import Connection
 from spherov2.commands.drive import Drive
@@ -555,17 +555,8 @@ class R2D2(ToyV2):
     drive_with_heading = Drive.drive_with_heading
     generic_raw_motor = Drive.generic_raw_motor
     set_stabilization = Drive.set_stabilization
-
-    def play_animation(self, animation: Animations, wait=False):
-        Animatronic.play_animation(self, animation)
-        if wait:
-            self._wait_packet(Animatronic.play_animation_complete_notify)
-
-    def perform_leg_action(self, leg_action: R2LegActions, wait=False):
-        Animatronic.perform_leg_action(self, leg_action)
-        if wait:
-            self._wait_packet(Animatronic.leg_action_complete_notify)
-
+    play_animation = Animatronic.play_animation
+    perform_leg_action = Animatronic.perform_leg_action
     set_head_position = Animatronic.set_head_position
     get_head_position = Animatronic.get_head_position
     set_leg_position = Animatronic.set_leg_position
