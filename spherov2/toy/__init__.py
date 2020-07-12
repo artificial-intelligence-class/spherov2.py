@@ -84,11 +84,12 @@ class Toy:
         self.__packet_queue.put(packet.build())
         return self._wait_packet(packet.id)
 
-    def _wait_packet(self, key, timeout=10.0):
+    def _wait_packet(self, key, timeout=10.0, check_error=False):
         future = futures.Future()
         self.__waiting[key].put(future)
         packet = future.result(timeout)
-        packet.check_error()
+        if check_error:
+            packet.check_error()
         return packet
 
     def _add_listener(self, key, listener: Callable):

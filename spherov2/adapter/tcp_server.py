@@ -49,7 +49,7 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
                 data = (await reader.readexactly(size)).decode('ascii')
                 try:
                     if cmd == RequestOp.INIT:
-                        adapter = bleak.BleakClient(data)
+                        adapter = bleak.BleakClient(data, timeout=5.0)
                         await adapter.connect()
                     elif cmd == RequestOp.SET_CALLBACK:
                         await adapter.start_notify(data, callback)

@@ -104,8 +104,8 @@ class SpheroEduAPI:
         self.__stopped.clear()
         self.__thread = threading.Thread(target=self.__background)
         self.__toy.__enter__()
+        self.__thread.start()
         try:
-            self.__thread.start()
             self.__toy.wake()
             ToyUtil.set_robot_state_on_start(self.__toy)
             self.__start_capturing_sensor_data()
