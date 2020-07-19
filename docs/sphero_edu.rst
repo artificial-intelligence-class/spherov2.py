@@ -212,7 +212,7 @@ Executes conditional logic when the robot collides with an object.
 
 .. code-block:: python
 
-    def on_collision():
+    def on_collision(api):
         # code to execute on collision
 
     api.register_event(EventType.on_collision, on_collision)
@@ -221,7 +221,7 @@ For example, below is a basic `pong <https://en.wikipedia.org/wiki/Pong>`_ progr
 
 .. code-block:: python
 
-    def on_collision():
+    def on_collision(api):
         api.stop_roll()
         api.set_main_led(Color(255, 0, 0))
         print('Collision')
@@ -240,7 +240,7 @@ Executes conditional logic when gravity is the only force acting on the robot, s
 
 .. code-block:: python
 
-    def on_freefall():
+    def on_freefall(api):
         # code to execute on freefall
 
     api.register_event(EventType.on_freefall, on_freefall)
@@ -249,7 +249,7 @@ For example, to print "freefall" and change the LED's to red on freefall use:
 
 .. code-block:: python
 
-    def on_freefall():
+    def on_freefall(api):
         api.set_main_led(Color(255, 0, 0))
         print('freefall')
 
@@ -262,7 +262,7 @@ Executes conditional logic when the robot lands after an being in freefall. You 
 
 .. code-block:: python
 
-    def on_landing():
+    def on_landing(api):
         # code to execute on landing
 
     api.register_event(EventType.on_landing, on_landing)
@@ -271,7 +271,7 @@ For example, to print "landing" and change the LED's to green after landing use:
 
 .. code-block:: python
 
-    def on_landing():
+    def on_landing(api):
         api.set_main_led(Color(0, 255, 0))
         print('land')
 
@@ -284,7 +284,7 @@ Executes conditional logic when the robot exceeds the bounds of measurable rotat
 
 .. code-block:: python
 
-    def on_gyro_max():
+    def on_gyro_max(api):
         # code to execute on gyromax
 
     api.register_event(EventType.on_gyro_max, on_gyro_max)
@@ -293,7 +293,7 @@ For example, to print "gyromax" and change the LED's to red when you reach gyrom
 
 .. code-block:: python
 
-    def on_gyro_max():
+    def on_gyro_max(api):
         api.set_main_led(Color(255, 0, 0))
         print('gyromax')
 
@@ -308,7 +308,7 @@ Executes conditional logic called when the robot starts charging its battery. Th
 
 .. code-block:: python
 
-    def on_charging():
+    def on_charging(api):
         # code to execute on charging
 
     api.register_event(EventType.on_charging, on_charging)
@@ -319,7 +319,7 @@ Executes conditional logic called when the robot stops charging its battery. Thi
 
 .. code-block:: python
 
-    def on_not_charging():
+    def on_not_charging(api):
         # code to execute on not charging
 
     api.register_event(EventType.on_not_charging, on_not_charging)
@@ -328,7 +328,7 @@ For example, to have Sphero execute 2 different conditions for on charging, and 
 
 .. code-block:: python
 
-    def on_charging():
+    def on_charging(api):
         api.set_main_led(Color(6, 0, 255))
         print('charging')
         time.sleep(1)
@@ -336,7 +336,7 @@ For example, to have Sphero execute 2 different conditions for on charging, and 
 
     api.register_event(EventType.on_charging, on_charging)
 
-    def on_not_charging():
+    def on_not_charging(api):
         api.set_main_led(Color(255, 0, 47))
         print('not charging')
 

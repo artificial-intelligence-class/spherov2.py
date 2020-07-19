@@ -640,9 +640,9 @@ class SpheroEduAPI:
     # be called every time it occurs by default, unless you customize it.
     def __call_event_listener(self, event_type: EventType, *args, **kwargs):
         for f in self.__listeners[event_type]:
-            threading.Thread(target=f, args=args, kwargs=kwargs).start()
+            threading.Thread(target=f, args=(self, *args), kwargs=kwargs).start()
 
-    def register_event(self, event_type: EventType, listener: Callable):
+    def register_event(self, event_type: EventType, listener: Callable[['SpheroEduAPI'], None]):
         """Registers the event type with listener. If listener is ``None`` then it removes all listeners of the
         specified event type.
 
