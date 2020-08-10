@@ -9,7 +9,7 @@ An unofficial Python library for [Sphero](https://sphero.com/) toys that support
 - [x] Sphero 2.0 / SPRK
 - [x] Sphero Ollie
 - [x] Sphero BB-8
-- [ ] Sphero BB-9E
+- [x] Sphero BB-9E
 - [x] Sphero R2-D2 / R2-Q5
 - [ ] Sphero BOLT
 - [ ] Sphero SPRK+ / SPRK 2.0

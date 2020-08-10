@@ -26,6 +26,14 @@ BB-8
     :show-inheritance:
     :member-order: bysource
 
+BB-9E
+====
+.. autoclass:: spherov2.toy.bb9e.BB9E
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :member-order: bysource
+
 R2-D2
 =====
 .. autoclass:: spherov2.toy.r2d2.R2D2
