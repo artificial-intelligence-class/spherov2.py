@@ -4,12 +4,13 @@ import time
 from collections import namedtuple, defaultdict
 from enum import Enum, IntEnum, auto
 from functools import partial
-from typing import Union, Callable, Dict
+from typing import Union, Callable, Dict, Iterable
 
 import numpy as np
 from transforms3d.euler import euler2mat
 
 from spherov2.commands.animatronic import R2LegActions
+from spherov2.commands.io import IO
 from spherov2.commands.power import BatteryVoltageAndStateStates
 from spherov2.controls import RawMotorModes
 from spherov2.helper import bound_value, bound_color
@@ -85,11 +86,12 @@ class SpheroEduAPI:
         self.__raw_motor = namedtuple('rawMotor', ('left', 'right'))(0, 0)
         self.__leds = LedManager(toy.__class__)
 
-        self.__sensor_data: Dict[str, Union[float, Dict[str, float]]] = {'distance': 0.}
+        self.__sensor_data: Dict[str, Union[float, Dict[str, float]]] = {'distance': 0., 'color_index': -1}
         self.__sensor_name_mapping = {}
         self.__last_location = (0., 0.)
         self.__last_non_fall = time.time()
         self.__falling_v = 1.
+        self.__last_message = None
         self.__should_land = self.__free_falling = False
         ToyUtil.add_listeners(toy, self)
 
@@ -478,6 +480,12 @@ class SpheroEduAPI:
             self.__sensor_data['distance'] += math.hypot(cur_loc[0] - self.__last_location[0],
                                                          cur_loc[1] - self.__last_location[1])
             self.__last_location = cur_loc
+        if 'color_detection' in self.__sensor_data:
+            color = self.__sensor_data['color_detection']
+            index = color['index']
+            if index != self.__sensor_data['color_index'] and index < 255 and color['confidence'] >= 0.71:
+                self.__sensor_data['color_index'] = index
+                self.__call_event_listener(EventType.on_color, Color(int(color['r']), int(color['g']), int(color['b'])))
 
     def __process_falling(self, a):
         self.__falling_v = (self.__falling_v + a * 3) / 4
@@ -595,7 +603,11 @@ class SpheroEduAPI:
         intensity can vary greatly between rooms."""
         return self.__sensor_data.get('ambient_light', None)
 
-    # TODO Last Message Received
+    def get_last_ir_message(self):
+        """Returns which channel the last infrared message was received on. You need to declare the ``on_ir_message``
+        event for each IR message you plan to see returned."""
+        return self.__last_message
+
     def get_back_led(self):
         """Provides the RGB color of the back LED, from 0 to 255 for each color channel."""
         return self.__leds.get('back', None)
@@ -633,7 +645,75 @@ class SpheroEduAPI:
         return self.__leds.get('logic_display', None)
 
     # Communications
-    # TODO BOLT, RVR
+    def start_ir_broadcast(self, near: int, far: int):
+        """Sets the IR emitters to broadcast on two specified channels, from 0 to 7, so other BOLTs can follow or evade.
+        The broadcaster uses two channels because the first channel emits near IR pulses (< 1 meter), and the second
+        channel emits far IR pulses (1 to 3 meters) so the following and evading BOLTs can detect these messages on
+        their IR receivers with a sense of relative proximity to the broadcaster. You can't use a channel for more than
+        one purpose at time, such as sending messages along with broadcasting, following, or evading. For example,
+        use ``start_ir_broadcast(0, 1)`` to broadcast on channels 0 and 1, so that other BOLTs following or evading on
+        0 and 1 will recognize this robot."""
+        ToyUtil.start_robot_to_robot_infrared_broadcasting(self.__toy, bound_value(0, far, 7), bound_value(0, near, 7))
+
+    def stop_ir_broadcast(self):
+        """Stops the broadcasting behavior."""
+        ToyUtil.stop_robot_to_robot_infrared_broadcasting(self.__toy)
+
+    def start_ir_follow(self, near: int, far: int):
+        """Sets the IR receivers to look for broadcasting BOLTs on the same channel pair, from 0 to 7. Upon receiving
+        messages from a broadcasting BOLT, the follower will adjust its heading and speed to follow the broadcaster.
+        When a follower loses sight of a broadcaster, the follower will spin in place to search for the broadcaster.
+        You can't use a channel for more than one purpose at time, such as sending messages along with broadcasting,
+        following, or evading. For example, use ``start_ir_follow(0, 1)`` to follow another BOLT that is broadcasting on
+        channels 0 and 1."""
+        ToyUtil.start_robot_to_robot_infrared_following(self.__toy, bound_value(0, far, 7), bound_value(0, near, 7))
+
+    def stop_ir_follow(self):
+        """Stops the following behavior."""
+        ToyUtil.stop_robot_to_robot_infrared_following(self.__toy)
+
+    def start_ir_evade(self, near: int, far: int):
+        """Sets the IR receivers to look for broadcasting BOLTs on the same channel pair, from 0 to 7. Upon receiving
+        messages from a broadcasting BOLT, the evader will adjust its heading to roll away from the broadcaster.
+        When an evader loses sight of a broadcaster, the evader will spin in place to search for the broadcaster.
+        The evader may stop if it is in the far range for a period of time so it does not roll too far away from the
+        broadcaster. You can't use a channel for more than one purpose at time, such as sending messages along with
+        broadcasting, following, or evading. For example, use ``start_ir_evade(0, 1)`` to evade another BOLT that is
+        broadcasting on channels 0 and 1."""
+        ToyUtil.start_robot_to_robot_infrared_evading(self.__toy, bound_value(0, far, 7), bound_value(0, near, 7))
+
+    def stop_ir_evade(self):
+        """Stops the evading behavior."""
+        ToyUtil.stop_robot_to_robot_infrared_evading(self.__toy)
+
+    def send_ir_message(self, channel: int, intensity: int):
+        """Sends a message on a given IR channel, at a set intensity, from 1 to 64. Intensity is proportional to
+        proximity, where a 1 is the closest, and 64 is the farthest. For example, use ``send_ir_message(4, 5)`` to send
+        message 4 at intensity 5. You will need to use ``onIRMessage4(channel)`` event for on a corresponding robot to
+        receive the message. Also see the ``getLastIRMessage()`` sensor to keep track of the last message your robot
+        received. You can't use a channel for more than one purpose at time, such as sending messages along with
+        broadcasting, following, or evading."""
+        ToyUtil.send_robot_to_robot_infrared_message(
+            self.__toy, bound_value(0, channel, 7), bound_value(1, intensity, 64))
+
+    def listen_for_ir_message(self, channels: Union[int, Iterable[int]], duration: int = 0xFFFFFFFF):
+        if isinstance(channels, int):
+            channels = (channels,)
+        if len(channels) > 0:
+            ToyUtil.listen_for_robot_to_robot_infrared_message(
+                self.__toy, map(lambda v: bound_value(0, v, 7), channels), bound_value(0, duration, 0xFFFFFFFF))
+
+    def _robot_to_robot_infrared_message_received_notify(self, infrared_code: int):
+        self.__last_message = infrared_code
+        self.__call_event_listener(EventType.on_ir_message, infrared_code)
+
+    def listen_for_color_sensor(self, colors: Iterable[Color]):
+        if self.__toy.implements(IO.set_active_color_palette):
+            palette = []
+            for i, color in enumerate(colors):
+                palette.extend((i, color.r, color.g, color.b))
+            if palette:
+                self.__toy.set_active_color_palette(palette)
 
     # Events: are predefined robot functions into which you can embed conditional logic. When an event occurs, the
     # conditional logic is called and then the program returns to the main loop where it left off. The event will
@@ -642,7 +722,7 @@ class SpheroEduAPI:
         for f in self.__listeners[event_type]:
             threading.Thread(target=f, args=(self, *args), kwargs=kwargs).start()
 
-    def register_event(self, event_type: EventType, listener: Callable[['SpheroEduAPI'], None]):
+    def register_event(self, event_type: EventType, listener: Callable[..., None]):
         """Registers the event type with listener. If listener is ``None`` then it removes all listeners of the
         specified event type.
 

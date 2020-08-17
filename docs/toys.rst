@@ -27,7 +27,7 @@ BB-8
     :member-order: bysource
 
 BB-9E
-====
+=====
 .. autoclass:: spherov2.toy.bb9e.BB9E
     :members:
     :undoc-members:

@@ -164,6 +164,8 @@ Sphero BOLT Sensors
 -------------------
 .. class:: SpheroEduAPI
 
+    .. automethod:: get_last_ir_message
+
     .. method:: get_back_led
 
         Provides the RGB color of the back LED, from 0 to 255 for each color channel.
@@ -197,6 +199,23 @@ R2-D2 & R2-Q5 Sensors
 Communications
 ==============
 Infrared (IR) is invisible light with longer wavelengths than visible light, and it is commonly used in TV remote controls to transmit small amounts of data. IR is used in Sphero BOLT to transmit data such as relative distance and heading between robots to enable following and evading behavior among multiple robots, as well as to send custom messages. There are four IR emitters and receivers (pairs) for 360° awareness assuming there is a clear line of sight between two or more robots. The effective range is up to about 3 meters.
+
+.. class:: SpheroEduAPI
+
+    .. automethod:: start_ir_broadcast
+    .. automethod:: stop_ir_broadcast
+    .. automethod:: start_ir_follow
+    .. automethod:: stop_ir_follow
+    .. automethod:: start_ir_evade
+    .. automethod:: stop_ir_evade
+    .. automethod:: send_ir_message
+    .. method:: listen_for_ir_message
+
+        Refer to `IR Message Received Event <#on-ir-message-received>`_ for usage.
+
+    .. method:: listen_for_color_sensor
+
+        Refer to `Color Event <#on-color>`_ for usage.
 
 Events
 ======
@@ -349,6 +368,34 @@ For example, to have Sphero execute 2 different conditions for on charging, and 
 
 On IR Message Received
 ----------------------
+Executes conditional logic called when an infrared message is received on the specified channel. This can be triggered by one Sphero BOLT robot receiving a message from another Sphero BOLT. For example, to have Sphero BOLT change the matrix to red when receiving a message on channel 4:
+
+.. code-block:: python
+
+    message_channels = (4, )
+
+    def on_ir_message_4(api, channel):
+        if channel != 4:
+            return
+        api.set_main_led(Color(255, 0, 0))
+        api.listen_for_ir_message(message_channels)
+
+    api.register_event(EventType.on_ir_message, on_ir_message_4)
+    api.listen_for_ir_message(message_channels)
 
 On Color
 --------
+Executes conditional logic called when Sphero RVR's color sensor returns a specified RGB color value.
+
+.. code-block:: python
+
+    color = (Color(255, 15, 60), )
+
+    def on_color(api, color):
+        if color != Color(255, 15, 60):
+            return
+
+    api.register_event(EventType.on_color, on_color)
+    api.listen_for_color_sensor(colors)
+
+The color that RVR's color sensor returns needs to be very close to the color set with :func:`listen_for_color_sensor` for the event to execute correctly.

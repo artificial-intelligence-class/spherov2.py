@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Iterable
 
 from spherov2.commands.animatronic import R2LegActions, Animatronic
 from spherov2.commands.api_and_shell import ApiAndShell
@@ -105,8 +105,13 @@ class ToyUtil:
     def set_main_led(toy: Toy, r: int, g: int, b: int, is_user_color: bool,
                      not_supported_handler: Callable[[], None] = None):
         def _fallback():
-            # TODO other toys
-            if isinstance(toy, (R2D2, R2Q5)):
+            if isinstance(toy, BB9E):
+                mapping = {
+                    toy.LEDs.BODY_RED: r,
+                    toy.LEDs.BODY_GREEN: g,
+                    toy.LEDs.BODY_BLUE: b
+                }
+            elif isinstance(toy, (R2D2, R2Q5)):
                 mapping = {
                     toy.LEDs.BACK_RED: r,
                     toy.LEDs.BACK_GREEN: g,
@@ -372,6 +377,10 @@ class ToyUtil:
             toy.add_gyro_max_notify_listener(manager._gyro_max_notify)
         if hasattr(toy, 'add_will_sleep_notify_listener') and hasattr(manager, '_will_sleep_notify'):
             toy.add_will_sleep_notify_listener(manager._will_sleep_notify)
+        if hasattr(toy, 'add_robot_to_robot_infrared_message_received_notify_listener') and \
+                hasattr(manager, '_robot_to_robot_infrared_message_received_notify'):
+            toy.add_robot_to_robot_infrared_message_received_notify_listener(
+                manager._robot_to_robot_infrared_message_received_notify)
 
     @staticmethod
     def set_locator_flags(toy: Toy, flag: bool, not_supported_handler: Callable[[], None] = None):
@@ -399,6 +408,70 @@ class ToyUtil:
         elif toy.implements(Sensor.configure_sensitivity_based_collision_detection):
             toy.configure_sensitivity_based_collision_detection(
                 SensitivityBasedCollisionDetectionMethods.ACCELEROMETER_BASED_DETECTION, SensitivityLevels.VERY_HIGH, t)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def start_robot_to_robot_infrared_broadcasting(toy: Toy, far: int, near: int,
+                                                   not_supported_handler: Callable[[], None] = None):
+        if toy.implements(Sensor.start_robot_to_robot_infrared_broadcasting):
+            toy.start_robot_to_robot_infrared_broadcasting(far, near)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def stop_robot_to_robot_infrared_broadcasting(toy: Toy, not_supported_handler: Callable[[], None] = None):
+        if toy.implements(Sensor.stop_robot_to_robot_infrared_broadcasting):
+            toy.stop_robot_to_robot_infrared_broadcasting()
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def start_robot_to_robot_infrared_following(toy: Toy, far: int, near: int,
+                                                not_supported_handler: Callable[[], None] = None):
+        if toy.implements(Sensor.start_robot_to_robot_infrared_following):
+            toy.start_robot_to_robot_infrared_following(far, near)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def stop_robot_to_robot_infrared_following(toy: Toy, not_supported_handler: Callable[[], None] = None):
+        if toy.implements(Sensor.stop_robot_to_robot_infrared_following):
+            toy.stop_robot_to_robot_infrared_following()
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def start_robot_to_robot_infrared_evading(toy: Toy, far: int, near: int,
+                                              not_supported_handler: Callable[[], None] = None):
+        if toy.implements(Sensor.start_robot_to_robot_infrared_evading):
+            toy.start_robot_to_robot_infrared_evading(far, near)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def stop_robot_to_robot_infrared_evading(toy: Toy, not_supported_handler: Callable[[], None] = None):
+        if toy.implements(Sensor.stop_robot_to_robot_infrared_evading):
+            toy.stop_robot_to_robot_infrared_evading()
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def send_robot_to_robot_infrared_message(toy: Toy, channel: int, intensity: int,
+                                             not_supported_handler: Callable[[], None] = None):
+        # if toy.implements(Sensor.send_robot_to_robot_infrared_message): TODO: BOLT
+        #     toy.send_robot_to_robot_infrared_message(channel, intensity, intensity, intensity, intensity)
+        if toy.implements(Sensor.send_infrared_message):
+            toy.send_infrared_message(channel, intensity, intensity, intensity, intensity)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def listen_for_robot_to_robot_infrared_message(toy: Toy, channels: Iterable[int], duration: int,
+                                                   not_supported_handler: Callable[[], None] = None):
+        # TODO: BOLT
+        if toy.implements(Sensor.enable_robot_infrared_message_notify):
+            toy.enable_robot_infrared_message_notify(True)
         elif not_supported_handler:
             not_supported_handler()
 

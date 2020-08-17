@@ -487,6 +487,8 @@ class StreamingControl:
                 if component.modifier is not None:
                     value = component.modifier(value)
                 n[name] = value
+            if sensor_name == 'color_detection' and node != 0:
+                continue
             data[sensor_name] = n
         for f in self.__listeners:
             threading.Thread(target=f, args=(data,)).start()
