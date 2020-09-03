@@ -6,7 +6,7 @@ Sphero Edu API
 
 Get Started
 ===========
-Sphero robots are fun, durable and programmable toys! This wiki is a guide to learn how to program Sphero robots with JavaScript, the most common web programming language in the world. You will need a `Sphero robot <https://sphero.com/collections/all>`_, a Python 3 environment, and a hunger to learn.
+Sphero robots aren't just toys – they are programmable robots that are great for learning about computer science! This wiki is a guide to learn how to program Sphero robots with Python. You will need a `Sphero robot <https://sphero.com/collections/all>`_, a Python 3 environment, and a hunger to learn.
 
 Hello World!
 ------------
