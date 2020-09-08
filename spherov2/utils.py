@@ -105,13 +105,7 @@ class ToyUtil:
     def set_main_led(toy: Toy, r: int, g: int, b: int, is_user_color: bool,
                      not_supported_handler: Callable[[], None] = None):
         def _fallback():
-            if isinstance(toy, BB9E):
-                mapping = {
-                    toy.LEDs.BODY_RED: r,
-                    toy.LEDs.BODY_GREEN: g,
-                    toy.LEDs.BODY_BLUE: b
-                }
-            elif isinstance(toy, (R2D2, R2Q5)):
+            if isinstance(toy, (R2D2, R2Q5)):
                 mapping = {
                     toy.LEDs.BACK_RED: r,
                     toy.LEDs.BACK_GREEN: g,
@@ -119,6 +113,12 @@ class ToyUtil:
                     toy.LEDs.FRONT_RED: r,
                     toy.LEDs.FRONT_GREEN: g,
                     toy.LEDs.FRONT_BLUE: b
+                }
+            elif isinstance(toy, BB9E):
+                mapping = {
+                    toy.LEDs.BODY_RED: r,
+                    toy.LEDs.BODY_GREEN: g,
+                    toy.LEDs.BODY_BLUE: b
                 }
             elif isinstance(toy, RVR):
                 mapping = {
@@ -217,15 +217,15 @@ class ToyUtil:
 
     @staticmethod
     def set_back_led_brightness(toy: Toy, brightness: int, not_supported_handler: Callable[[], None] = None):
-        if isinstance(toy, (BB9E, Mini)):
-            mapping = {
-                toy.LEDs.AIMING: brightness
-            }
-        elif isinstance(toy, (R2D2, R2Q5, BOLT)):
+        if isinstance(toy, (R2D2, R2Q5, BOLT)):
             mapping = {
                 toy.LEDs.BACK_RED: 0,
                 toy.LEDs.BACK_GREEN: 0,
                 toy.LEDs.BACK_BLUE: brightness,
+            }
+        elif isinstance(toy, (BB9E, Mini)):
+            mapping = {
+                toy.LEDs.AIMING: brightness
             }
         elif isinstance(toy, RVR):
             mapping = {
