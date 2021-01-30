@@ -11,7 +11,7 @@ class BleakAdapter:
 
     def __init__(self, address):
         self.__event_loop = asyncio.new_event_loop()
-        self.__device = bleak.BleakClient(address, self.__event_loop, timeout=5.0)
+        self.__device = bleak.BleakClient(address, timeout=5.0)
         self.__lock = threading.Lock()
         self.__thread = threading.Thread(target=self.__event_loop.run_forever)
         self.__thread.start()
