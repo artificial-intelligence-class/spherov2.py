@@ -75,6 +75,8 @@ class LedManager:
         return self.__leds.get(item, default)
 
 
+rawMotor = namedtuple('rawMotor', ('left', 'right'))
+
 class SpheroEduAPI:
     """Implementation of Sphero Edu Javascript APIs: https://sphero.docsapp.io/docs/get-started"""
 
@@ -83,7 +85,7 @@ class SpheroEduAPI:
         self.__heading = 0
         self.__speed = 0
         self.__stabilization = True
-        self.__raw_motor = namedtuple('rawMotor', ('left', 'right'))(0, 0)
+        self.__raw_motor = rawMotor(0, 0)
         self.__leds = LedManager(toy.__class__)
 
         self.__sensor_data: Dict[str, Union[float, Dict[str, float]]] = {'distance': 0., 'color_index': -1}
@@ -145,7 +147,7 @@ class SpheroEduAPI:
             self.__speed = 0
             self.__update_speed()
         if self.__raw_motor.left != 0 or self.__raw_motor.right != 0:
-            self.__raw_motor.left = self.__raw_motor.right = 0
+            self.__raw_motor = rawMotor(0, 0)
             self.__update_raw_motor()
 
     def roll(self, heading: int, speed: int, duration: float):
@@ -258,14 +260,13 @@ class SpheroEduAPI:
         stabilize = self.__stabilization
         if stabilize:
             self.set_stabilization(False)
-        self.__raw_motor.left = bound_value(-255, left, 255)
-        self.__raw_motor.right = bound_value(-255, right, 255)
+        self.__raw_motor = rawMotor(bound_value(-255, left, 255), bound_value(-255, right, 255))
         self.__update_raw_motor()
         if duration is not None:
             time.sleep(duration)
             if stabilize:
                 self.set_stabilization(True)
-            self.__raw_motor.left = self.__raw_motor.right = 0
+            self.__raw_motor = rawMotor(0, 0)
             ToyUtil.set_raw_motor(self.__toy, RawMotorModes.OFF, 0, RawMotorModes.OFF, 0)
 
     def reset_aim(self):
