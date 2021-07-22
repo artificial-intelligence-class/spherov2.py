@@ -10,7 +10,20 @@ class DriveFlags(IntFlag):
     FORWARD = 0b0
     BACKWARD = 0b1
     TURBO = 0b10
+    FAST_TURN = 0b100
+    LEFT_DIRECTION = 0b1000
+    RIGHT_DIRECTION = 0b10000
+    ENABLE_DRIFT = 0b100000
 
+
+class RCDriveFlags(IntFlag):
+    SLEW_LINEAR_VELOCITY = 0b1
+    
+    
+class XYPositionDriveFlags(IntFlag):
+    FORCE_REVERSE = 0b1
+    AUTO_REVERSE = 0b10
+    
 
 class StabilizationIndexes(IntEnum):
     NO_CONTROL_SYSTEM = 0
@@ -38,6 +51,16 @@ class GenericRawMotorModes(IntEnum):
     MOTOR_OFF = 0
     FORWARD = 1
     REVERSE = 2
+    
+    
+class LinearVelocitySlewMethods(IntEnum):
+    CONSTANT = 0
+    PROPORTIONAL = 1
+    
+    
+class MotorIndexes(IntEnum):
+    LEFT_MOTOR_INDEX = 0
+    RIGHT_MOTOR_INDEX = 1
 
 
 class Drive(Commands):
@@ -66,6 +89,10 @@ class Drive(Commands):
     @staticmethod
     def set_control_system_type(toy, s, s2, proc=None):  # unknown name
         toy._execute(Drive._encode(toy, 14, proc, [s, s2]))
+        
+    @staticmethod
+    def set_pitch_torque_modification_value(toy, f, proc=None): #Untested / Unknown Param Name
+        toy._execute(Drive._encode(toy, 15, proc, [f]))
 
     @staticmethod
     def set_component_parameters(toy, s, s2, f_arr, proc=None):  # unknown name

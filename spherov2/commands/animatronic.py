@@ -19,6 +19,11 @@ class R2LegActions(IntEnum):
     TWO_LEGS = 2
     WADDLE = 3
 
+    
+class SuspensionAnimationModes(IntEnum):
+    NON_ACTIVE = 0
+    ACTIVE = 1
+
 
 class Animatronic(Commands):
     _did = 23
