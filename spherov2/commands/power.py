@@ -7,8 +7,8 @@ from spherov2.listeners.power import BatteryVoltageStateThresholds
 
 
 class PowerOptions(IntFlag):
-    SLEEP_WHILE_CHARGING = 0b1
-    DOUBLE_TAP_TO_WAKE = 0b10
+    SLEEP_WHILE_CHARGING = 0x1 #0b1
+    DOUBLE_TAP_TO_WAKE = 0x2 #0b10
 
 
 class BatteryVoltageAndStateStates(IntEnum):

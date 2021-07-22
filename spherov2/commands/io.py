@@ -5,18 +5,18 @@ from spherov2.commands import Commands
 from spherov2.helper import to_bytes, to_int
 
 
+class AudioPlaybackModes(IntFlag):
+    PLAY_IMMEDIATELY = 0x0 #0b0
+    PLAY_ONLY_IF_NOT_PLAYING = 0x1 #0b1
+    PLAY_AFTER_CURRENT_SOUND = 0x2 #0b10
+
+
 class UsbConnectionStatus(IntEnum):
     UNKNOWN = 0
     CONNECTED_BUT_NOT_READY = 1
     CONNECTED_AND_READY = 2
     DISCONNECTED = 3
-        
 
-class AudioPlaybackModes(IntFlag):
-    PLAY_IMMEDIATELY = 0b0
-    PLAY_ONLY_IF_NOT_PLAYING = 0b1
-    PLAY_AFTER_CURRENT_SOUND = 0b10
-    
     
 class FadeOverrideOptions(IntEnum):
     NONE = 0

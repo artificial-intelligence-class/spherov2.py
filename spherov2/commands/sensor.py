@@ -9,44 +9,43 @@ from spherov2.listeners.sensor import SensorStreamingMask, CollisionDetected, Bo
 
 
 class CliffDetectionSensorLocations(IntFlag):
-    FRONT_LEFT = 0b1
-    FRONT_RIGHT = 0b10
-    BACK_LEFT = 0b100
-    BACK_RIGHT 0b1000
+    FRONT_LEFT = 0x1 #0b1
+    FRONT_RIGHT = 0x2 #0b10
+    BACK_LEFT = 0x4 #0b100
+    BACK_RIGHT = 0x8 #0b1000
 
 
 class CollisionDetectedAxis(IntFlag):
-    X_AXIS = 0b1
-    Y_AXIS = 0b10
-    
-    
+    X_AXIS = 0x1 #0b1
+    Y_AXIS = 0x2 #0b10
+
+
 class GyroMaxFlags(IntFlag):
-    MAX_PLUS_X = 0b1
-    MAX_MINUS_X = 0b10
-    MAX_PLUS_Y = 0b100
-    MAX_MINUS_Y = 0b1000
-    MAX_PLUS_Z = 0b10000
-    MAX_MINUS_Z = 0b100000
-    
- 
-#This is what is known, no idea conversion currently
-#class InfraredSensorLocations(IntFlag):
-    #FRONT_LEFT = 0b11111111 #0xff
-    #FRONT_RIGHT = 0b1111111100000000 #0xff00
-    #BACK_LEFT = 0b11111111000000000000000000000000 #-0x1000000
-    #BACK_RIGHT = 0b111111110000000000000000 #0xff0000
-    
-    
+    MAX_PLUS_X = 0x1 #0b1
+    MAX_MINUS_X = 0x2 #0b10
+    MAX_PLUS_Y = 0x4 #0b100
+    MAX_MINUS_Y = 0x8 #0b1000
+    MAX_PLUS_Z = 0x10 #0b10000
+    MAX_MINUS_Z = 0x20 #0b100000
+
+
+class InfraredSensorLocations(IntFlag):
+    FRONT_LEFT = 0xff #0b11111111
+    FRONT_RIGHT = 0xff00 #0b1111111100000000
+    BACK_LEFT = 0xff000000 #0b11111111000000000000000000000000 #How it's displayed in decompiled: -0x1000000
+    BACK_RIGHT = 0xff0000 #0b111111110000000000000000
+
+
 class LocatorFlags(IntFlag):
-    AUTO_CALIBRATE = 0b1
-    
+    AUTO_CALIBRATE = 0x1 #0b1
+
 
 class CollisionDetectionMethods(IntEnum):
     NO_COLLISION_DETECTION = 0
     ACCELEROMETER_BASED_DETECTION = 1
     ACCELEROMETER_BASED_WITH_EXTRA_FILTERING = 2
     HYBRID_ACCELEROMETER_AND_CONTROL_SYSTEM_DETECTION = 3
-    
+
 
 class MotorIndexes(IntEnum):
     LEFT_MOTOR_INDEX = 0
@@ -64,19 +63,18 @@ class SensitivityLevels(IntEnum):
     MEDIUM = 3
     LOW = 4
     VERY_LOW = 5
-    
-    
+
+
 class SteamingDataSizes(IntEnum):
     EIGHT_BIT = 0
     SIXTEEN_BIT = 1
     THIRTY_TWO_BIT = 2
-    
-    
-#Exists here but imported from listener
-#class ThermalProtectionStatus(IntEnum):    
-#    OK = 0
-#    WARN = 1
-#    CRITICAL = 2
+
+
+class ThermalProtectionStatus(IntEnum):    
+    OK = 0
+    WARN = 1
+    CRITICAL = 2
 
 
 class Sensor(Commands):

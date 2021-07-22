@@ -5,12 +5,12 @@ from spherov2.helper import to_int
 
 
 class PendingUpdateFlags(IntFlag):
-    NORDIC = 0b1
-    ST = 0b10
-    ESP2886 = 0b100
-    AUDIO = 0b1000
-    ANIMATIONS = 0b10000
-    ST_BOOTLOADER = 0b100000
+    NORDIC = 0x1 #0b1
+    ST = 0x2 #0b10
+    ESP2886 = 0x4 #0b100
+    AUDIO = 0x8 #0b1000
+    ANIMATIONS = 0x10 #0b10000
+    ST_BOOTLOADER = 0x20 #0b100000
 
 
 class ApplicationIds(IntEnum):

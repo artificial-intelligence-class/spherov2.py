@@ -7,22 +7,22 @@ from spherov2.listeners.drive import MotorStall
 
 
 class DriveFlags(IntFlag):
-    FORWARD = 0b0
-    BACKWARD = 0b1
-    TURBO = 0b10
-    FAST_TURN = 0b100
-    LEFT_DIRECTION = 0b1000
-    RIGHT_DIRECTION = 0b10000
-    ENABLE_DRIFT = 0b100000
+    FORWARD = 0x0 #0b0
+    BACKWARD = 0x1 #0b1
+    TURBO = 0x2 #0b10
+    FAST_TURN = 0x4 #0b100
+    LEFT_DIRECTION = 0x8 #0b1000
+    RIGHT_DIRECTION = 0x10 #0b10000
+    ENABLE_DRIFT = 0x20 #0b100000
 
 
 class RCDriveFlags(IntFlag):
-    SLEW_LINEAR_VELOCITY = 0b1
+    SLEW_LINEAR_VELOCITY = 0x1 #0b1
     
     
 class XYPositionDriveFlags(IntFlag):
-    FORCE_REVERSE = 0b1
-    AUTO_REVERSE = 0b10
+    FORCE_REVERSE = 0x1 #0b1
+    AUTO_REVERSE = 0x2 #0b10
     
 
 class StabilizationIndexes(IntEnum):
