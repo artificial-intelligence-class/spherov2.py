@@ -6,6 +6,24 @@ from spherov2.helper import to_bytes, to_int
 from spherov2.listeners.system_info import Version, LastErrorInfo, ConfigBlock, ManufacturingDate, EventLogStatus
 
 
+class ApplicationIndexes(IntEnum):
+    BOOTLOADER = 0
+    MAIN_APPLICATION = 1
+    
+    
+class ConfigBlockWriteCodes(IntEnum):
+    CS_SUCCESS = 0
+    CB_BUSY = 1
+    BC_FS_ERROR = 2
+    
+
+class DeviceModes(IntEnum):
+    FACTORY_MODE = 0
+    USER_PLAY_TEST_MODE = 1
+    USER_OUT_OF_BOX_MODE = 2
+    USER_FULL_MODE = 3
+    
+
 class SosMessages(IntEnum):
     UNKNOWN = 0
     SUBPROCESSOR_CRASHED = 1

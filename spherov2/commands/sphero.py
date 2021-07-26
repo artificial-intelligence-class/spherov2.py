@@ -5,9 +5,31 @@ from spherov2.helper import to_bytes, to_int
 from spherov2.listeners.sphero import Options
 
 
+class ConfigurationOptions(IntFlag):
+    DISABLE_SLEEP_IN_CHARGE = 0x1 #0b1
+    ENABLE_VECTOR_DRIVE = 0x2 #0b10
+    DISABLE_SELF_LEVEL_IN_CHARGER = 0x4 #0b100
+    ENABLE_TAIL_LIGHT_ALWAYS_ON = 0x8 #0b1000
+    ENABLE_MOTION_TIMEOUT = 0x10 #0b10000
+    ENABLE_GYRO_MAX_NOTIFY = 0x100 #0b100000000
+    ENABLE_FULL_SPEED = 0x400 #0b10000000000
+    
+    
+class SelfLevelOptions(IntFlag):
+    START = 0x1 #0b1
+    KEEP_HEADING = 0x2 #0b10
+    SLEEP_AFTER = 0x4 #0b100
+    TURN_CONTROL_SYSTEM_ON = 0x8 #0b1000
+
+
 class CollisionDetectionMethods(IntEnum):
     OFF = 0
     DEFAULT = 1
+    
+    
+class DeviceModes(IntEnum):
+    NORMAL = 0
+    HACK = 1
 
 
 class RollModes(IntEnum):

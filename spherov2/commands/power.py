@@ -6,6 +6,11 @@ from spherov2.helper import to_int
 from spherov2.listeners.power import BatteryVoltageStateThresholds
 
 
+class PowerOptions(IntFlag):
+    SLEEP_WHILE_CHARGING = 0x1 #0b1
+    DOUBLE_TAP_TO_WAKE = 0x2 #0b10
+
+
 class BatteryVoltageAndStateStates(IntEnum):
     CHARGED = 0
     CHARGING = 1
@@ -38,6 +43,13 @@ class BatteryVoltageReadingTypes(IntEnum):
     CALIBRATED_AND_FILTERED = 0
     CALIBRATED_AND_UNFILTERED = 1
     UNCALIBRATED_AND_UNFILTERED = 2
+    
+
+class ChargerStates(IntEnum):
+    UNKNOWN = 0
+    NOT_CHARGING = 1
+    CHARGING = 2
+    CHARGED = 3
 
 
 class AmplifierIds(IntEnum):
@@ -100,8 +112,26 @@ class Power(Commands):
     battery_voltage_state_change_notify = (19, 28, 0xff), lambda listener, p: listener(BatteryVoltageStates(p.data[0]))
 
     @staticmethod
+    def get_charger_state(toy, proc=None): #Untested
+        return toy._execute(Power._encode(toy, 31, proc)).data[0]
+        
+    @staticmethod
     def enable_charger_state_changed_notify(toy, enable: bool, proc=None):
         toy._execute(Power._encode(toy, 32, proc, [int(enable)]))
+
+    charger_state_changed_notify = (19, 33, 0xff), lambda listener, p: listener(BatteryVoltageStates(p.data[0])) #Untested / Unknown param name
+    
+    @staticmethod
+    def get_battery_adc_reading(toy, proc=None): #Untested
+        return toy._execute(Power._encode(toy, 34, proc)).data[0]
+        
+    @staticmethod
+    def set_battery_calibration_slope_and_intercept(toy, f, f2, proc=None): #untested / Unknown param names
+        toy._execute(Power._encode(toy, 35, proc, [f, f2]))
+        
+    @staticmethod
+    def get_battery_calibration_slope_intercept(toy, proc=None): #Untested
+        return toy._execute(Power._encode(toy, 36, proc)).data[0]
 
     @staticmethod
     def get_battery_voltage_in_volts(toy, reading_type: BatteryVoltageReadingTypes, proc=None):

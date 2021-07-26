@@ -1,6 +1,17 @@
 from spherov2.commands import Commands
 
 
+class BleCentralStates(IntEnum):
+    NOT_YET_INITIALIZED = 0
+    DISCONNECTED = 1
+    SCANNING = 2
+    CONNECTING = 3
+    RECONNECTING = 4
+    CONNECTED = 5
+    DISCONNECTING = 6
+    CONFIGURING = 7
+    
+
 class Connection(Commands):
     _did = 25
 

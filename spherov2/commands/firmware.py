@@ -5,22 +5,35 @@ from spherov2.helper import to_int
 
 
 class PendingUpdateFlags(IntFlag):
-    nordic = 0b1
-    st = 0b10
-    esp2886 = 0b100
-    audio = 0b1000
-    animations = 0b10000
-    st_bootloader = 0b100000
+    NORDIC = 0x1 #0b1
+    ST = 0x2 #0b10
+    ESP2886 = 0x4 #0b100
+    AUDIO = 0x8 #0b1000
+    ANIMATIONS = 0x10 #0b10000
+    ST_BOOTLOADER = 0x20 #0b100000
 
 
 class ApplicationIds(IntEnum):
     BOOTLOADER = 0
     MAIN_APP = 1
+    
+    
+class MainAppValidaties(IntEnum):
+    UNKNOWN = 0
+    UNKNOWN_BECAUSE_UPDATE_FLAG_SET = 1
+    VALID = 2
+    INVALID = 3
 
 
 class ResetStrategies(IntEnum):
     RESET_INTO_OR_JUMP_TO_MAIN_APP = 1
     RESET_INTO_OR_JUMP_TO_BOOTLOADER = 2
+    
+    
+class UodateMethods(IntEnum):
+    REQUIRES_RESET = 0
+    MASTER_CONTROLS_UPDATE_FLOW = 1
+    IN_MASTER_BOOTLOADER = 2
 
 
 class Firmware(Commands):
