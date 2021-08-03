@@ -30,7 +30,7 @@ class ResetStrategies(IntEnum):
     RESET_INTO_OR_JUMP_TO_BOOTLOADER = 2
     
     
-class UodateMethods(IntEnum):
+class UpdateMethods(IntEnum):
     REQUIRES_RESET = 0
     MASTER_CONTROLS_UPDATE_FLOW = 1
     IN_MASTER_BOOTLOADER = 2

@@ -152,7 +152,7 @@ class ToyUtil:
                     toy.LEDs.RIGHT_BRAKELIGHT_RED: r,
                     toy.LEDs.RIGHT_BRAKELIGHT_GREEN: g,
                     toy.LEDs.RIGHT_BRAKELIGHT_BLUE: b
-                }                
+                }
             else:
                 mapping = None
 
