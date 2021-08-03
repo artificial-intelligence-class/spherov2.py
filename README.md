@@ -9,7 +9,7 @@ An unofficial Python library for [Sphero](https://sphero.com/) toys that support
 - [x] Sphero BB-8
 - [x] Sphero BB-9E
 - [x] Sphero R2-D2 / R2-Q5
-- [ ] Sphero BOLT
+- [o] Sphero BOLT (In Progress)
 - [ ] Sphero SPRK+ / SPRK 2.0
 - [ ] Sphero Mini
 - [x] Sphero RVR
@@ -75,3 +75,4 @@ It is published as an open-source library under the [MIT License](LICENSE).
 ## Authors
 
 * **Hanbang Wang** - [https://www.cis.upenn.edu/~hanbangw/](https://www.cis.upenn.edu/~hanbangw/)
+* **Elionardo Feliciano**

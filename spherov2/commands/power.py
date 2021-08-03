@@ -1,5 +1,5 @@
 import struct
-from enum import IntEnum
+from enum import IntEnum, IntFlag
 
 from spherov2.commands import Commands
 from spherov2.helper import to_int

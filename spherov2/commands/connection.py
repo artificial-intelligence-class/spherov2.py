@@ -1,5 +1,5 @@
+from enum import IntEnum, IntFlag
 from spherov2.commands import Commands
-
 
 class BleCentralStates(IntEnum):
     NOT_YET_INITIALIZED = 0
