@@ -15,7 +15,7 @@ class ChargerStates(IntEnum):
     OUT = 0
     IN = 1
     UNKNOWN = 2
-    
+
 
 class PowerStates(IntEnum):
     UNKNOWN = 0

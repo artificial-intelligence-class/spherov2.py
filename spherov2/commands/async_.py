@@ -1,22 +1,23 @@
-from enum import IntEnum, IntFlag
 import struct
+from enum import IntEnum, IntFlag
 
 from spherov2.listeners.async_ import CollisionDetected
 from spherov2.listeners.core import PowerStates
 
+
 class CollisionAxis(IntFlag):
-   X_AXIS = 0x1 #0b1
-   Y_AXIS = 0x2 #0b10
-   
+    X_AXIS = 0x1  # 0b1
+    Y_AXIS = 0x2  # 0b10
+
 
 class GyroMaxExceedsFlags(IntFlag):
-   X_POSITIVE = 0x1  #0b1
-   X_NEGATIVE = 0x2  #0b10
-   Y_POSITIVE = 0x4  #0b100
-   Y_NEGATIVE = 0x8  #0b1000
-   Z_POSITIVE = 0x10 #0b10000
-   Z_NEGATIVE = 0x20 #0b100000
-   
+    X_POSITIVE = 0x1  # 0b1
+    X_NEGATIVE = 0x2  # 0b10
+    Y_POSITIVE = 0x4  # 0b100
+    Y_NEGATIVE = 0x8  # 0b1000
+    Z_POSITIVE = 0x10  # 0b10000
+    Z_NEGATIVE = 0x20  # 0b100000
+
 
 class PowerStates(IntEnum):
     UNKNOWN = 0

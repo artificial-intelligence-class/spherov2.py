@@ -6,11 +6,12 @@ from spherov2.commands.sphero import Sphero
 from spherov2.toy import Toy
 from spherov2.toy.bb8 import BB8
 from spherov2.toy.bb9e import BB9E
+from spherov2.toy.bolt import BOLT
 from spherov2.toy.ollie import Ollie
 from spherov2.toy.r2d2 import R2D2
 from spherov2.toy.r2q5 import R2Q5
 from spherov2.toy.rvr import RVR
-from spherov2.toy.bolt import BOLT
+
 
 class ToyNotFoundError(Exception):
     ...

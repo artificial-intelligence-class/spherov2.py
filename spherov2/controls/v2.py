@@ -173,6 +173,7 @@ class Packet(NamedTuple):
                         raise PacketDecodingException(f'Very small packet {[hex(x) for x in pkt]}')
                     self.__callback(Packet.parse_response(pkt))
 
+
 class AnimationControl:
     def __init__(self, toy):
         self.__toy = toy
@@ -322,9 +323,11 @@ class SensorControl:
         self.__enabled_extended.clear()
         self.__update()
 
+
 class StatsControl:
     def __init__(self, toy):
         self.__toy = toy
+
 
 class Processors(IntEnum):
     UNKNOWN = 0
