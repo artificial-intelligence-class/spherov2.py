@@ -15,7 +15,6 @@ from spherov2.commands.system_info import SystemInfo
 from spherov2.controls.v2 import AnimationControl, DriveControl, LedControl, SensorControl, StatsControl, StreamingControl, Processors
 from spherov2.toy import ToyV2, Toy, ToySensor
 from spherov2.types import ToyType
-from spherov2.toy.bb9e import BB9E
 
 
 class BOLT(ToyV2):
@@ -68,6 +67,8 @@ class BOLT(ToyV2):
             z=ToySensor(0x800000, -20000., 20000.)
         )
     )
+    
+    #ambient_light - 0x40000 - 120000.0f
     
 #Bolt Supported calls
     #API and Shell:

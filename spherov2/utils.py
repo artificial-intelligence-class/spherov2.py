@@ -120,6 +120,15 @@ class ToyUtil:
                     toy.LEDs.BODY_GREEN: g,
                     toy.LEDs.BODY_BLUE: b
                 }
+            elif isinstance(toy, Mini):
+                mapping = {
+                    toy.LEDs.BODY_RED: r,
+                    toy.LEDs.BODY_GREEN: g,
+                    toy.LEDs.BODY_BLUE: b,
+                    toy.LEDs.USER_BODY_RED: r,
+                    toy.LEDs.USER_BODY_GREEN: g,
+                    toy.LEDs.USER_BODY_BLUE: b
+                }
             elif isinstance(toy, RVR):
                 mapping = {
                     toy.LEDs.RIGHT_HEADLIGHT_RED: r,
@@ -152,7 +161,7 @@ class ToyUtil:
                     toy.LEDs.RIGHT_BRAKELIGHT_RED: r,
                     toy.LEDs.RIGHT_BRAKELIGHT_GREEN: g,
                     toy.LEDs.RIGHT_BRAKELIGHT_BLUE: b
-                }
+                }                
             else:
                 mapping = None
 
@@ -190,6 +199,12 @@ class ToyUtil:
                 toy.LEDs.FRONT_GREEN: g,
                 toy.LEDs.FRONT_BLUE: b
             }
+        elif isinstance(toy, Mini):
+            mapping = {
+                toy.LEDs.BODY_RED: r,
+                toy.LEDs.BODY_GREEN: g,
+                toy.LEDs.BODY_BLUE: b
+            }
         else:
             mapping = None
             
@@ -211,6 +226,12 @@ class ToyUtil:
                 toy.LEDs.BACK_RED: r,
                 toy.LEDs.BACK_GREEN: g,
                 toy.LEDs.BACK_BLUE: b
+            }
+        elif isinstance(toy, Mini):
+            mapping = {
+                toy.LEDs.USER_BODY_RED: r,
+                toy.LEDs.USER_BODY_GREEN: g,
+                toy.LEDs.USER_BODY_BLUE: b
             }
         else:
             mapping = None
@@ -376,9 +397,6 @@ class ToyUtil:
 
         if isinstance(toy, RVR):
             mapping.pop(RVR.LEDs.UNDERCARRIAGE_WHITE)
-
-        # elif isinstance(toy, Mini): TODO
-        #     mapping.pop
 
         def __fallback():
             ToyUtil.set_main_led(toy, 0, 0, 0, False)

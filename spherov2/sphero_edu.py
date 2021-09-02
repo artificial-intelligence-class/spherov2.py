@@ -349,7 +349,7 @@ class SpheroEduAPI:
         if isinstance(color, int):
             self.__leds['back'] = Color(0, 0, bound_value(0, color, 255))
             ToyUtil.set_back_led_brightness(self.__toy, self.__leds['back'].b)
-        elif isinstance(self.__toy, (R2D2, R2Q5, BOLT, RVR)):
+        elif isinstance(self.__toy, (R2D2, R2Q5, BOLT, RVR, Mini)):
             self.__leds['back'] = bound_color(color, self.__leds['back'])
             ToyUtil.set_back_led(self.__toy, **self.__leds['back']._asdict())
 
