@@ -207,7 +207,6 @@ class ToyUtil:
             }
         else:
             mapping = None
-            
         ToyUtil.set_multiple_leds(toy, mapping, not_supported_handler)
 
     @staticmethod
@@ -389,6 +388,54 @@ class ToyUtil:
             not_supported_handler()
 
     @staticmethod
+    def set_matrix_pixel(toy: Toy, x: int, y: int, r: int, g: int, b: int, is_user_color: bool,
+                         not_supported_handler: Callable[[], None] = None):
+        def _fallback():
+            not_supported_handler()
+
+        ToyUtil.set_led_matrix_pixel(toy, x, y, r, g, b, _fallback)
+
+    @staticmethod
+    def set_led_matrix_pixel(toy: Toy, x: int, y: int, r: int, g: int, b: int,
+                             not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.set_compressed_frame_player_pixel):
+            toy.set_compressed_frame_player_pixel(x, y, r, g, b)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def set_matrix_line(toy: Toy, x1: int, y1: int, x2: int, y2: int, r: int, g: int, b: int, is_user_color: bool,
+                        not_supported_handler: Callable[[], None] = None):
+        def _fallback():
+            not_supported_handler()
+
+        ToyUtil.set_led_matrix_line(toy, x1, y1, x2, y2, r, g, b, _fallback)
+
+    @staticmethod
+    def set_led_matrix_line(toy: Toy, x1: int, y1: int, x2: int, y2: int, r: int, g: int, b: int,
+                            not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.draw_compressed_frame_player_line):
+            toy.draw_compressed_frame_player_line(x1, y1, x2, y2, r, g, b)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def set_matrix_fill(toy: Toy, x1: int, y1: int, x2: int, y2: int, r: int, g: int, b: int, is_user_color: bool,
+                        not_supported_handler: Callable[[], None] = None):
+        def _fallback():
+            not_supported_handler()
+
+        ToyUtil.set_led_matrix_fill(toy, x1, y1, x2, y2, r, g, b, _fallback)
+
+    @staticmethod
+    def set_led_matrix_fill(toy: Toy, x1: int, y1: int, x2: int, y2: int, r: int, g: int, b: int,
+                            not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.draw_compressed_frame_player_fill):
+            toy.draw_compressed_frame_player_fill(x1, y1, x2, y2, r, g, b)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
     def turn_off_leds(toy: Toy):
         if hasattr(toy, 'LEDs'):
             mapping = dict((e, 0) for e in toy.LEDs)
@@ -404,7 +451,7 @@ class ToyUtil:
 
         ToyUtil.set_multiple_leds(toy, mapping, __fallback)
         ToyUtil.set_led_matrix_one_colour(toy, 0, 0, 0)
-        
+    
     #Bolt Animation 
     def register_matrix_animation(toy: Toy, s, s2, z, s3, s_arr, i, i_arr, not_supported_handler: Callable[[], None] = None):
         def _fallback():
@@ -417,7 +464,7 @@ class ToyUtil:
             toy.save_compressed_frame_player_animation(s, s2, z, s3, s_arr, i, i_arr)
         elif not_supported_handler:
             not_supported_handler()
-            
+    
     def play_matrix_animation(toy: Toy, s, not_supported_handler: Callable[[], None] = None):
         def _fallback():
             not_supported_handler()
@@ -430,7 +477,7 @@ class ToyUtil:
         elif not_supported_handler:
             not_supported_handler()
     
-    #Sound
+    # Sound
     @staticmethod
     def play_sound(toy: Toy, sound: IntEnum, force_play: bool, not_supported_handler: Callable[[], None] = None):
         if toy.implements(IO.play_audio_file):

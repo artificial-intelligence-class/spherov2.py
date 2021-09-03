@@ -9,35 +9,35 @@ from spherov2.listeners.sensor import SensorStreamingMask, CollisionDetected, Bo
 
 
 class CliffDetectionSensorLocations(IntFlag):
-    FRONT_LEFT = 0x1 #0b1
-    FRONT_RIGHT = 0x2 #0b10
-    BACK_LEFT = 0x4 #0b100
-    BACK_RIGHT = 0x8 #0b1000
+    FRONT_LEFT = 0x1  # 0b1
+    FRONT_RIGHT = 0x2  # 0b10
+    BACK_LEFT = 0x4  # 0b100
+    BACK_RIGHT = 0x8  # 0b1000
 
 
 class CollisionDetectedAxis(IntFlag):
-    X_AXIS = 0x1 #0b1
-    Y_AXIS = 0x2 #0b10
+    X_AXIS = 0x1  # 0b1
+    Y_AXIS = 0x2  # 0b10
 
 
 class GyroMaxFlags(IntFlag):
-    MAX_PLUS_X = 0x1 #0b1
-    MAX_MINUS_X = 0x2 #0b10
-    MAX_PLUS_Y = 0x4 #0b100
-    MAX_MINUS_Y = 0x8 #0b1000
-    MAX_PLUS_Z = 0x10 #0b10000
-    MAX_MINUS_Z = 0x20 #0b100000
+    MAX_PLUS_X = 0x1  # 0b1
+    MAX_MINUS_X = 0x2  # 0b10
+    MAX_PLUS_Y = 0x4  # 0b100
+    MAX_MINUS_Y = 0x8  # 0b1000
+    MAX_PLUS_Z = 0x10  # 0b10000
+    MAX_MINUS_Z = 0x20  # 0b100000
 
 
 class InfraredSensorLocations(IntFlag):
-    FRONT_LEFT = 0xff #0b11111111
-    FRONT_RIGHT = 0xff00 #0b1111111100000000
-    BACK_LEFT = 0xff000000 #0b11111111000000000000000000000000 #How it's displayed in decompiled: -0x1000000
-    BACK_RIGHT = 0xff0000 #0b111111110000000000000000
+    FRONT_LEFT = 0xff  # 0b11111111
+    FRONT_RIGHT = 0xff00  # 0b1111111100000000
+    BACK_LEFT = 0xff000000  # 0b11111111000000000000000000000000 #How it's displayed in decompiled: -0x1000000
+    BACK_RIGHT = 0xff0000  # 0b111111110000000000000000
 
 
 class LocatorFlags(IntFlag):
-    AUTO_CALIBRATE = 0x1 #0b1
+    AUTO_CALIBRATE = 0x1  # 0b1
 
 
 class CollisionDetectionMethods(IntEnum):
@@ -71,7 +71,7 @@ class SteamingDataSizes(IntEnum):
     THIRTY_TWO_BIT = 2
 
 
-class ThermalProtectionStatus(IntEnum):    
+class ThermalProtectionStatus(IntEnum):
     OK = 0
     WARN = 1
     CRITICAL = 2
@@ -124,9 +124,9 @@ class Sensor(Commands):
     @staticmethod
     def reset_locator_x_and_y(toy, proc=None):
         toy._execute(Sensor._encode(toy, 19, proc))
-        
+
     @staticmethod
-    def enable_collision_detected_notify(toy, enable: bool, proc=None): #Untested
+    def enable_collision_detected_notify(toy, enable: bool, proc=None):  # Untested
         toy._execute(Sensor._encode(toy, 20, proc, [int(enable)]))
 
     @staticmethod
@@ -179,15 +179,15 @@ class Sensor(Commands):
     @staticmethod
     def stop_robot_to_robot_infrared_broadcasting(toy, proc=None):
         toy._execute(Sensor._encode(toy, 41, proc))
-        
+
     @staticmethod
-    def send_robot_to_robot_infrared_message(toy, s, s2, s3, s4, s5, proc=None): #Untested / Unknown param names
+    def send_robot_to_robot_infrared_message(toy, s, s2, s3, s4, s5, proc=None):  # Untested / Unknown param names
         toy._execute(Sensor._encode(toy, 42, proc, [s, s2, s3, s4, s5]))
-        
+
     @staticmethod
-    def listen_for_robot_to_robot_infrared_message(toy, s, j, proc=None): #Untested / Unknown param names
+    def listen_for_robot_to_robot_infrared_message(toy, s, j, proc=None):  # Untested / Unknown param names
         toy._execute(Sensor._encode(toy, 43, proc, [s, j]))
-    
+
     robot_to_robot_infrared_message_received_notify = (24, 44, 0xff), lambda listener, p: listener(p.data[0])
 
     @staticmethod

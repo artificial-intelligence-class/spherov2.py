@@ -77,6 +77,7 @@ class LedManager:
 
 rawMotor = namedtuple('rawMotor', ('left', 'right'))
 
+
 class SpheroEduAPI:
     """Implementation of Sphero Edu Javascript APIs: https://sphero.docsapp.io/docs/get-started"""
 
@@ -407,7 +408,7 @@ class SpheroEduAPI:
         
     def register_matrix_animation(self, s, s2, z, s3, s_arr, i, i_arr): #TODO: fix this function
         ToyUtil.register_matrix_animation(self.__toy, s, s2, z, s3, s_arr, i, i_arr);
-        
+    
     def play_matrix_animation(self, s):
         ToyUtil.play_matrix_animation(self.__toy, s);
 

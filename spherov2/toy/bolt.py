@@ -28,8 +28,8 @@ class BOLT(ToyV2):
         BACK_RED = 3
         BACK_GREEN = 4
         BACK_BLUE = 5
-        
-#Sensors Available:
+
+    #Sensors Available:
     sensors = OrderedDict(
         quaternion=OrderedDict(
             x=ToySensor(0x2000000, -1., 1.),
@@ -68,7 +68,6 @@ class BOLT(ToyV2):
         )
     )
     
-    #ambient_light - 0x40000 - 120000.0f
     
 #Bolt Supported calls
     #API and Shell:

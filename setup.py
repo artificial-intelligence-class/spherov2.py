@@ -5,7 +5,7 @@ with open('README.md', 'rt', encoding='utf_8') as f:
 
 setup(
     name='spherov2',
-    version='0.8.3',
+    version='0.9',
     author='Hanbang Wang', 'Elionardo Feliciano',
     author_email='hanbangw@cis.upenn.edu', 'elionardo.feliciano.dev@gmail.com',
     license='MIT',
