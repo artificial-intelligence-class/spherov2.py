@@ -114,53 +114,46 @@ class BB9E(ToyV2):
             z=ToySensor(0x800000, -20000., 20000.)
         )
     )
-    
-    #Animatronic
+
+    # Animatronic
     play_animation = Animatronic.play_animation
     stop_animation = Animatronic.stop_animation
     enable_idle_animations = Animatronic.enable_idle_animations
     enable_trophy_mode = Animatronic.enable_trophy_mode
     get_trophy_mode_enabled = Animatronic.get_trophy_mode_enabled
-    
-    
-    #APIAndShell
+
+    # APIAndShell
     ping = ApiAndShell.ping
     get_api_protocol_version = ApiAndShell.get_api_protocol_version
     send_command_to_shell = ApiAndShell.send_command_to_shell
     add_send_string_to_console_listener = partialmethod(Toy._add_listener, ApiAndShell.send_string_to_console)
     remove_send_string_to_console_listener = partialmethod(Toy._remove_listener, ApiAndShell.send_string_to_console)
-    
-    
-    #Connection
+
+    # Connection
     set_bluetooth_name = Connection.set_bluetooth_name
     get_bluetooth_name = Connection.get_bluetooth_name
-    
-    
-    #Drive
+
+    # Drive
     set_raw_motors = Drive.set_raw_motors
     reset_yaw = Drive.reset_yaw
     drive_with_heading = Drive.drive_with_heading
     set_stabilization = Drive.set_stabilization
-    
-    
-    #FactoryTest
+
+    # FactoryTest
     get_factory_mode_challenge = FactoryTest.get_factory_mode_challenge
     enter_factory_mode = FactoryTest.enter_factory_mode
     exit_factory_mode = FactoryTest.exit_factory_mode
     get_chassis_id = FactoryTest.get_chassis_id
-    
-    
-    #Firmware
+
+    # Firmware
     get_pending_update_flags = Firmware.get_pending_update_flags
-    
-    
-    #IO
+
+    # IO
     play_audio_file = IO.play_audio_file
     set_all_leds_with_16_bit_mask = IO.set_all_leds_with_16_bit_mask
     start_idle_led_animation = IO.start_idle_led_animation
-    
-    
-    #Sensor
+
+    # Sensor
     set_sensor_streaming_mask = Sensor.set_sensor_streaming_mask
     get_sensor_streaming_mask = Sensor.get_sensor_streaming_mask
     add_sensor_streaming_data_notify_listener = partialmethod(Toy._add_listener, Sensor.sensor_streaming_data_notify)
@@ -185,9 +178,8 @@ class BB9E(ToyV2):
     enable_gyro_activity_notify = Sensor.enable_gyro_activity_notify
     add_gyro_activity_notify_listener = partialmethod(Toy._add_listener, Sensor.gyro_activity_notify)
     remove_gyro_activity_notify_listener = partialmethod(Toy._remove_listener, Sensor.gyro_activity_notify)
-    
-    
-    #Power
+
+    # Power
     enter_deep_sleep = Power.enter_deep_sleep
     sleep = Power.sleep
     get_battery_voltage = Power.get_battery_voltage
@@ -206,30 +198,32 @@ class BB9E(ToyV2):
                                                                      Power.battery_voltage_state_change_notify)
     remove_battery_voltage_state_change_notify_listener = partialmethod(Toy._remove_listener,
                                                                         Power.battery_voltage_state_change_notify)
-                                                                        
-                                                                        
-    #SystemInfo
+
+    # SystemInfo
     get_main_app_version = SystemInfo.get_main_app_version
     get_bootloader_version = SystemInfo.get_bootloader_version
     get_board_revision = SystemInfo.get_board_revision
     get_mac_address = SystemInfo.get_mac_address
     get_stats_id = SystemInfo.get_stats_id
     get_secondary_main_app_version = SystemInfo.get_secondary_main_app_version
-    add_secondary_main_app_version_notify_listener = partialmethod(Toy._add_listener, SystemInfo.secondary_main_app_version_notify)
-    remove_secondary_main_app_version_notify_listener = partialmethod(Toy._remove_listener, SystemInfo.secondary_main_app_version_notify)
+    add_secondary_main_app_version_notify_listener = partialmethod(Toy._add_listener,
+                                                                   SystemInfo.secondary_main_app_version_notify)
+    remove_secondary_main_app_version_notify_listener = partialmethod(Toy._remove_listener,
+                                                                      SystemInfo.secondary_main_app_version_notify)
     get_processor_name = SystemInfo.get_processor_name
     get_secondary_mcu_bootloader_version = SystemInfo.get_secondary_mcu_bootloader_version
-    add_get_secondary_mcu_bootloader_version_notify_listener = partialmethod(Toy._add_listener, SystemInfo.secondary_mcu_bootloader_version_notify)
-    remove_get_secondary_mcu_bootloader_version_notify_listener = partialmethod(Toy._remove_listener, SystemInfo.secondary_mcu_bootloader_version_notify)
+    add_get_secondary_mcu_bootloader_version_notify_listener = partialmethod(Toy._add_listener,
+                                                                             SystemInfo.secondary_mcu_bootloader_version_notify)
+    remove_get_secondary_mcu_bootloader_version_notify_listener = partialmethod(Toy._remove_listener,
+                                                                                SystemInfo.secondary_mcu_bootloader_version_notify)
     get_three_character_sku = SystemInfo.get_three_character_sku
-    
-    
-    #Controls
+
+    # Controls
     @property
     @lru_cache(None)
     def drive_control(self):
         return DriveControl(self)
-        
+
     @property
     @lru_cache(None)
     def firmware_update_control(self):
@@ -244,7 +238,7 @@ class BB9E(ToyV2):
     @lru_cache(None)
     def sensor_control(self):
         return SensorControl(self)
-        
+
     @property
     @lru_cache(None)
     def stats_control(self):

@@ -1,5 +1,7 @@
-from enum import IntEnum, IntFlag
+from enum import IntEnum
+
 from spherov2.commands import Commands
+
 
 class BleCentralStates(IntEnum):
     NOT_YET_INITIALIZED = 0
@@ -10,7 +12,7 @@ class BleCentralStates(IntEnum):
     CONNECTED = 5
     DISCONNECTING = 6
     CONFIGURING = 7
-    
+
 
 class BleCentralStates(IntEnum):
     NOT_YET_INITIALIZED = 0
