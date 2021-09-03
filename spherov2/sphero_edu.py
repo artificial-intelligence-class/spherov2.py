@@ -350,7 +350,7 @@ class SpheroEduAPI:
         if isinstance(color, int):
             self.__leds['back'] = Color(0, 0, bound_value(0, color, 255))
             ToyUtil.set_back_led_brightness(self.__toy, self.__leds['back'].b)
-        elif isinstance(self.__toy, (R2D2, R2Q5, BOLT, RVR)):
+        elif isinstance(self.__toy, (R2D2, R2Q5, BOLT, RVR, Mini)):
             self.__leds['back'] = bound_color(color, self.__leds['back'])
             ToyUtil.set_back_led(self.__toy, **self.__leds['back']._asdict())
 
@@ -385,33 +385,30 @@ class SpheroEduAPI:
             time.sleep(period)
 
     # TODO Sphero BOLT Lights
-    def set_matrix_pixel(self, x: int, y: int, color: Color):
+    def set_matrix_pixel(self, x:int, y:int, color: Color):
         """For Sphero BOLT: Changes the color of BOLT's matrix at X and Y value. 8x8
         """
-        strMapLoc: str = str(x) + ':' + str(y)
-        self.__leds[strMapLoc] = bound_color(color, self.__leds[
-            strMapLoc])  # TODO: Do this in a way that works with line and fill
+        strMapLoc:str = str(x) + ':' + str(y)
+        self.__leds[strMapLoc] = bound_color(color, self.__leds[strMapLoc]) #TODO: Do this in a way that works with line and fill
         ToyUtil.set_matrix_pixel(self.__toy, x, y, **self.__leds[strMapLoc]._asdict(), is_user_color=False)
 
     def set_matrix_line(self, x1: int, y1: int, x2: int, y2: int, color: Color):
         """For Sphero BOLT: Changes the color of BOLT's matrix from x1,y1 to x2,y2 in a line. 8x8
         """
-        strMapLoc: str = str(x1) + 'x' + str(y1) + '|' + str(x2) + 'x' + str(y2)
-        self.__leds[strMapLoc] = bound_color(color, self.__leds[
-            strMapLoc])  # TODO: Do this in a way that works with pixel and fill (needs to be accurate to diagonal lines)
+        strMapLoc:str = str(x1) + 'x' + str(y1) + '|' + str(x2) + 'x' + str(y2)
+        self.__leds[strMapLoc] = bound_color(color, self.__leds[strMapLoc]) #TODO: Do this in a way that works with pixel and fill (needs to be accurate to diagonal lines)
         ToyUtil.set_matrix_line(self.__toy, x1, y1, x2, y2, **self.__leds[strMapLoc]._asdict(), is_user_color=False)
-
+        
     def set_matrix_fill(self, x1: int, y1: int, x2: int, y2: int, color: Color):
         """For Sphero BOLT: Changes the color of BOLT's matrix from x1,y1 to x2,y2 in a box. 8x8
         """
-        strMapLoc: str = str(x1) + 'x' + str(y1) + '[]' + str(x2) + 'x' + str(y2)
-        self.__leds[strMapLoc] = bound_color(color, self.__leds[
-            strMapLoc])  # TODO: Do this in a way that works with pixel and line
+        strMapLoc:str = str(x1) + 'x' + str(y1) + '[]' + str(x2) + 'x' + str(y2)
+        self.__leds[strMapLoc] = bound_color(color, self.__leds[strMapLoc]) #TODO: Do this in a way that works with pixel and line
         ToyUtil.set_matrix_fill(self.__toy, x1, y1, x2, y2, **self.__leds[strMapLoc]._asdict(), is_user_color=False)
-
-    def register_matrix_animation(self, s, s2, z, s3, s_arr, i, i_arr):  # TODO: fix this function
+        
+    def register_matrix_animation(self, s, s2, z, s3, s_arr, i, i_arr): #TODO: fix this function
         ToyUtil.register_matrix_animation(self.__toy, s, s2, z, s3, s_arr, i, i_arr);
-
+    
     def play_matrix_animation(self, s):
         ToyUtil.play_matrix_animation(self.__toy, s);
 

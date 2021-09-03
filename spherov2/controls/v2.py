@@ -223,6 +223,11 @@ class DriveControl:
         self.__toy.reset_yaw()
 
 
+class FirmwareUpdateControl:
+    def __init__(self, toy):
+        self.__toy = toy
+
+
 class LedControl:
     def __init__(self, toy):
         self.__toy = toy

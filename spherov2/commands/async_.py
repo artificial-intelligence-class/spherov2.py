@@ -1,3 +1,4 @@
+from enum import IntEnum, IntFlag
 import struct
 from enum import IntEnum, IntFlag
 

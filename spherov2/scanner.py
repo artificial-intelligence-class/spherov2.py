@@ -6,12 +6,12 @@ from spherov2.commands.sphero import Sphero
 from spherov2.toy import Toy
 from spherov2.toy.bb8 import BB8
 from spherov2.toy.bb9e import BB9E
-from spherov2.toy.bolt import BOLT
+from spherov2.toy.mini import Mini
 from spherov2.toy.ollie import Ollie
 from spherov2.toy.r2d2 import R2D2
 from spherov2.toy.r2q5 import R2Q5
 from spherov2.toy.rvr import RVR
-
+from spherov2.toy.bolt import BOLT
 
 class ToyNotFoundError(Exception):
     ...
@@ -78,6 +78,7 @@ def find_toy(*, toy_name: str = None, **kwargs) -> Toy:
 
 find_Sphero: Callable[..., Sphero] = partial(find_toy, toy_types=[Sphero])
 find_Ollie: Callable[..., Ollie] = partial(find_toy, toy_types=[Ollie])
+find_Mini: Callable[..., Mini] = partial(find_toy, toy_types=[Mini])
 find_BB8: Callable[..., BB8] = partial(find_toy, toy_types=[BB8])
 find_BB9E: Callable[..., BB9E] = partial(find_toy, toy_types=[BB9E])
 find_R2D2: Callable[..., R2D2] = partial(find_toy, toy_types=[R2D2])

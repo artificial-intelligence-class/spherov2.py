@@ -6,8 +6,8 @@ with open('README.md', 'rt', encoding='utf_8') as f:
 setup(
     name='spherov2',
     version='0.9',
-    author='Hanbang Wang',
-    author_email='hanbangw@cis.upenn.edu',
+    author='Hanbang Wang', # and 'Elionardo Feliciano',
+    author_email='hanbangw@cis.upenn.edu', # and 'elionardo.feliciano.dev@gmail.com',
     license='MIT',
     description='An unofficial Bluetooth low energy library for Sphero toys in Python.',
     long_description=long_desc,

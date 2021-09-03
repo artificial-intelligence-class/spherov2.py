@@ -177,6 +177,16 @@ class DriveControl:
         self.__toy.set_raw_motors(left_mode, left_speed, right_mode, right_speed)
 
 
+class FirmwareUpdateControl:
+    def __init__(self, toy):
+        self.__toy = toy
+
+
+class LedControl:
+    def __init__(self, toy):
+        self.__toy = toy
+
+
 class SensorControl:
     def __init__(self, toy):
         toy.add_sensor_streaming_data_notify_listener(self.__sensor_streaming_data)
@@ -258,3 +268,8 @@ class SensorControl:
         self.__enabled.clear()
         self.__enabled_extended.clear()
         self.__update()
+
+
+class StatsControl:
+    def __init__(self, toy):
+        self.__toy = toy
