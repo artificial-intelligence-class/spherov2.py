@@ -9,9 +9,9 @@ An unofficial Python library for [Sphero](https://sphero.com/) toys that support
 - [x] Sphero BB-8
 - [x] Sphero BB-9E
 - [x] Sphero R2-D2 / R2-Q5
-- [o] Sphero BOLT (In Progress)
-- [ ] Sphero SPRK+ / SPRK 2.0
-- [ ] Sphero Mini
+- [x] Sphero BOLT (In Progress)
+- [x] Sphero SPRK+ / SPRK 2.0
+- [x] Sphero Mini
 - [x] Sphero RVR
 
 The logic is written based on reverse-engineering the official [Sphero Edu for Android](https://play.google.com/store/apps/details?id=com.sphero.sprk), with the help from available documentation and other unofficial community-based Sphero libraries like [igbopie/spherov2.js](https://github.com/igbopie/spherov2.js) and [EnotYoyo/pysphero](https://github.com/EnotYoyo/pysphero).

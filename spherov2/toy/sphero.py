@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from functools import partialmethod, lru_cache
 
-from spherov2.commands.async_ import Async
 from spherov2.commands.bootloader import Bootloader
 from spherov2.commands.core import Core
 from spherov2.commands.power import Power
@@ -118,7 +117,7 @@ class Sphero(Toy):
     set_temporary_options = SpheroCmd.set_temporary_options #SetTemporaryOptionsCommand
     
     
-    #Controls - V1
+    # Controls - V1
     @property
     @lru_cache(None)
     def drive_control(self):
@@ -130,11 +129,18 @@ class Sphero(Toy):
     #def multi_led_control(self):
     #    return LedControl(self)
 
+    # The way utils.py is implemented this doesnt need to be present
+    # @property
+    # @lru_cache(None)
+    # def multi_led_control(self):
+    #    return LedControl(self)
+
     @property
     @lru_cache(None)
     def sensor_control(self):
         return SensorControl(self)
-    
+
+      
     @property
     @lru_cache(None)
     def stats_control(self):
