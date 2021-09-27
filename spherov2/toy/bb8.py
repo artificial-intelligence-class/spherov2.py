@@ -1,15 +1,10 @@
-from collections import OrderedDict
 from enum import IntEnum
-from functools import partialmethod, lru_cache
+from enum import IntEnum
+from functools import lru_cache
 
-from spherov2.commands.async_ import Async
-from spherov2.commands.bootloader import Bootloader
 from spherov2.commands.core import Core
-from spherov2.commands.power import Power
-from spherov2.commands.sensor import Sensor
 from spherov2.commands.sphero import Sphero
-from spherov2.controls.v1 import DriveControl, FirmwareUpdateControl, LedControl, SensorControl, StatsControl
-from spherov2.toy import ToyV2, ToySensor, Toy
+from spherov2.controls.v1 import FirmwareUpdateControl
 from spherov2.toy.sphero import Sphero as SPHERO
 from spherov2.types import ToyType
 
@@ -28,8 +23,7 @@ class BB8(SPHERO):
         BODY_BLUE = 2
         AIMING = 3
         HEAD = 4
-        
-        
+
     class Animations(IntEnum):
         EMOTE_ALARM = 0
         EMOTE_NO = 1
@@ -78,21 +72,16 @@ class BB8(SPHERO):
         EYE_2 = 46
         EYE_3 = 47
         EYE_4 = 48
-    
-    
-    #Async - Sphero
-    #Bootloader - Sphero
-    #Core
-    get_factory_config_block_crc = Core.get_factory_config_block_crc #GetFactorConfigBlockCrcCommand
-    
-    
-    #Sphero
-    get_sku = Sphero.get_sku #GetSkuCommand
-        
-    
-    #Controls - Sphero
-    
-    
+
+    # Async - Sphero
+    # Bootloader - Sphero
+    # Core
+    get_factory_config_block_crc = Core.get_factory_config_block_crc  # GetFactorConfigBlockCrcCommand
+
+    # Sphero
+    get_sku = Sphero.get_sku  # GetSkuCommand
+
+    # Controls - Sphero
     @property
     @lru_cache(None)
     def firmware_update_control(self):

@@ -126,14 +126,14 @@ class ToyV2(Toy):
     _packet = PacketV2
     _handshake = []
     _response_uuid = _send_uuid = '00010002-574f-4f20-5370-6865726f2121'
-    #_response_uuid = _send_uuid = '00010002-574f-4f20-5370-6865726f2121' #Available responses
-    #_response_uuid = _send_uuid = '00010003-574f-4f20-5370-6865726f2121'
-    #_response_uuid = _send_uuid = '00020004-574f-4f20-5370-6865726f2121'
-    #_response_uuid = _send_uuid = '00020005-574f-4f20-5370-6865726f2121'
-    #_response_uuid = _send_uuid = '00020002-574f-4f20-5370-6865726f2121'
-    #_response_uuid = _send_uuid = '22bb746f-2bbd-7554-2d6f-726568705327'
-    #_response_uuid = _send_uuid = '22bb746f-2bb2-7554-2d6f-726568705327'
-    #_response_uuid = _send_uuid = '22bb746f-2bbf-7554-2d6f-726568705327'
-    #_response_uuid = _send_uuid = '22bb746f-2ba1-7554-2d6f-726568705327'
-    #_response_uuid = _send_uuid = '22bb746f-2ba6-7554-2d6f-726568705327'
-    #_response_uuid = _send_uuid = '22bb746f-2bb0-7554-2d6f-726568705327'
+    # _response_uuid = _send_uuid = '00010002-574f-4f20-5370-6865726f2121' #Available responses
+    # _response_uuid = _send_uuid = '00010003-574f-4f20-5370-6865726f2121'
+    # _response_uuid = _send_uuid = '00020004-574f-4f20-5370-6865726f2121'
+    # _response_uuid = _send_uuid = '00020005-574f-4f20-5370-6865726f2121'
+    # _response_uuid = _send_uuid = '00020002-574f-4f20-5370-6865726f2121'
+    # _response_uuid = _send_uuid = '22bb746f-2bbd-7554-2d6f-726568705327'
+    # _response_uuid = _send_uuid = '22bb746f-2bb2-7554-2d6f-726568705327'
+    # _response_uuid = _send_uuid = '22bb746f-2bbf-7554-2d6f-726568705327'
+    # _response_uuid = _send_uuid = '22bb746f-2ba1-7554-2d6f-726568705327'
+    # _response_uuid = _send_uuid = '22bb746f-2ba6-7554-2d6f-726568705327'
+    # _response_uuid = _send_uuid = '22bb746f-2bb0-7554-2d6f-726568705327'

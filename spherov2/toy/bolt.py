@@ -27,8 +27,8 @@ class BOLT(ToyV2):
         BACK_RED = 3
         BACK_GREEN = 4
         BACK_BLUE = 5
-        
-#Sensors Available:
+
+    # Sensors Available:
     sensors = OrderedDict(
         quaternion=OrderedDict(
             x=ToySensor(0x2000000, -1., 1.),
@@ -64,189 +64,195 @@ class BOLT(ToyV2):
             x=ToySensor(0x2000000, -20000., 20000.),
             y=ToySensor(0x1000000, -20000., 20000.),
             z=ToySensor(0x800000, -20000., 20000.)
-        ),
-        ambient_light=OrderedDict(
-            ambient_light=ToySensor(0x40000, 120000., 120000.))
+        )
     )
-    
-#Bolt Supported calls
-    #API and Shell:
-    get_api_protocol_version = ApiAndShell.get_api_protocol_version #GetApiProtocolVersionCommand
-    get_supported_cids = ApiAndShell.get_supported_cids             #GetSupportedCidsCommand
-    get_supported_dids = ApiAndShell.get_supported_dids             #GetSupportedDidsCommand
-    ping = ApiAndShell.ping                                         #PingCommand
-    send_command_to_shell = ApiAndShell.send_command_to_shell       #SendCommandToShellCommand
-    add_send_string_to_console_listener = partialmethod(Toy._add_listener, ApiAndShell.send_string_to_console) #SendStringToConsoleCommand
-    remove_send_string_to_console_listener = partialmethod(Toy._remove_listener, ApiAndShell.send_string_to_console) #SendStringToConsoleCommand
-    
-    
-    #Connection
-    get_bluetooth_advertising_name = Connection.get_bluetooth_advertising_name #GetBluetoothAdvertisingNameCommand
-    get_bluetooth_name = Connection.get_bluetooth_name #GetBluetoothNameCommand
-    set_bluetooth_name = Connection.set_bluetooth_name #SetBluetoothNameCommand
-    
-    
-    #Drive - Driving done on the Secondary Processor
-    drive_with_heading = partialmethod(Drive.drive_with_heading,
-                                                      proc=Processors.SECONDARY) #DriveWithHeadingCommand
-    reset_yaw = partialmethod(Drive.reset_yaw,
-                                                      proc=Processors.SECONDARY) #ResetYawCommand
-    set_pitch_torque_modification_value = partialmethod(Drive.set_pitch_torque_modification_value,
-                                                      proc=Processors.SECONDARY) #SetPitchTorqueModificationValueCommand
-    set_raw_motors = partialmethod(Drive.set_raw_motors,
-                                                      proc=Processors.SECONDARY) #SetRawMotorsCommand
-    set_stabilization = partialmethod(Drive.set_stabilization,
-                                                      proc=Processors.SECONDARY) #SetStabilizationCommand
-    
-    
-    #Firmware
-    get_pending_update_flags = Firmware.get_pending_update_flags #GetPendingUpdateFlagsCommand
-    
-    
-    #IO - most LED/Matrix stuff is done on Secondary Processor, if issues check that 
-    assign_compressed_frame_player_frames_to_animation = partialmethod(IO.assign_compressed_frame_player_frames_to_animation,
-                                                                       proc=Processors.SECONDARY) #AssignCompressedFramePlayerFramesToAnimationCommand
+
+    # Bolt Supported calls
+    # API and Shell:
+    get_api_protocol_version = ApiAndShell.get_api_protocol_version  # GetApiProtocolVersionCommand
+    get_supported_cids = ApiAndShell.get_supported_cids  # GetSupportedCidsCommand
+    get_supported_dids = ApiAndShell.get_supported_dids  # GetSupportedDidsCommand
+    ping = ApiAndShell.ping  # PingCommand
+    send_command_to_shell = ApiAndShell.send_command_to_shell  # SendCommandToShellCommand
+    add_send_string_to_console_listener = partialmethod(Toy._add_listener,
+                                                        ApiAndShell.send_string_to_console)  # SendStringToConsoleCommand
+    remove_send_string_to_console_listener = partialmethod(Toy._remove_listener,
+                                                           ApiAndShell.send_string_to_console)  # SendStringToConsoleCommand
+
+    # Connection
+    get_bluetooth_advertising_name = Connection.get_bluetooth_advertising_name  # GetBluetoothAdvertisingNameCommand
+    get_bluetooth_name = Connection.get_bluetooth_name  # GetBluetoothNameCommand
+    set_bluetooth_name = Connection.set_bluetooth_name  # SetBluetoothNameCommand
+
+    # Drive
+    drive_with_heading = Drive.drive_with_heading  # DriveWithHeadingCommand
+    reset_yaw = Drive.reset_yaw  # ResetYawCommand
+    set_pitch_torque_modification_value = Drive.set_pitch_torque_modification_value  # SetPitchTorqueModificationValueCommand
+    set_raw_motors = Drive.set_raw_motors  # SetRawMotorsCommand
+    set_stabilization = Drive.set_stabilization  # SetStabilizationCommand
+
+    # Firmware
+    get_pending_update_flags = Firmware.get_pending_update_flags  # GetPendingUpdateFlagsCommand
+
+    # IO - most LED/Matrix stuff is done on Secondary Processor, if issues check that
+    assign_compressed_frame_player_frames_to_animation = partialmethod(
+        IO.assign_compressed_frame_player_frames_to_animation,
+        proc=Processors.SECONDARY)  # AssignCompressedFramePlayerFramesToAnimationCommand
     add_compressed_frame_player_animation_complete_notify_listener = partialmethod(
-        Toy._add_listener, IO.compressed_frame_player_animation_complete_notify) #CompressedFramePlayerAnimationCompleteNotifyCommand
+        Toy._add_listener,
+        IO.compressed_frame_player_animation_complete_notify)  # CompressedFramePlayerAnimationCompleteNotifyCommand
     remove_compressed_frame_player_animation_complete_notify_listener = partialmethod(
-        Toy._remove_listener, IO.compressed_frame_player_animation_complete_notify) #CompressedFramePlayerAnimationCompleteNotifyCommand
-    delete_all_compressed_frame_player_animations_and_frames = partialmethod(IO.delete_all_compressed_frame_player_animations_and_frames,
-                                                                             proc=Processors.SECONDARY) #DeleteAllCompressedFramePlayerAnimationsAndFramesCommand
+        Toy._remove_listener,
+        IO.compressed_frame_player_animation_complete_notify)  # CompressedFramePlayerAnimationCompleteNotifyCommand
+    delete_all_compressed_frame_player_animations_and_frames = partialmethod(
+        IO.delete_all_compressed_frame_player_animations_and_frames,
+        proc=Processors.SECONDARY)  # DeleteAllCompressedFramePlayerAnimationsAndFramesCommand
     draw_compressed_frame_player_fill = partialmethod(IO.draw_compressed_frame_player_fill,
-                                                      proc=Processors.SECONDARY) #DrawCompressedFramePlayerFillCommand
+                                                      proc=Processors.SECONDARY)  # DrawCompressedFramePlayerFillCommand
     draw_compressed_frame_player_line = partialmethod(IO.draw_compressed_frame_player_line,
-                                                      proc=Processors.SECONDARY) #DrawCompressedFramePlayerLineCommand
+                                                      proc=Processors.SECONDARY)  # DrawCompressedFramePlayerLineCommand
     get_compressed_frame_player_list_of_frames = partialmethod(IO.get_compressed_frame_player_list_of_frames,
-                                                               proc=Processors.SECONDARY) #GetCompressedFramePlayerListOfFramesCommand
-    override_compressed_frame_player_animation_global_settings = partialmethod(IO.override_compressed_frame_player_animation_global_settings,
-                                                            proc=Processors.SECONDARY) #OverrideCompressedFramePlayerAnimationGlobalSettingsCommand
+                                                               proc=Processors.SECONDARY)  # GetCompressedFramePlayerListOfFramesCommand
+    override_compressed_frame_player_animation_global_settings = partialmethod(
+        IO.override_compressed_frame_player_animation_global_settings,
+        proc=Processors.SECONDARY)  # OverrideCompressedFramePlayerAnimationGlobalSettingsCommand
     pause_compressed_frame_player_animation = partialmethod(IO.pause_compressed_frame_player_animation,
-                                                            proc=Processors.SECONDARY) #PauseCompressedFramePlayerAnimationCommand
+                                                            proc=Processors.SECONDARY)  # PauseCompressedFramePlayerAnimationCommand
     play_compressed_frame_player_animation = partialmethod(IO.play_compressed_frame_player_animation,
-                                                           proc=Processors.SECONDARY) #PlayCompressedFramePlayerAnimationCommand
-    play_compressed_frame_player_animation_with_loop_option = partialmethod(IO.play_compressed_frame_player_animation_with_loop_option,
-                                                            proc=Processors.SECONDARY) #PlayCompressedFramePlayerAnimationWithLoopOptionCommand
+                                                           proc=Processors.SECONDARY)  # PlayCompressedFramePlayerAnimationCommand
+    play_compressed_frame_player_animation_with_loop_option = partialmethod(
+        IO.play_compressed_frame_player_animation_with_loop_option,
+        proc=Processors.SECONDARY)  # PlayCompressedFramePlayerAnimationWithLoopOptionCommand
     play_compressed_frame_player_frame = partialmethod(IO.play_compressed_frame_player_frame,
-                                                       proc=Processors.SECONDARY) #PlayCompressedFramePlayerFrameCommand
+                                                       proc=Processors.SECONDARY)  # PlayCompressedFramePlayerFrameCommand
     reset_compressed_frame_player_animation = partialmethod(IO.reset_compressed_frame_player_animation,
-                                                            proc=Processors.SECONDARY) #ResetCompressedFramePlayerAnimationCommand
+                                                            proc=Processors.SECONDARY)  # ResetCompressedFramePlayerAnimationCommand
     resume_compressed_frame_player_animation = partialmethod(IO.resume_compressed_frame_player_animation,
-                                                             proc=Processors.SECONDARY) #ResumeCompressedFramePlayerAnimationCommand
+                                                             proc=Processors.SECONDARY)  # ResumeCompressedFramePlayerAnimationCommand
     save_compressed_frame_player64_bit_frame = partialmethod(IO.save_compressed_frame_player64_bit_frame,
-                                                             proc=Processors.SECONDARY) #SaveCompressedFramePlayer64BitFrameCommand
+                                                             proc=Processors.SECONDARY)  # SaveCompressedFramePlayer64BitFrameCommand
     save_compressed_frame_player_animation = partialmethod(IO.save_compressed_frame_player_animation,
-                                                           proc=Processors.SECONDARY) #SaveCompressedFramePlayerAnimationCommand
-    save_compressed_frame_player_animation_without_frames = partialmethod(IO.save_compressed_frame_player_animation_without_frames,
-                                                           proc=Processors.SECONDARY) #SaveCompressedFramePlayerAnimationWithoutFramesCommand
+                                                           proc=Processors.SECONDARY)  # SaveCompressedFramePlayerAnimationCommand
+    save_compressed_frame_player_animation_without_frames = partialmethod(
+        IO.save_compressed_frame_player_animation_without_frames,
+        proc=Processors.SECONDARY)  # SaveCompressedFramePlayerAnimationWithoutFramesCommand
     set_all_leds_with_8_bit_mask = partialmethod(IO.set_all_leds_with_8_bit_mask,
-                                                          proc=Processors.PRIMARY) #SetAllLedsWith8BitMaskCommand
+                                                 proc=Processors.PRIMARY)  # SetAllLedsWith8BitMaskCommand
     set_compressed_frame_player = partialmethod(IO.set_compressed_frame_player,
-                                                          proc=Processors.SECONDARY) #SetCompressedFramePlayerCommand
+                                                proc=Processors.SECONDARY)  # SetCompressedFramePlayerCommand
     set_compressed_frame_player_frame_rotation = partialmethod(IO.set_compressed_frame_player_frame_rotation,
-                                                          proc=Processors.SECONDARY) #SetCompressedFramePlayerFrameRotationCommand
+                                                               proc=Processors.SECONDARY)  # SetCompressedFramePlayerFrameRotationCommand
     set_compressed_frame_player_one_color = partialmethod(IO.set_compressed_frame_player_one_color,
-                                                          proc=Processors.SECONDARY) #SetCompressedFramePlayerOneColorCommand
+                                                          proc=Processors.SECONDARY)  # SetCompressedFramePlayerOneColorCommand
     set_compressed_frame_player_pixel = partialmethod(IO.set_compressed_frame_player_pixel,
-                                                          proc=Processors.SECONDARY) #SetCompressedFramePlayerPixelCommand
+                                                      proc=Processors.SECONDARY)  # SetCompressedFramePlayerPixelCommand
     set_compressed_frame_player_single_character = partialmethod(IO.set_compressed_frame_player_single_character,
-                                                          proc=Processors.SECONDARY) #SetCompressedFramePlayerSingleCharacterCommand
+                                                                 proc=Processors.SECONDARY)  # SetCompressedFramePlayerSingleCharacterCommand
     set_compressed_frame_player_text_scrolling = partialmethod(IO.set_compressed_frame_player_text_scrolling,
-                                                          proc=Processors.SECONDARY) #SetCompressedFramePlayerTextScrollingCommand
+                                                               proc=Processors.SECONDARY)  # SetCompressedFramePlayerTextScrollingCommand
     add_compressed_frame_player_animation_complete_notify = partialmethod(
-        Toy._add_listener, IO.set_compressed_frame_player_text_scrolling_notify) #SetCompressedFramePlayerTextScrollingNotifyCommand
+        Toy._add_listener,
+        IO.set_compressed_frame_player_text_scrolling_notify)  # SetCompressedFramePlayerTextScrollingNotifyCommand
     remove_compressed_frame_player_animation_complete_notify_listener = partialmethod(
-        Toy._remove_listener, IO.set_compressed_frame_player_text_scrolling_notify) #SetCompressedFramePlayerTextScrollingNotifyCommand
-    set_led = partialmethod(IO.set_led, proc = Processors.SECONDARY) #SetLedCommand    
-    
-    #Testing
+        Toy._remove_listener,
+        IO.set_compressed_frame_player_text_scrolling_notify)  # SetCompressedFramePlayerTextScrollingNotifyCommand
+    set_led = partialmethod(IO.set_led, proc=Processors.SECONDARY)  # SetLedCommand
+
+    # Testing
     release_led_requests = partialmethod(IO.release_led_requests, proc=Processors.PRIMARY)
-    
 
-    #Power
+    # Power
     add_will_sleep_notify_listener = partialmethod(Toy._add_listener,
-                                                   Power.charger_state_changed_notify) #ChargerStateChangedNotifyCommand
+                                                   Power.charger_state_changed_notify)  # ChargerStateChangedNotifyCommand
     remove_will_sleep_notify_listener = partialmethod(Toy._remove_listener,
-                                                      Power.charger_state_changed_notify) #ChargerStateChangedNotifyCommand   
+                                                      Power.charger_state_changed_notify)  # ChargerStateChangedNotifyCommand
     add_will_sleep_notify_listener = partialmethod(Toy._add_listener,
-                                                   Power.did_sleep_notify) #DidSleepNotifyCommand
+                                                   Power.did_sleep_notify)  # DidSleepNotifyCommand
     remove_will_sleep_notify_listener = partialmethod(Toy._remove_listener,
-                                                      Power.did_sleep_notify) #DidSleepNotifyCommand    
-    enable_battery_voltage_state_change_notify = Power.enable_battery_voltage_state_change_notify #EnableBatteryVoltageStateChangeNotifyCommand
-    enable_charger_state_changed_notify = Power.enable_charger_state_changed_notify #EnableChargerStateChangedNotifyCommand
-    enter_deep_sleep = Power.enter_deep_sleep #EnterDeepSleepCommand
-    get_battery_voltage = Power.get_battery_voltage #GetBatteryVoltageCommand
-    get_battery_voltage_state = Power.get_battery_voltage_state #GetBatteryVoltageStateCommand
-    get_charger_state = Power.get_charger_state #GetChargerStateCommand
-    sleep = Power.sleep #SleepCommand
-    wake = Power.wake #WakeCommand
+                                                      Power.did_sleep_notify)  # DidSleepNotifyCommand
+    enable_battery_voltage_state_change_notify = Power.enable_battery_voltage_state_change_notify  # EnableBatteryVoltageStateChangeNotifyCommand
+    enable_charger_state_changed_notify = Power.enable_charger_state_changed_notify  # EnableChargerStateChangedNotifyCommand
+    enter_deep_sleep = Power.enter_deep_sleep  # EnterDeepSleepCommand
+    get_battery_voltage = Power.get_battery_voltage  # GetBatteryVoltageCommand
+    get_battery_voltage_state = Power.get_battery_voltage_state  # GetBatteryVoltageStateCommand
+    get_charger_state = Power.get_charger_state  # GetChargerStateCommand
+    sleep = Power.sleep  # SleepCommand
+    wake = Power.wake  # WakeCommand
     add_will_sleep_notify_listener = partialmethod(Toy._add_listener,
-                                                   Power.will_sleep_notify) #WillSleepNotifyCommand
+                                                   Power.will_sleep_notify)  # WillSleepNotifyCommand
     remove_will_sleep_notify_listener = partialmethod(Toy._remove_listener,
-                                                      Power.will_sleep_notify) #WillSleepNotifyCommand
-    
-    
-    #Sensor
-    add_collision_detected_notify_listener = partialmethod(Toy._add_listener, Sensor.collision_detected_notify) #CollisionDetectedNotifyCommand
-    remove_collision_detected_notify_listener = partialmethod(Toy._remove_listener, Sensor.collision_detected_notify) #CollisionDetectedNotifyCommand
-    configure_collision_detection = Sensor.configure_collision_detection #ConfigureCollisionDetectionCommand
-    enable_gyro_max_notify = Sensor.enable_gyro_max_notify #EnableGyroMaxNotifyCommand
-    get_ambient_light_sensor_value = Sensor.get_ambient_light_sensor_value #GetAmbientLightSensorValueCommand
-    get_bot_to_bot_infrared_readings = Sensor.get_bot_to_bot_infrared_readings #GetBotToBotInfraredReadingsCommand
-    get_extended_sensor_streaming_mask = Sensor.get_extended_sensor_streaming_mask #GetExtendedSensorStreamingMaskCommand
-    set_sensor_streaming_mask = Sensor.set_sensor_streaming_mask #GetSensorStreamingMaskCommand
-    add_gyro_max_notify_listener = partialmethod(Toy._add_listener, Sensor.gyro_max_notify) #GyroMaxNotifyCommand
-    remove_gyro_max_notify_listener = partialmethod(Toy._remove_listener, Sensor.gyro_max_notify) #GyroMaxNotifyCommand
-    listen_for_robot_to_robot_infrared_message = Sensor.listen_for_robot_to_robot_infrared_message #ListenForRobotToRobotInfraredMessageCommand
-    magnetometer_calibrate_to_north = Sensor.magnetometer_calibrate_to_north #MagnetometerCalibrateToNorthCommand
-    add_magnetometer_north_yaw_notify_listener = partialmethod(Toy._add_listener, Sensor.magnetometer_north_yaw_notify) #MagnetometerNorthYawNotifyCommand
-    remove_magnetometer_north_yaw_notify_listener = partialmethod(Toy._remove_listener, Sensor.magnetometer_north_yaw_notify) #MagnetometerNorthYawNotifyCommand    
-    reset_locator_x_and_y = Sensor.reset_locator_x_and_y #ResetLocationXAndYCommand
-    add_robot_to_robot_infrared_message_received_notify_listener = partialmethod(Toy._add_listener, Sensor.robot_to_robot_infrared_message_received_notify) ##RobotToRobotInfraredMessageReceivedNotifyCommand
-    remove_robot_to_robot_infrared_message_received_notify_listener = partialmethod(Toy._remove_listener, Sensor.robot_to_robot_infrared_message_received_notify) #RobotToRobotInfraredMessageReceivedNotifyCommand
-    send_robot_to_robot_infrared_message = Sensor.send_robot_to_robot_infrared_message #SendRobotToRobotInfraredMessageCommand
-    add_sensor_streaming_data_notify_listener = partialmethod(Toy._add_listener, Sensor.sensor_streaming_data_notify) #SensorStreamingDataNotifyCommand
-    remove_sensor_streaming_data_notify_listener = partialmethod(Toy._remove_listener, Sensor.sensor_streaming_data_notify) #SensorStreamingDataNotifyCommand
-    set_extended_sensor_streaming_mask = Sensor.set_extended_sensor_streaming_mask #SetExtendedSensorStreamingMaskCommand
-    set_locator_flags = Sensor.set_locator_flags #SetLocatorFlagsCommand
-    get_sensor_streaming_mask = Sensor.get_sensor_streaming_mask #SetSensorStreamingMaskCommand
-    start_robot_to_robot_infrared_broadcasting = Sensor.start_robot_to_robot_infrared_broadcasting #StartRobotToRobotInfraredBroadcastingCommand
-    start_robot_to_robot_infrared_evading = Sensor.start_robot_to_robot_infrared_evading #StartRobotToRobotInfraredEvadingCommand
-    start_robot_to_robot_infrared_following = Sensor.start_robot_to_robot_infrared_following #StartRobotToRobotInfraredFollowingCommand
-    stop_robot_to_robot_infrared_broadcasting = Sensor.stop_robot_to_robot_infrared_broadcasting #StopRobotToRobotInfraredBroadcastingCommand
-    stop_robot_to_robot_infrared_evading = Sensor.stop_robot_to_robot_infrared_evading #StopRobotToRobotInfraredEvadingCommand
-    stop_robot_to_robot_infrared_following = Sensor.stop_robot_to_robot_infrared_following #StopRobotToRobotInfraredFollowingCommand
-    
+                                                      Power.will_sleep_notify)  # WillSleepNotifyCommand
 
-    #System Info
-    erase_config_block = SystemInfo.erase_config_block           #EraseConfigBlockCommand
-    get_board_revision = SystemInfo.get_board_revision           #GetBoardRevisionCommand
-    get_boot_reason = SystemInfo.get_boot_reason                 #GetBootReasonCommand
-    get_bootloader_version = SystemInfo.get_bootloader_version   #GetBootloaderVersionCommand
+    # Sensor
+    add_collision_detected_notify_listener = partialmethod(Toy._add_listener,
+                                                           Sensor.collision_detected_notify)  # CollisionDetectedNotifyCommand
+    remove_collision_detected_notify_listener = partialmethod(Toy._remove_listener,
+                                                              Sensor.collision_detected_notify)  # CollisionDetectedNotifyCommand
+    configure_collision_detection = Sensor.configure_collision_detection  # ConfigureCollisionDetectionCommand
+    enable_gyro_max_notify = Sensor.enable_gyro_max_notify  # EnableGyroMaxNotifyCommand
+    get_ambient_light_sensor_value = Sensor.get_ambient_light_sensor_value  # GetAmbientLightSensorValueCommand
+    get_bot_to_bot_infrared_readings = Sensor.get_bot_to_bot_infrared_readings  # GetBotToBotInfraredReadingsCommand
+    get_extended_sensor_streaming_mask = Sensor.get_extended_sensor_streaming_mask  # GetExtendedSensorStreamingMaskCommand
+    set_sensor_streaming_mask = Sensor.set_sensor_streaming_mask  # GetSensorStreamingMaskCommand
+    add_gyro_max_notify_listener = partialmethod(Toy._add_listener, Sensor.gyro_max_notify)  # GyroMaxNotifyCommand
+    remove_gyro_max_notify_listener = partialmethod(Toy._remove_listener,
+                                                    Sensor.gyro_max_notify)  # GyroMaxNotifyCommand
+    listen_for_robot_to_robot_infrared_message = Sensor.listen_for_robot_to_robot_infrared_message  # ListenForRobotToRobotInfraredMessageCommand
+    magnetometer_calibrate_to_north = Sensor.magnetometer_calibrate_to_north  # MagnetometerCalibrateToNorthCommand
+    add_magnetometer_north_yaw_notify_listener = partialmethod(Toy._add_listener,
+                                                               Sensor.magnetometer_north_yaw_notify)  # MagnetometerNorthYawNotifyCommand
+    remove_magnetometer_north_yaw_notify_listener = partialmethod(Toy._remove_listener,
+                                                                  Sensor.magnetometer_north_yaw_notify)  # MagnetometerNorthYawNotifyCommand
+    reset_locator_x_and_y = Sensor.reset_locator_x_and_y  # ResetLocationXAndYCommand
+    add_robot_to_robot_infrared_message_received_notify_listener = partialmethod(Toy._add_listener,
+                                                                                 Sensor.robot_to_robot_infrared_message_received_notify)  ##RobotToRobotInfraredMessageReceivedNotifyCommand
+    remove_robot_to_robot_infrared_message_received_notify_listener = partialmethod(Toy._remove_listener,
+                                                                                    Sensor.robot_to_robot_infrared_message_received_notify)  # RobotToRobotInfraredMessageReceivedNotifyCommand
+    send_robot_to_robot_infrared_message = Sensor.send_robot_to_robot_infrared_message  # SendRobotToRobotInfraredMessageCommand
+    add_sensor_streaming_data_notify_listener = partialmethod(Toy._add_listener,
+                                                              Sensor.sensor_streaming_data_notify)  # SensorStreamingDataNotifyCommand
+    remove_sensor_streaming_data_notify_listener = partialmethod(Toy._remove_listener,
+                                                                 Sensor.sensor_streaming_data_notify)  # SensorStreamingDataNotifyCommand
+    set_extended_sensor_streaming_mask = Sensor.set_extended_sensor_streaming_mask  # SetExtendedSensorStreamingMaskCommand
+    set_locator_flags = Sensor.set_locator_flags  # SetLocatorFlagsCommand
+    get_sensor_streaming_mask = Sensor.get_sensor_streaming_mask  # SetSensorStreamingMaskCommand
+    start_robot_to_robot_infrared_broadcasting = Sensor.start_robot_to_robot_infrared_broadcasting  # StartRobotToRobotInfraredBroadcastingCommand
+    start_robot_to_robot_infrared_evading = Sensor.start_robot_to_robot_infrared_evading  # StartRobotToRobotInfraredEvadingCommand
+    start_robot_to_robot_infrared_following = Sensor.start_robot_to_robot_infrared_following  # StartRobotToRobotInfraredFollowingCommand
+    stop_robot_to_robot_infrared_broadcasting = Sensor.stop_robot_to_robot_infrared_broadcasting  # StopRobotToRobotInfraredBroadcastingCommand
+    stop_robot_to_robot_infrared_evading = Sensor.stop_robot_to_robot_infrared_evading  # StopRobotToRobotInfraredEvadingCommand
+    stop_robot_to_robot_infrared_following = Sensor.stop_robot_to_robot_infrared_following  # StopRobotToRobotInfraredFollowingCommand
+
+    # System Info
+    erase_config_block = SystemInfo.erase_config_block  # EraseConfigBlockCommand
+    get_board_revision = SystemInfo.get_board_revision  # GetBoardRevisionCommand
+    get_boot_reason = SystemInfo.get_boot_reason  # GetBootReasonCommand
+    get_bootloader_version = SystemInfo.get_bootloader_version  # GetBootloaderVersionCommand
     get_secondary_mcu_bootloader_version = SystemInfo.get_secondary_mcu_bootloader_version
-    get_config_block = SystemInfo.get_config_block               #GetConfigBlockCommand
-    get_last_error_info = SystemInfo.get_last_error_info         #GetLastErrorInfoCommand
-    get_mac_address = SystemInfo.get_mac_address                 #GetMacAddressCommand
-    get_main_app_version = SystemInfo.get_main_app_version       #GetMainAppVersionCommand
+    get_config_block = SystemInfo.get_config_block  # GetConfigBlockCommand
+    get_last_error_info = SystemInfo.get_last_error_info  # GetLastErrorInfoCommand
+    get_mac_address = SystemInfo.get_mac_address  # GetMacAddressCommand
+    get_main_app_version = SystemInfo.get_main_app_version  # GetMainAppVersionCommand
     get_secondary_main_app_version = SystemInfo.get_secondary_main_app_version
-    get_manufacturing_date = SystemInfo.get_manufacturing_date   #GetManufacturingDateCommand
-    get_processor_name = SystemInfo.get_processor_name           #GetProcessorNameCommand
-    get_sku = SystemInfo.get_sku                                 #GetSkuCommand
-    get_stats_id = SystemInfo.get_stats_id                       #GetStatsIdCommand
-    get_swd_locking_status = SystemInfo.get_swd_locking_status   #GetSwdLockingStatusCommand
-    set_config_block = SystemInfo.set_config_block               #SetConfigBlockCommand
-    write_config_block = SystemInfo.write_config_block           #WriteConfigBlockCommand
-    
-    #Controls - V2
+    get_manufacturing_date = SystemInfo.get_manufacturing_date  # GetManufacturingDateCommand
+    get_processor_name = SystemInfo.get_processor_name  # GetProcessorNameCommand
+    get_sku = SystemInfo.get_sku  # GetSkuCommand
+    get_stats_id = SystemInfo.get_stats_id  # GetStatsIdCommand
+    get_swd_locking_status = SystemInfo.get_swd_locking_status  # GetSwdLockingStatusCommand
+    set_config_block = SystemInfo.set_config_block  # SetConfigBlockCommand
+    write_config_block = SystemInfo.write_config_block  # WriteConfigBlockCommand
+
+    # Controls - V2
     @property
     @lru_cache(None)
     def animation_control(self):
         return AnimationControl(self)
-    
+
     @property
     @lru_cache(None)
     def drive_control(self):
         return DriveControl(self)
-    
+
     @property
     @lru_cache(None)
     def multi_led_control(self):
@@ -256,7 +262,7 @@ class BOLT(ToyV2):
     @lru_cache(None)
     def sensor_control(self):
         return SensorControl(self)
-    
+
     @property
     @lru_cache(None)
     def stats_control(self):

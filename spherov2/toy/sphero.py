@@ -54,80 +54,76 @@ class Sphero(Toy):
         ),
         speed=OrderedDict(speed=ToySensor(0x400000, 0., 32767.)),
     )
-    
+
     def wake(self):
         self._Toy__adapter.write('22bb746f-2bbf-7554-2d6f-726568705327', bytearray([1]))
-    
-    
-    #Async
+
+    # Async
     add_battery_state_changed_notify_listener = partialmethod(Toy._add_listener,
-                                                   Power.battery_state_changed_notify) #BatteryStateChangedNotifyCommand
+                                                              Power.battery_state_changed_notify)  # BatteryStateChangedNotifyCommand
     remove_battery_state_changed_notify_listener = partialmethod(Toy._remove_listener,
-                                                      Power.battery_state_changed_notify) #BatteryStateChangedNotifyCommand
-    add_collision_detected_notify_listener = partialmethod(Toy._add_listener, Sensor.collision_detected_notify) #CollisionDetectedNotifyCommand
-    remove_collision_detected_notify_listener = partialmethod(Toy._remove_listener, Sensor.collision_detected_notify) #CollisionDetectedNotifyCommand
-    add_did_sleep_notify_listener = partialmethod(Toy._add_listener, Power.did_sleep_notify) #DidSleepNotifyCommand
-    remove_did_sleep_notify_listener = partialmethod(Toy._remove_listener, Power.did_sleep_notify) #DidSleepNotifyCommand
-    add_gyro_max_notify_listener = partialmethod(Toy._add_listener, Sensor.gyro_max_notify) #GyroMaxNotifyCommand
-    remove_gyro_max_notify_listener = partialmethod(Toy._remove_listener, Sensor.gyro_max_notify) #GyroMaxNotifyCommand
-    add_sensor_streaming_data_notify_listener = partialmethod(Toy._add_listener, Sensor.sensor_streaming_data_notify) #SensorStreamingDataNotifyCommand
-    remove_sensor_streaming_data_notify_listener = partialmethod(Toy._remove_listener, Sensor.sensor_streaming_data_notify) #SensorStreamingDataNotifyCommand
-    add_will_sleep_notify_listener = partialmethod(Toy._add_listener, Power.will_sleep_notify) #WillSleepNotifyCommand
-    remove_will_sleep_notify_listener = partialmethod(Toy._remove_listener, Power.will_sleep_notify) #WillSleepNotifyCommand
-    
-    
-    #Bootloader
-    begin_reflash = Bootloader.begin_reflash #BeginReflashCommand
-    here_is_page = Bootloader.here_is_page #HereIsPageCommand
-    jump_to_main = Bootloader.jump_to_main #JumpToMainCommand
-    
-    
-    #Core
-    enable_battery_state_changed_notify = Core.enable_battery_state_changed_notify #EnableBatteryStateChangedNotifyCommand
-    get_bluetooth_info = Core.get_bluetooth_info #GetBluetoothInfoCommand
-    get_charger_state = Core.get_charger_state #GetChargerStateCommand
-    get_power_state = Core.get_power_state #GetPowerStateCommand
-    get_versions = Core.get_versions #GetVersionsCommand
-    jump_to_bootloader = Core.jump_to_bootloader #JumpToBootloaderCommand
-    ping = Core.ping #PingCommand
-    set_bluetooth_name = Core.set_bluetooth_name #SetBluetoothNameCommand
-    set_inactivity_timeout = Core.set_inactivity_timeout #SetInactivityTimeoutCommand
-    sleep = Core.sleep #SleepCommand
-    
-    
-    #Sphero
-    boost = SpheroCmd.boost #BoostCommand
-    configure_collision_detection = SpheroCmd.configure_collision_detection #ConfigureCollisionDetectionCommand
-    configure_locator = SpheroCmd.configure_locator #ConfigureLocatorCommand
-    get_chassis_id = SpheroCmd.get_chassis_id #GetChassisId
-    get_persistent_options = SpheroCmd.get_persistent_options #GetPersistentOptionsCommand
-    get_temperature = SpheroCmd.get_temperature #GetTemperatureCommand
-    set_temporary_options = SpheroCmd.set_temporary_options #GetTemporaryOptionsCommand
-    roll = SpheroCmd.roll #RollCommand
-    self_level = SpheroCmd.self_level #SelfLevelCommand
-    set_back_led_brightness = SpheroCmd.set_back_led_brightness #SetBackLedBrightnessCommand
-    set_data_streaming = SpheroCmd.set_data_streaming #SetDataSteamingCommand
-    set_heading = SpheroCmd.set_heading #SetHeadingCommand
-    set_main_led = SpheroCmd.set_main_led #SetMainLedCommand
-    set_motion_timeout = SpheroCmd.set_motion_timeout #SetMotionTimeoutCommand
-    set_persistent_options = SpheroCmd.set_persistent_options #SetPersistentOptionsCommand
-    set_raw_motors = SpheroCmd.set_raw_motors #SetRawMotorsCommand
-    set_rotation_rate = SpheroCmd.set_rotation_rate #SetRotationRateCommand
-    set_stabilization = SpheroCmd.set_stabilization #SetStabilizationCommand
-    set_temporary_options = SpheroCmd.set_temporary_options #SetTemporaryOptionsCommand
-    
-    
+                                                                 Power.battery_state_changed_notify)  # BatteryStateChangedNotifyCommand
+    add_collision_detected_notify_listener = partialmethod(Toy._add_listener,
+                                                           Sensor.collision_detected_notify)  # CollisionDetectedNotifyCommand
+    remove_collision_detected_notify_listener = partialmethod(Toy._remove_listener,
+                                                              Sensor.collision_detected_notify)  # CollisionDetectedNotifyCommand
+    add_did_sleep_notify_listener = partialmethod(Toy._add_listener, Power.did_sleep_notify)  # DidSleepNotifyCommand
+    remove_did_sleep_notify_listener = partialmethod(Toy._remove_listener,
+                                                     Power.did_sleep_notify)  # DidSleepNotifyCommand
+    add_gyro_max_notify_listener = partialmethod(Toy._add_listener, Sensor.gyro_max_notify)  # GyroMaxNotifyCommand
+    remove_gyro_max_notify_listener = partialmethod(Toy._remove_listener,
+                                                    Sensor.gyro_max_notify)  # GyroMaxNotifyCommand
+    add_sensor_streaming_data_notify_listener = partialmethod(Toy._add_listener,
+                                                              Sensor.sensor_streaming_data_notify)  # SensorStreamingDataNotifyCommand
+    remove_sensor_streaming_data_notify_listener = partialmethod(Toy._remove_listener,
+                                                                 Sensor.sensor_streaming_data_notify)  # SensorStreamingDataNotifyCommand
+    add_will_sleep_notify_listener = partialmethod(Toy._add_listener, Power.will_sleep_notify)  # WillSleepNotifyCommand
+    remove_will_sleep_notify_listener = partialmethod(Toy._remove_listener,
+                                                      Power.will_sleep_notify)  # WillSleepNotifyCommand
+
+    # Bootloader
+    begin_reflash = Bootloader.begin_reflash  # BeginReflashCommand
+    here_is_page = Bootloader.here_is_page  # HereIsPageCommand
+    jump_to_main = Bootloader.jump_to_main  # JumpToMainCommand
+
+    # Core
+    enable_battery_state_changed_notify = Core.enable_battery_state_changed_notify  # EnableBatteryStateChangedNotifyCommand
+    get_bluetooth_info = Core.get_bluetooth_info  # GetBluetoothInfoCommand
+    get_charger_state = Core.get_charger_state  # GetChargerStateCommand
+    get_power_state = Core.get_power_state  # GetPowerStateCommand
+    get_versions = Core.get_versions  # GetVersionsCommand
+    jump_to_bootloader = Core.jump_to_bootloader  # JumpToBootloaderCommand
+    ping = Core.ping  # PingCommand
+    set_bluetooth_name = Core.set_bluetooth_name  # SetBluetoothNameCommand
+    set_inactivity_timeout = Core.set_inactivity_timeout  # SetInactivityTimeoutCommand
+    sleep = Core.sleep  # SleepCommand
+
+    # Sphero
+    boost = SpheroCmd.boost  # BoostCommand
+    configure_collision_detection = SpheroCmd.configure_collision_detection  # ConfigureCollisionDetectionCommand
+    configure_locator = SpheroCmd.configure_locator  # ConfigureLocatorCommand
+    get_chassis_id = SpheroCmd.get_chassis_id  # GetChassisId
+    get_persistent_options = SpheroCmd.get_persistent_options  # GetPersistentOptionsCommand
+    get_temperature = SpheroCmd.get_temperature  # GetTemperatureCommand
+    set_temporary_options = SpheroCmd.set_temporary_options  # GetTemporaryOptionsCommand
+    roll = SpheroCmd.roll  # RollCommand
+    self_level = SpheroCmd.self_level  # SelfLevelCommand
+    set_back_led_brightness = SpheroCmd.set_back_led_brightness  # SetBackLedBrightnessCommand
+    set_data_streaming = SpheroCmd.set_data_streaming  # SetDataSteamingCommand
+    set_heading = SpheroCmd.set_heading  # SetHeadingCommand
+    set_main_led = SpheroCmd.set_main_led  # SetMainLedCommand
+    set_motion_timeout = SpheroCmd.set_motion_timeout  # SetMotionTimeoutCommand
+    set_persistent_options = SpheroCmd.set_persistent_options  # SetPersistentOptionsCommand
+    set_raw_motors = SpheroCmd.set_raw_motors  # SetRawMotorsCommand
+    set_rotation_rate = SpheroCmd.set_rotation_rate  # SetRotationRateCommand
+    set_stabilization = SpheroCmd.set_stabilization  # SetStabilizationCommand
+    set_temporary_options = SpheroCmd.set_temporary_options  # SetTemporaryOptionsCommand
+
     # Controls - V1
     @property
     @lru_cache(None)
     def drive_control(self):
         return DriveControl(self)
-        
-    #The way utils.py is implemented this doesnt need to be present
-    #@property
-    #@lru_cache(None)
-    #def multi_led_control(self):
-    #    return LedControl(self)
 
     # The way utils.py is implemented this doesnt need to be present
     # @property
@@ -140,7 +136,6 @@ class Sphero(Toy):
     def sensor_control(self):
         return SensorControl(self)
 
-      
     @property
     @lru_cache(None)
     def stats_control(self):

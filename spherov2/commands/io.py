@@ -155,9 +155,10 @@ class IO(Commands):
     @staticmethod
     def set_compressed_frame_player_text_scrolling(toy, b_arr, j, b, proc=None):  # Untested / Unknown Param Names
         toy._execute(IO._encode(toy, 59, proc, [*b_arr, j, b]))
-    
-    set_compressed_frame_player_text_scrolling_notify = (26, 60, 0xff), lambda listener, p: listener(p.data[0])  # Untested / Unknown Param Names
-    
+
+    set_compressed_frame_player_text_scrolling_notify = (26, 60, 0xff), lambda listener, p: listener(
+        p.data[0])  # Untested / Unknown Param Names
+
     @staticmethod
     def draw_compressed_frame_player_line(toy, x1, y1, x2, y2, r, g, b, proc=None):
         toy._execute(IO._encode(toy, 61, proc, [x1, y1, x2, y2, r, g, b]))

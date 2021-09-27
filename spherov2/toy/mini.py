@@ -2,7 +2,6 @@ from collections import OrderedDict
 from enum import IntEnum
 from functools import partialmethod, lru_cache
 
-from spherov2.commands.animatronic import Animatronic
 from spherov2.commands.api_and_shell import ApiAndShell
 from spherov2.commands.connection import Connection
 from spherov2.commands.drive import Drive
@@ -13,15 +12,16 @@ from spherov2.commands.power import Power
 from spherov2.commands.sensor import Sensor
 from spherov2.commands.system_info import SystemInfo
 from spherov2.commands.system_mode import SystemMode
-from spherov2.controls.v2 import AnimationControl, DriveControl, FirmwareUpdateControl, LedControl, SensorControl, StatsControl, StreamingControl, Processors
+from spherov2.controls.v2 import DriveControl, FirmwareUpdateControl, LedControl, SensorControl, \
+    StatsControl
 from spherov2.toy import ToyV2, Toy, ToySensor
 from spherov2.types import ToyType
 
 
 class Mini(ToyV2):
     toy_type = ToyType('Sphero Mini', 'SM-', 'SM', .12)
-    _handshake = [('00020005-574f-4f20-5370-6865726f2121', bytearray(b'usetheforce...band'))] #Remove ForceBand
-    
+    _handshake = [('00020005-574f-4f20-5370-6865726f2121', bytearray(b'usetheforce...band'))]  # Remove ForceBand
+
     class LEDs(IntEnum):
         AIMING = 0
         BODY_RED = 1
@@ -61,6 +61,7 @@ class Mini(ToyV2):
         speed=OrderedDict(speed=ToySensor(0x4, 0., 32767.)),
         core_time=OrderedDict(core_time=ToySensor(0x2, 0., 0.))
     )
+
     extended_sensors = OrderedDict(
         gyroscope=OrderedDict(
             x=ToySensor(0x2000000, -20000., 20000.),
@@ -68,7 +69,7 @@ class Mini(ToyV2):
             z=ToySensor(0x800000, -20000., 20000.)
         )
     )
-    
+
     # Mini Supported calls
     # API and Shell:
     ping = ApiAndShell.ping  # PingCommand
@@ -163,25 +164,21 @@ class Mini(ToyV2):
     def drive_control(self):
         return DriveControl(self)
 
-      
     @property
     @lru_cache(None)
     def multi_led_control(self):
         return LedControl(self)
 
-      
     @property
     @lru_cache(None)
     def sensor_control(self):
         return SensorControl(self)
 
-      
     @property
     @lru_cache(None)
     def stats_control(self):
         return StatsControl(self)
 
-      
     @property
     @lru_cache(None)
     def firmware_update_control(self):
