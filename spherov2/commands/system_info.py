@@ -62,6 +62,10 @@ class SystemInfo(Commands):
         return toy._execute(SystemInfo._encode(toy, 18, proc)).data
 
     @staticmethod
+    def get_model_number(toy, proc=None):
+        return toy._execute(SystemInfo._encode(toy, 18, proc)).data
+
+    @staticmethod
     def get_stats_id(toy, proc=None):
         return toy._execute(SystemInfo._encode(toy, 19, proc)).data
 

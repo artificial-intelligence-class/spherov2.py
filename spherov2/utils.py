@@ -436,6 +436,54 @@ class ToyUtil:
             not_supported_handler()
 
     @staticmethod
+    def set_matrix_pixel(toy: Toy, x: int, y: int, r: int, g: int, b: int, is_user_color: bool,
+                         not_supported_handler: Callable[[], None] = None):
+        def _fallback():
+            not_supported_handler()
+
+        ToyUtil.set_led_matrix_pixel(toy, x, y, r, g, b, _fallback)
+
+    @staticmethod
+    def set_led_matrix_pixel(toy: Toy, x: int, y: int, r: int, g: int, b: int,
+                             not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.set_compressed_frame_player_pixel):
+            toy.set_compressed_frame_player_pixel(x, y, r, g, b)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def set_matrix_line(toy: Toy, x1: int, y1: int, x2: int, y2: int, r: int, g: int, b: int, is_user_color: bool,
+                        not_supported_handler: Callable[[], None] = None):
+        def _fallback():
+            not_supported_handler()
+
+        ToyUtil.set_led_matrix_line(toy, x1, y1, x2, y2, r, g, b, _fallback)
+
+    @staticmethod
+    def set_led_matrix_line(toy: Toy, x1: int, y1: int, x2: int, y2: int, r: int, g: int, b: int,
+                            not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.draw_compressed_frame_player_line):
+            toy.draw_compressed_frame_player_line(x1, y1, x2, y2, r, g, b)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def set_matrix_fill(toy: Toy, x1: int, y1: int, x2: int, y2: int, r: int, g: int, b: int, is_user_color: bool,
+                        not_supported_handler: Callable[[], None] = None):
+        def _fallback():
+            not_supported_handler()
+
+        ToyUtil.set_led_matrix_fill(toy, x1, y1, x2, y2, r, g, b, _fallback)
+
+    @staticmethod
+    def set_led_matrix_fill(toy: Toy, x1: int, y1: int, x2: int, y2: int, r: int, g: int, b: int,
+                            not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.draw_compressed_frame_player_fill):
+            toy.draw_compressed_frame_player_fill(x1, y1, x2, y2, r, g, b)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
     def turn_off_leds(toy: Toy):
         if hasattr(toy, 'LEDs'):
             mapping = dict((e, 0) for e in toy.LEDs)

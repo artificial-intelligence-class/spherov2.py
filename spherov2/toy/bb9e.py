@@ -115,6 +115,7 @@ class BB9E(ToyV2):
         )
     )
     
+    
     #Animatronic
     play_animation = Animatronic.play_animation
     stop_animation = Animatronic.stop_animation
@@ -143,24 +144,23 @@ class BB9E(ToyV2):
     set_stabilization = Drive.set_stabilization
     
     
-    #FactoryTest
+    # FactoryTest
     get_factory_mode_challenge = FactoryTest.get_factory_mode_challenge
     enter_factory_mode = FactoryTest.enter_factory_mode
     exit_factory_mode = FactoryTest.exit_factory_mode
     get_chassis_id = FactoryTest.get_chassis_id
+
     
-    
-    #Firmware
+    # Firmware
     get_pending_update_flags = Firmware.get_pending_update_flags
+
     
-    
-    #IO
+    # IO
     play_audio_file = IO.play_audio_file
     set_all_leds_with_16_bit_mask = IO.set_all_leds_with_16_bit_mask
     start_idle_led_animation = IO.start_idle_led_animation
-    
-    
-    #Sensor
+
+    # Sensor
     set_sensor_streaming_mask = Sensor.set_sensor_streaming_mask
     get_sensor_streaming_mask = Sensor.get_sensor_streaming_mask
     add_sensor_streaming_data_notify_listener = partialmethod(Toy._add_listener, Sensor.sensor_streaming_data_notify)
@@ -186,8 +186,8 @@ class BB9E(ToyV2):
     add_gyro_activity_notify_listener = partialmethod(Toy._add_listener, Sensor.gyro_activity_notify)
     remove_gyro_activity_notify_listener = partialmethod(Toy._remove_listener, Sensor.gyro_activity_notify)
     
-    
-    #Power
+
+    # Power
     enter_deep_sleep = Power.enter_deep_sleep
     sleep = Power.sleep
     get_battery_voltage = Power.get_battery_voltage
@@ -229,22 +229,27 @@ class BB9E(ToyV2):
     @lru_cache(None)
     def drive_control(self):
         return DriveControl(self)
-        
+    
     @property
     @lru_cache(None)
     def firmware_update_control(self):
         return FirmwareUpdateControl(self)
-
+    
+    @property
+    @lru_cache(None)
+    def firmware_update_control(self):
+        return FirmwareUpdateControl(self)
+    
     @property
     @lru_cache(None)
     def multi_led_control(self):
         return LedControl(self)
-
+    
     @property
     @lru_cache(None)
     def sensor_control(self):
         return SensorControl(self)
-        
+    
     @property
     @lru_cache(None)
     def stats_control(self):

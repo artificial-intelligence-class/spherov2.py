@@ -1,5 +1,6 @@
 #python3
 import time
+
 from spherov2 import scanner
 from spherov2.sphero_edu import SpheroEduAPI
 from spherov2.types import Color
