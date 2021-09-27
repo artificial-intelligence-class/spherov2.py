@@ -25,7 +25,6 @@ def recvall(s, size):
 
 def get_tcp_adapter(host: str, port: int = 50004):
     """Gets an anonymous ``TCPAdapter`` with the given address and port."""
-
     class TCPAdapter:
         @staticmethod
         def scan_toys(timeout=5.0):

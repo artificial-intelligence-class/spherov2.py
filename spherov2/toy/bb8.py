@@ -16,19 +16,17 @@ from spherov2.types import ToyType
 
 class BB8(SPHERO):
     toy_type = ToyType('BB-8', 'BB-', 'BB', .06)
-
-    # _send_uuid = '22bb746f-2ba1-7554-2d6f-726568705327'
-    # _response_uuid = '22bb746f-2ba6-7554-2d6f-726568705327'
-    # _handshake = [('22bb746f-2bbd-7554-2d6f-726568705327', bytearray(b'011i3')),
+    #_send_uuid = '22bb746f-2ba1-7554-2d6f-726568705327'
+    #_response_uuid = '22bb746f-2ba6-7554-2d6f-726568705327'
+    #_handshake = [('22bb746f-2bbd-7554-2d6f-726568705327', bytearray(b'011i3')),
     #              ('22bb746f-2bb2-7554-2d6f-726568705327', bytearray([7]))]
-
+    
     class LEDs(IntEnum):
         BODY_RED = 0
         BODY_GREEN = 1
         BODY_BLUE = 2
         AIMING = 3
         HEAD = 4
-        
         
     class Animations(IntEnum):
         EMOTE_ALARM = 0
@@ -91,9 +89,8 @@ class BB8(SPHERO):
         
     
     #Controls - Sphero
-    
-    
     @property
     @lru_cache(None)
     def firmware_update_control(self):
         return FirmwareUpdateControl(self)
+    
