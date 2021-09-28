@@ -10,8 +10,7 @@ from spherov2.commands.io import IO
 from spherov2.commands.power import Power
 from spherov2.commands.sensor import Sensor
 from spherov2.commands.system_info import SystemInfo
-from spherov2.controls.v2 import AnimationControl, DriveControl, LedControl, SensorControl, StatsControl, \
-    Processors
+from spherov2.controls.v2 import AnimationControl, DriveControl, LedControl, SensorControl, StatsControl, Processors
 from spherov2.toy import ToyV2, Toy, ToySensor
 from spherov2.types import ToyType
 
@@ -64,7 +63,9 @@ class BOLT(ToyV2):
             x=ToySensor(0x2000000, -20000., 20000.),
             y=ToySensor(0x1000000, -20000., 20000.),
             z=ToySensor(0x800000, -20000., 20000.)
-        )
+        ),
+        ambient_light=OrderedDict(
+            ambient_light=ToySensor(0x40000, 120000., 120000.))
     )
 
     # Bolt Supported calls
@@ -84,12 +85,17 @@ class BOLT(ToyV2):
     get_bluetooth_name = Connection.get_bluetooth_name  # GetBluetoothNameCommand
     set_bluetooth_name = Connection.set_bluetooth_name  # SetBluetoothNameCommand
 
-    # Drive
-    drive_with_heading = Drive.drive_with_heading  # DriveWithHeadingCommand
-    reset_yaw = Drive.reset_yaw  # ResetYawCommand
-    set_pitch_torque_modification_value = Drive.set_pitch_torque_modification_value  # SetPitchTorqueModificationValueCommand
-    set_raw_motors = Drive.set_raw_motors  # SetRawMotorsCommand
-    set_stabilization = Drive.set_stabilization  # SetStabilizationCommand
+    #Drive - Driving done on the Secondary Processor
+    drive_with_heading = partialmethod(Drive.drive_with_heading,
+                                                      proc=Processors.SECONDARY) #DriveWithHeadingCommand
+    reset_yaw = partialmethod(Drive.reset_yaw,
+                                                      proc=Processors.SECONDARY) #ResetYawCommand
+    set_pitch_torque_modification_value = partialmethod(Drive.set_pitch_torque_modification_value,
+                                                      proc=Processors.SECONDARY) #SetPitchTorqueModificationValueCommand
+    set_raw_motors = partialmethod(Drive.set_raw_motors,
+                                                      proc=Processors.SECONDARY) #SetRawMotorsCommand
+    set_stabilization = partialmethod(Drive.set_stabilization,
+                                                      proc=Processors.SECONDARY) #SetStabilizationCommand
 
     # Firmware
     get_pending_update_flags = Firmware.get_pending_update_flags  # GetPendingUpdateFlagsCommand
