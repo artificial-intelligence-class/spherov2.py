@@ -14,6 +14,16 @@ An unofficial Python library for [Sphero](https://sphero.com/) toys that support
 - [x] Sphero Mini
 - [x] Sphero RVR
 
+Current Progress:
+- Found a better way to decompile, fixing a few things like Controls, Command Queueing, and Waiting for responses
+- [ ] Controls
+	- [ ] Animation Control
+	- [ ] Drive Control
+	- [x] LED Control
+	- [ ] Sensor Control
+	- [ ] Stats Control
+	- [ ] Streaming Control
+
 The logic is written based on reverse-engineering the official [Sphero Edu for Android](https://play.google.com/store/apps/details?id=com.sphero.sprk), with the help from available documentation and other unofficial community-based Sphero libraries like [igbopie/spherov2.js](https://github.com/igbopie/spherov2.js) and [EnotYoyo/pysphero](https://github.com/EnotYoyo/pysphero).
 
 This project uses the [hbldh/bleak](https://github.com/hbldh/bleak) Bluetooth Low Energy library, which works across all platforms.
