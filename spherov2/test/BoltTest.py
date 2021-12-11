@@ -1,13 +1,17 @@
 # python3
+#import sys
+#sys.path.append('/spherov2/')
+
 import time
 
 from spherov2 import scanner
-from spherov2.sphero_edu import SpheroEduAPI
+from spherov2.sphero_edu import EventType, SpheroEduAPI
 from spherov2.types import Color
 
 print("Testing Starting...")
 print("Connecting to Bolt...")
 toy = scanner.find_BOLT()
+
 if toy is not None:
     print("Connected.")
     with SpheroEduAPI(toy) as droid:
@@ -15,12 +19,10 @@ if toy is not None:
         droid.set_main_led(Color(r=0, g=255, b=0)) #Sets whole Matrix
         
         droid.reset_aim()
-        #droid.roll(0, 100, 5)
-        #droid.raw_motor(255, -255, 5) #spin FAST
-        #droid.set_stabilization(False)
+        droid.set_main_led(Color(r=0,g=0,b=255))
         
-        print("Testing End!")
-        droid.set_main_led(Color(r=255, g=0, b=0)) #Sets whole Matrix
+        print("Luminosity: " + str(droid.get_luminosity()))
+        print("Accel: " + str(droid.get_acceleration()))
         
         """
         print("Testing Main LED")
@@ -41,18 +43,9 @@ if toy is not None:
         print("Set Matrix Fill")
         droid.set_matrix_fill(2, 0, 6, 6, Color(r=0, g=255, b=255)) #Set Matrix Box
         time.sleep(2)
+        """
 
-        # Smile (manual)
-        # droid.set_main_led(Color(r=0, g=0, b=0)) #Sets whole Matrix
-        # droid.set_matrix_line(2, 7, 5, 7, Color(r=255, g=0, b=255)) #Set Matrix Line
-        # droid.set_matrix_line(1, 6, 6, 6, Color(r=255, g=0, b=255)) #Set Matrix Line
-        # droid.set_matrix_line(0, 5, 1, 5, Color(r=255, g=0, b=255)) #Set Matrix Line
-        # droid.set_matrix_line(3, 5, 4, 5, Color(r=255, g=0, b=255)) #Set Matrix Line
-        # droid.set_matrix_line(6, 5, 7, 5, Color(r=255, g=0, b=255)) #Set Matrix Line
-        # droid.set_matrix_line(0, 4, 7, 4, Color(r=255, g=0, b=255)) #Set Matrix Line
-        # droid.set_matrix_line(0, 3, 7, 3, Color(r=255, g=0, b=255)) #Set Matrix Line
-        # droid.set_matrix_pixel(0, 2, Color(r=255, g=0, b=255)) #Set Matrix Pixel
-        # droid.set_matrix_pixel(7, 2, Color(r=255, g=0, b=255)) #Set Matrix Pixel
-        # droid.set_matrix_pixel(1, 1, Color(r=255, g=0, b=255)) #Set Matrix Pixel
-        # droid.set_matrix_pixel(6, 1, Color(r=255, g=0, b=255)) #Set Matrix Pixel
-        # droid.set_matrix_line(2, 0, 5, 0, Color(r=255, g=0, b=255)) #Set Matrix Line
+        droid.set_main_led(Color(r=255, g=0, b=0)) #Sets whole Matrix
+        print("Testing End...")
+  
+  #droid.register_event(EventType.on_sensor_streaming_data, droid.SensorStreamingInfo) #how you would register to data (function name is custom)

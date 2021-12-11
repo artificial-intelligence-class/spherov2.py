@@ -12,7 +12,7 @@ from spherov2.commands.io import IO
 from spherov2.commands.power import Power
 from spherov2.commands.sensor import Sensor
 from spherov2.commands.system_info import SystemInfo
-from spherov2.controls.v2 import DriveControl, LedControl, SensorControl
+from spherov2.controls.v2 import DriveControl, LedControl, SensorControl, FirmwareUpdateControl, StatsControl
 from spherov2.toy import ToyV2, ToySensor, Toy
 from spherov2.types import ToyType
 

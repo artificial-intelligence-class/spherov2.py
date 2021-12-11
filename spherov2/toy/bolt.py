@@ -17,7 +17,7 @@ from spherov2.types import ToyType
 
 class BOLT(ToyV2):
     toy_type = ToyType('Sphero BOLT', 'SB-', 'SB', .075)
-    _handshake = [('00020005-574f-4f20-5370-6865726f2121', bytearray(b'usetheforce...band'))]
+    _handshake = [('00020005-574f-4f20-5370-6865726f2121', bytearray(b'usetheforce...band'))] #TODO: find correct info here
 
     class LEDs(IntEnum):
         FRONT_RED = 0
@@ -195,11 +195,13 @@ class BOLT(ToyV2):
     remove_collision_detected_notify_listener = partialmethod(Toy._remove_listener,
                                                               Sensor.collision_detected_notify)  # CollisionDetectedNotifyCommand
     configure_collision_detection = Sensor.configure_collision_detection  # ConfigureCollisionDetectionCommand
-    enable_gyro_max_notify = Sensor.enable_gyro_max_notify  # EnableGyroMaxNotifyCommand
-    get_ambient_light_sensor_value = Sensor.get_ambient_light_sensor_value  # GetAmbientLightSensorValueCommand
+    enable_gyro_max_notify = partialmethod(Sensor.enable_gyro_max_notify, proc=Processors.SECONDARY)  # EnableGyroMaxNotifyCommand
+    get_ambient_light_sensor_value = partialmethod(Sensor.get_ambient_light_sensor_value, proc=Processors.SECONDARY)
     get_bot_to_bot_infrared_readings = Sensor.get_bot_to_bot_infrared_readings  # GetBotToBotInfraredReadingsCommand
-    get_extended_sensor_streaming_mask = Sensor.get_extended_sensor_streaming_mask  # GetExtendedSensorStreamingMaskCommand
-    set_sensor_streaming_mask = Sensor.set_sensor_streaming_mask  # GetSensorStreamingMaskCommand
+    get_sensor_streaming_mask = partialmethod(Sensor.get_sensor_streaming_mask, proc=Processors.SECONDARY)  # GetSensorStreamingMaskCommand
+    set_sensor_streaming_mask = partialmethod(Sensor.set_sensor_streaming_mask, proc=Processors.SECONDARY)  # SetSensorStreamingMaskCommand
+    get_extended_sensor_streaming_mask = partialmethod(Sensor.get_extended_sensor_streaming_mask, proc=Processors.SECONDARY)  # GetExtendedSensorStreamingMaskCommand
+    set_extended_sensor_streaming_mask = partialmethod(Sensor.set_extended_sensor_streaming_mask, proc=Processors.SECONDARY)  # SetExtendedSensorStreamingMaskCommand
     add_gyro_max_notify_listener = partialmethod(Toy._add_listener, Sensor.gyro_max_notify)  # GyroMaxNotifyCommand
     remove_gyro_max_notify_listener = partialmethod(Toy._remove_listener,
                                                     Sensor.gyro_max_notify)  # GyroMaxNotifyCommand
@@ -209,7 +211,7 @@ class BOLT(ToyV2):
                                                                Sensor.magnetometer_north_yaw_notify)  # MagnetometerNorthYawNotifyCommand
     remove_magnetometer_north_yaw_notify_listener = partialmethod(Toy._remove_listener,
                                                                   Sensor.magnetometer_north_yaw_notify)  # MagnetometerNorthYawNotifyCommand
-    reset_locator_x_and_y = Sensor.reset_locator_x_and_y  # ResetLocationXAndYCommand
+    reset_locator_x_and_y = partialmethod(Sensor.reset_locator_x_and_y, proc=Processors.SECONDARY)  # ResetLocationXAndYCommand
     add_robot_to_robot_infrared_message_received_notify_listener = partialmethod(Toy._add_listener,
                                                                                  Sensor.robot_to_robot_infrared_message_received_notify)  ##RobotToRobotInfraredMessageReceivedNotifyCommand
     remove_robot_to_robot_infrared_message_received_notify_listener = partialmethod(Toy._remove_listener,
@@ -219,9 +221,7 @@ class BOLT(ToyV2):
                                                               Sensor.sensor_streaming_data_notify)  # SensorStreamingDataNotifyCommand
     remove_sensor_streaming_data_notify_listener = partialmethod(Toy._remove_listener,
                                                                  Sensor.sensor_streaming_data_notify)  # SensorStreamingDataNotifyCommand
-    set_extended_sensor_streaming_mask = Sensor.set_extended_sensor_streaming_mask  # SetExtendedSensorStreamingMaskCommand
     set_locator_flags = Sensor.set_locator_flags  # SetLocatorFlagsCommand
-    get_sensor_streaming_mask = Sensor.get_sensor_streaming_mask  # SetSensorStreamingMaskCommand
     start_robot_to_robot_infrared_broadcasting = Sensor.start_robot_to_robot_infrared_broadcasting  # StartRobotToRobotInfraredBroadcastingCommand
     start_robot_to_robot_infrared_evading = Sensor.start_robot_to_robot_infrared_evading  # StartRobotToRobotInfraredEvadingCommand
     start_robot_to_robot_infrared_following = Sensor.start_robot_to_robot_infrared_following  # StartRobotToRobotInfraredFollowingCommand
@@ -265,9 +265,10 @@ class BOLT(ToyV2):
         return LedControl(self)
 
     @property
-    @lru_cache(None)
     def sensor_control(self):
-        return SensorControl(self)
+        if self._sensor_controller is None: #Make a new SensorControl if necessary (NOT A UTIL CLASS)
+            self._sensor_controller = SensorControl(self)
+        return self._sensor_controller
 
     @property
     @lru_cache(None)

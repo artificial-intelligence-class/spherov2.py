@@ -460,7 +460,6 @@ class ToyUtil:
                                   not_supported_handler: Callable[[], None] = None):
         def _fallback():
             not_supported_handler()
-
         ToyUtil.save_compressed_frame_player_animation(toy, s, s2, z, s3, s_arr, i, i_arr, _fallback)
 
     def save_compressed_frame_player_animation(toy: Toy, s, s2, z, s3, s_arr, i, i_arr,
@@ -473,8 +472,7 @@ class ToyUtil:
     def play_matrix_animation(toy: Toy, s, not_supported_handler: Callable[[], None] = None):
         def _fallback():
             not_supported_handler()
-
-        ToyUtil.save_compressed_frame_player_animation(toy, s, s2, z, s3, s_arr, i, i_arr, _fallback)
+        #TODO: Add correct call #ToyUtil.save_compressed_frame_player_animation(toy, s, s2, z, s3, s_arr, i, i_arr, _fallback)
 
     def play_compressed_frame_player_animation(toy: Toy, s, not_supported_handler: Callable[[], None] = None):
         if toy.implements(IO.play_compressed_frame_player_animation):
@@ -507,6 +505,10 @@ class ToyUtil:
             not_supported_handler()
 
     @staticmethod
+    def get_ambient_light_sensor_value(toy: Toy):
+        return toy.get_ambient_light_sensor_value()
+
+    @staticmethod
     def add_listeners(toy: Toy, manager):
         if hasattr(toy, 'sensor_control') and hasattr(manager, '_sensor_data_listener'):
             toy.sensor_control.add_sensor_data_listener(manager._sensor_data_listener)
@@ -523,6 +525,10 @@ class ToyUtil:
                 hasattr(manager, '_robot_to_robot_infrared_message_received_notify'):
             toy.add_robot_to_robot_infrared_message_received_notify_listener(
                 manager._robot_to_robot_infrared_message_received_notify)
+        if hasattr(toy, 'add_sensor_streaming_data_notify_listener'):
+            toy.add_sensor_streaming_data_notify_listener(manager._sensor_streaming_data_notify)
+        if hasattr(toy, 'add_magnetometer_north_yaw_notify_listener'):
+            toy.add_magnetometer_north_yaw_notify_listener(manager._magnetometer_north_yaw_notify)
 
     @staticmethod
     def set_locator_flags(toy: Toy, flag: bool, not_supported_handler: Callable[[], None] = None):

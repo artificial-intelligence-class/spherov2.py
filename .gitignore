@@ -133,3 +133,5 @@ dmypy.json
 *.iml
 out
 gen
+.vscode/extensions.json
+.vscode/launch.json

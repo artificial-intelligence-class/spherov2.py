@@ -40,6 +40,8 @@ class EventType(Enum):
     on_gyro_max = auto()  # [f.Sphero, f.Mini, f.Ollie, f.BB8, f.BB9E, f.BOLT, f.Mini]
     on_charging = auto()  # [f.Sphero, f.Ollie, f.BB8, f.BB9E, f.R2D2, f.R2Q5, f.BOLT]
     on_not_charging = auto()  # [f.Sphero, f.Ollie, f.BB8, f.BB9E, f.R2D2, f.R2Q5, f.BOLT]
+    on_magnetometer_north_yaw = auto()  # [f.BOLT] TODO
+    on_sensor_streaming_data = auto()  # [f.BOLT] TODO
     on_ir_message = auto()  # [f.BOLT, f.RVR] TODO
     on_color = auto()  # [f.RVR] TODO
 
@@ -96,9 +98,9 @@ class SpheroEduAPI:
         self.__falling_v = 1.
         self.__last_message = None
         self.__should_land = self.__free_falling = False
-        ToyUtil.add_listeners(toy, self)
 
         self.__listeners = defaultdict(set)
+        ToyUtil.add_listeners(toy, self)
 
         self.__stopped = threading.Event()
         self.__stopped.set()
@@ -410,10 +412,10 @@ class SpheroEduAPI:
         ToyUtil.set_matrix_fill(self.__toy, x1, y1, x2, y2, **self.__leds[strMapLoc]._asdict(), is_user_color=False)
 
     def register_matrix_animation(self, s, s2, z, s3, s_arr, i, i_arr):  # TODO: fix this function
-        ToyUtil.register_matrix_animation(self.__toy, s, s2, z, s3, s_arr, i, i_arr);
+        ToyUtil.register_matrix_animation(self.__toy, s, s2, z, s3, s_arr, i, i_arr)
 
     def play_matrix_animation(self, s):
-        ToyUtil.play_matrix_animation(self.__toy, s);
+        ToyUtil.play_matrix_animation(self.__toy, s)
 
     # Sphero RVR Lights
     def set_left_headlight_led(self, color: Color):
@@ -546,6 +548,12 @@ class SpheroEduAPI:
     def _gyro_max_notify(self, flags):
         self.__call_event_listener(EventType.on_gyro_max)
 
+    def _magnetometer_north_yaw_notify(self, flags):
+        self.__call_event_listener(EventType.on_magnetometer_north_yaw)
+
+    def _sensor_streaming_data_notify(self, flags):
+        self.__call_event_listener(EventType.on_sensor_streaming_data)
+
     def get_acceleration(self):
         """Provides motion acceleration data along a given axis measured by the Accelerometer, in g's, where g =
         9.80665 m/s^2.
@@ -555,6 +563,7 @@ class SpheroEduAPI:
         ``get_acceleration()['y']`` is the forward-to-back acceleration, from of -8 to 8 g's.
 
         ``get_acceleration()['z']`` is the upward-to-downward acceleration, from -8 to 8 g's."""
+
         return self.__sensor_data.get('accelerometer', None)
 
     def get_vertical_acceleration(self):
@@ -627,6 +636,10 @@ class SpheroEduAPI:
 
     # Sphero BOLT Sensors
     # TODO Compass Direction
+
+    def get_luminosity_direct(self):
+        """similar to get_luminosity, however this is a more direct call to the sphero to get a value directly"""
+        return ToyUtil.get_ambient_light_sensor_value(self.__toy)
 
     def get_luminosity(self):
         """Provides the light intensity from 0 - 100,000 lux, where 0 lux is full darkness and 30,000-100,000 lux is
@@ -760,7 +773,7 @@ class SpheroEduAPI:
         **Note**: listeners will be called in a newly spawned thread, meaning the caller have to deal with concurrency
         if needed. This library is thread-safe."""
         if event_type not in EventType:
-            raise ValueError(f'Event type {event_type} does not exist')
+            raise ValueError('Event type {event_type} does not exist')
         if listener:
             self.__listeners[event_type].add(listener)
         else:

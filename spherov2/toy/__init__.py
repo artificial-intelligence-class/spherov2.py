@@ -40,6 +40,7 @@ class Toy:
         self.__decoder = self._packet.Collector(self.__new_packet)
         self.__waiting = defaultdict(SimpleQueue)
         self.__listeners = defaultdict(dict)
+        self._sensor_controller = None
 
         self.__thread = None
         self.__packet_queue = SimpleQueue()
@@ -125,15 +126,33 @@ class Toy:
 class ToyV2(Toy):
     _packet = PacketV2
     _handshake = []
-    _response_uuid = _send_uuid = '00010002-574f-4f20-5370-6865726f2121'
-    # _response_uuid = _send_uuid = '00010002-574f-4f20-5370-6865726f2121' #Available responses
+
+    _response_uuid = _send_uuid = '00010002-574f-4f20-5370-6865726f2121' #Original
+    #_response_uuid = '22bb746f-2ba6-7554-2d6f-726568705327'
+    #_send_uuid =     '22bb746f-2ba1-7554-2d6f-726568705327'
+    #_send_uuid =     '00010002-574f-4f20-5370-6865726f2121'
+    #_response_uuid = '00020002-574f-4f20-5370-6865726f2121'
+
+    # _response_uuid = _send_uuid = '00010001-574f-4f20-5370-6865726f2121' #Available responses
+    # _response_uuid = _send_uuid = '00010002-574f-4f20-5370-6865726f2121'
     # _response_uuid = _send_uuid = '00010003-574f-4f20-5370-6865726f2121'
+    # _response_uuid = _send_uuid = '00020001-574f-4f20-5370-6865726f2121'
+    # _response_uuid = _send_uuid = '00020002-574f-4f20-5370-6865726f2121'
     # _response_uuid = _send_uuid = '00020004-574f-4f20-5370-6865726f2121'
     # _response_uuid = _send_uuid = '00020005-574f-4f20-5370-6865726f2121'
-    # _response_uuid = _send_uuid = '00020002-574f-4f20-5370-6865726f2121'
     # _response_uuid = _send_uuid = '22bb746f-2bbd-7554-2d6f-726568705327'
     # _response_uuid = _send_uuid = '22bb746f-2bb2-7554-2d6f-726568705327'
     # _response_uuid = _send_uuid = '22bb746f-2bbf-7554-2d6f-726568705327'
+    # _response_uuid = _send_uuid = '22bb746f-2ba0-7554-2d6f-726568705327'
     # _response_uuid = _send_uuid = '22bb746f-2ba1-7554-2d6f-726568705327'
     # _response_uuid = _send_uuid = '22bb746f-2ba6-7554-2d6f-726568705327'
     # _response_uuid = _send_uuid = '22bb746f-2bb0-7554-2d6f-726568705327'
+
+#Some values found in apk - should revisit what values may be per robot
+#Adaptor.BLEService = "22bb746f2bb075542d6f726568705327";
+#Adaptor.WakeCharacteristic = "22bb746f2bbf75542d6f726568705327";
+#Adaptor.TXPowerCharacteristic = "22bb746f2bb275542d6f726568705327";
+#Adaptor.AntiDosCharacteristic = "22bb746f2bbd75542d6f726568705327";
+#Adaptor.RobotControlService = "22bb746f2ba075542d6f726568705327";
+#Adaptor.CommandsCharacteristic = "22bb746f2ba175542d6f726568705327";
+#Adaptor.ResponseCharacteristic = "22bb746f2ba675542d6f726568705327";
