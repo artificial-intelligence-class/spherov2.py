@@ -5,7 +5,7 @@ with open('README.md', 'rt', encoding='utf_8') as f:
 
 setup(
     name='spherov2',
-    version='0.10.2',
+    version='0.11',
     author='Hanbang Wang', # and 'Elionardo Feliciano',
     author_email='hanbangw@cis.upenn.edu', # and 'elionardo.feliciano.dev@gmail.com',
     license='MIT',
@@ -13,7 +13,8 @@ setup(
     long_description=long_desc,
     long_description_content_type='text/markdown',
     url='https://github.com/artificial-intelligence-class/spherov2.py',
-    packages=find_namespace_packages(include=['spherov2', 'spherov2.*']),
+    packages=find_namespace_packages(include=['spherov2', 'spherov2.*'],
+                                     exclude=["*.test", "*.test.*"]),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Framework :: Robot Framework :: Library',
