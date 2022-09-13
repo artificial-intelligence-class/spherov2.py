@@ -7,7 +7,7 @@ import bleak
 class BleakAdapter:
     @staticmethod
     def scan_toys(timeout: float = 5.0):
-        return asyncio.run(bleak.discover(timeout))
+        return asyncio.run(bleak.BleakScanner.discover(timeout))
 
     def __init__(self, address):
         self.__event_loop = asyncio.new_event_loop()

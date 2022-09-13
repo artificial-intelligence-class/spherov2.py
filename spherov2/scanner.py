@@ -48,6 +48,8 @@ def find_toys(*, timeout=5.0, toy_types: List[Type[Toy]] = None,
     if toy_names is not None:
         toy_names = set(toy_names)
     for toy in toys:
+        if toy.name is None:
+            continue
         if toy_names is not None and toy.name not in toy_names:
             continue
         for toy_cls in toy_types:

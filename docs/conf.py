@@ -24,9 +24,9 @@ copyright = '2020, University of Pennsylvania'
 author = 'Hanbang Wang'
 
 # The short X.Y version
-version = '0.10'
+version = '0.11.1'
 # The full version, including alpha/beta/rc tags
-release = '0.10'
+release = '0.11.1'
 
 # -- General configuration ---------------------------------------------------
 
