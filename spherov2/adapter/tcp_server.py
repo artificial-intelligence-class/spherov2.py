@@ -28,7 +28,7 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
             if cmd == RequestOp.SCAN:
                 timeout = struct.unpack('!f', await reader.readexactly(4))[0]
                 try:
-                    toys = await bleak.discover(timeout)
+                    toys = await bleak.BleakScanner.discover(timeout)
                 except BaseException as e:
                     err = str(e)[:0xffff].encode('utf_8')
                     writer.write(ResponseOp.ERROR + to_bytes(len(err), 2) + err)

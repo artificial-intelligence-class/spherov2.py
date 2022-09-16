@@ -1,6 +1,6 @@
 import importlib
-from functools import partial, lru_cache
-from typing import List, Type, Callable
+from functools import partial
+from typing import Iterable, List, Type, Callable
 
 from spherov2.commands.sphero import Sphero
 from spherov2.toy import Toy
@@ -18,7 +18,6 @@ class ToyNotFoundError(Exception):
     ...
 
 
-@lru_cache(None)
 def all_toys(cls=Toy):
     subtypes = cls.__subclasses__()
     yield cls
@@ -26,24 +25,25 @@ def all_toys(cls=Toy):
         yield from all_toys(sub)
 
 
-def find_toys(*, timeout=5.0, toy_types: List[Type[Toy]] = None,
-              toy_names: List[str] = None, adapter=None) -> List[Toy]:
+def find_toys(*, timeout=5.0, toy_types: Iterable[Type[Toy]] = None,
+              toy_names: Iterable[str] = None, adapter=None) -> List[Toy]:
     """Find toys that matches the criteria given.
 
     :param timeout: Device scanning timeout, in seconds.
-    :param toy_types: List of toy types (subclasses of :class:`Toy`) that needs to be scanned. Set to ``None`` to scan
+    :param toy_types: Iterable of toy types (subclasses of :class:`Toy`) that needs to be scanned. Set to ``None`` to scan
                       all toy types available.
-    :param toy_names: List of strings of toy names that needs to be scanned. Set to ``None`` to scan toys with all
+    :param toy_names: Iterable of strings of toy names that needs to be scanned. Set to ``None`` to scan toys with all
                       kinds of names.
     :param adapter: Kind of adapter to use for scanning bluetooth devices. Set to ``None`` to use default
                     :class:`BleakAdapter`.
     :return: A list of toys that are scanned.
     """
     if adapter is None:
-        adapter = importlib.import_module('spherov2.adapter.bleak_adapter').BleakAdapter
+        adapter = importlib.import_module(
+            'spherov2.adapter.bleak_adapter').BleakAdapter
     toys = adapter.scan_toys(timeout)
     if toy_types is None:
-        toy_types = list(all_toys())
+        toy_types = all_toys()
     ret = []
     if toy_names is not None:
         toy_names = set(toy_names)

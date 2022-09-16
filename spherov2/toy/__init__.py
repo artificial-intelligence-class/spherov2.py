@@ -45,6 +45,9 @@ class Toy:
         self.__thread = None
         self.__packet_queue = SimpleQueue()
 
+    def __repr__(self):
+        return f'{self.name} ({self.address})'
+
     def __enter__(self):
         if self.__adapter is not None:
             raise RuntimeError('Toy already in context manager')
