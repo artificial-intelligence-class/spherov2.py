@@ -6,6 +6,7 @@ class RequestOp(bytes, Enum):
     INIT = b'\x01'
     SET_CALLBACK = b'\x02'
     WRITE = b'\x03'
+    FIND = b'\x04'
     END = b'\xff'
 
 

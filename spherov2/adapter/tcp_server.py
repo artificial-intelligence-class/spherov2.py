@@ -16,7 +16,8 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
         if writer.is_closing():
             return
         char = char.encode('ascii')
-        writer.write(ResponseOp.ON_DATA + to_bytes(len(char), 2) + char + to_bytes(len(d), 1) + d)
+        writer.write(ResponseOp.ON_DATA + to_bytes(len(char),
+                     2) + char + to_bytes(len(d), 1) + d)
         asyncio.ensure_future(writer.drain())
 
     print('Incoming connection from %s:%d' % peer)
@@ -31,7 +32,8 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
                     toys = await bleak.BleakScanner.discover(timeout)
                 except BaseException as e:
                     err = str(e)[:0xffff].encode('utf_8')
-                    writer.write(ResponseOp.ERROR + to_bytes(len(err), 2) + err)
+                    writer.write(ResponseOp.ERROR +
+                                 to_bytes(len(err), 2) + err)
                     await writer.drain()
                     continue
                 writer.write(ResponseOp.OK + to_bytes(len(toys), 2))
@@ -39,8 +41,28 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
                 for toy in toys:
                     name = toy.name.encode('utf_8')
                     addr = toy.address.encode('ascii')
-                    writer.write(to_bytes(len(name), 2) + name + to_bytes(len(addr), 2) + addr)
+                    writer.write(to_bytes(len(name), 2) + name +
+                                 to_bytes(len(addr), 2) + addr)
                     await writer.drain()
+            elif cmd == RequestOp.FIND:
+                size = await reader.readexactly(2)
+                name = (await reader.readexactly(size)).decode('utf-8')
+                timeout = struct.unpack('!f', await reader.readexactly(4))[0]
+                try:
+                    toy = await bleak.BleakScanner.find_device_by_filter(lambda _, a: a.local_name == name, timeout)
+                except BaseException as e:
+                    err = str(e)[:0xffff].encode('utf_8')
+                    writer.write(ResponseOp.ERROR +
+                                 to_bytes(len(err), 2) + err)
+                    await writer.drain()
+                    continue
+                writer.write(ResponseOp.OK)
+                await writer.drain()
+                name = toy.name.encode('utf_8')
+                addr = toy.address.encode('ascii')
+                writer.write(to_bytes(len(name), 2) + name +
+                             to_bytes(len(addr), 2) + addr)
+                await writer.drain()
             elif cmd == RequestOp.END:
                 break
             else:
@@ -61,7 +83,8 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
                     raise
                 except BaseException as e:
                     err = str(e)[:0xffff].encode('utf_8')
-                    writer.write(ResponseOp.ERROR + to_bytes(len(err), 2) + err + bytes([seq]))
+                    writer.write(ResponseOp.ERROR +
+                                 to_bytes(len(err), 2) + err + bytes([seq]))
                     await writer.drain()
                     continue
                 writer.write(ResponseOp.OK + bytes([seq]))
@@ -78,6 +101,7 @@ if __name__ == '__main__':
     address = sys.argv[1] if len(sys.argv) > 1 else '0.0.0.0'
     port = int(sys.argv[2]) if len(sys.argv) > 2 else 50004
     loop = asyncio.get_event_loop()
-    server = loop.run_until_complete(asyncio.start_server(process_connection, host=address, port=port))
+    server = loop.run_until_complete(asyncio.start_server(
+        process_connection, host=address, port=port))
     print('Server listening on %s:%d...' % (address, port))
     loop.run_until_complete(server.wait_closed())

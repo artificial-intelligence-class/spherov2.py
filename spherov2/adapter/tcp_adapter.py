@@ -53,6 +53,30 @@ def get_tcp_adapter(host: str, port: int = 50004):
                 s.sendall(RequestOp.END)
                 s.close()
 
+        @staticmethod
+        def scan_toy(name: str, timeout: float = 5.0):
+            name = name.encode('utf_8')
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((host, port))
+            try:
+                s.sendall(RequestOp.FIND + to_bytes(len(name), 2) +
+                          name + struct.pack('!f', timeout))
+                code = recvall(s, 1)
+                if code == ResponseOp.ERROR:
+                    size = to_int(recvall(s, 2))
+                    data = recvall(s, size)
+                    raise Exception(data.decode('utf_8'))
+                elif code != ResponseOp.OK:
+                    raise SystemError(f'Unexpected response op code {code}')
+                name_size = to_int(recvall(s, 2))
+                name = recvall(s, name_size).decode('utf_8')
+                address_size = to_int(recvall(s, 2))
+                addr = recvall(s, address_size).decode('ascii')
+                return MockDevice(name, addr)
+            finally:
+                s.sendall(RequestOp.END)
+                s.close()
+
         def __init__(self, address):
             self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.__socket.connect((host, port))
@@ -65,7 +89,8 @@ def get_tcp_adapter(host: str, port: int = 50004):
             self.__thread = threading.Thread(target=self.__recv)
             self.__thread.start()
             try:
-                self.__send(RequestOp.INIT, to_bytes(len(address), 2) + address)
+                self.__send(RequestOp.INIT, to_bytes(
+                    len(address), 2) + address)
             except:
                 self.close()
                 raise
@@ -77,7 +102,8 @@ def get_tcp_adapter(host: str, port: int = 50004):
                 except:
                     break
                 if code == ResponseOp.OK:
-                    self.__sequence_wait.pop(recvall(self.__socket, 1)[0]).set_result(None)
+                    self.__sequence_wait.pop(
+                        recvall(self.__socket, 1)[0]).set_result(None)
                     continue
                 size = to_int(recvall(self.__socket, 2))
                 data = recvall(self.__socket, size)
@@ -89,7 +115,8 @@ def get_tcp_adapter(host: str, port: int = 50004):
                         f(uuid, data)
                 elif code == ResponseOp.ERROR:
                     err = Exception(data.decode('utf_8'))
-                    self.__sequence_wait.pop(recvall(self.__socket, 1)[0]).set_exception(err)
+                    self.__sequence_wait.pop(recvall(self.__socket, 1)[
+                                             0]).set_exception(err)
 
         def __send(self, cmd, payload):
             if not self.__thread.is_alive():
@@ -111,10 +138,12 @@ def get_tcp_adapter(host: str, port: int = 50004):
             else:
                 self.__callbacks[uuid] = {cb}
                 buf = uuid.encode('ascii')
-                self.__send(RequestOp.SET_CALLBACK, to_bytes(len(buf), 2) + buf)
+                self.__send(RequestOp.SET_CALLBACK,
+                            to_bytes(len(buf), 2) + buf)
 
         def write(self, uuid, data):
             uuid = uuid.encode('ascii')
-            self.__send(RequestOp.WRITE, to_bytes(len(uuid), 2) + uuid + to_bytes(len(data), 2) + data)
+            self.__send(RequestOp.WRITE, to_bytes(len(uuid), 2) +
+                        uuid + to_bytes(len(data), 2) + data)
 
     return TCPAdapter

@@ -9,6 +9,12 @@ class BleakAdapter:
     def scan_toys(timeout: float = 5.0):
         return asyncio.run(bleak.BleakScanner.discover(timeout))
 
+    @staticmethod
+    def scan_toy(name: str, timeout: float = 5.0):
+        return asyncio.run(
+            bleak.BleakScanner.find_device_by_filter(
+                lambda _, a: a.local_name == name, timeout))
+
     def __init__(self, address):
         self.__event_loop = asyncio.new_event_loop()
         self.__device = bleak.BleakClient(address, timeout=5.0)

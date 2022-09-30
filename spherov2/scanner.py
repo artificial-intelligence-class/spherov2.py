@@ -41,12 +41,18 @@ def find_toys(*, timeout=5.0, toy_types: Iterable[Type[Toy]] = None,
     if adapter is None:
         adapter = importlib.import_module(
             'spherov2.adapter.bleak_adapter').BleakAdapter
-    toys = adapter.scan_toys(timeout)
+    if toy_names is not None:
+        toy_names = set(toy_names)
+    if toy_names is not None and len(toy_names) == 1:
+        toy = adapter.scan_toy(list(toy_names)[0], timeout)
+        if toy is None:
+            return []
+        toys = [toy]
+    else:
+        toys = adapter.scan_toys(timeout)
     if toy_types is None:
         toy_types = all_toys()
     ret = []
-    if toy_names is not None:
-        toy_names = set(toy_names)
     for toy in toys:
         if toy.name is None:
             continue
