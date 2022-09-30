@@ -45,7 +45,7 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
                                  to_bytes(len(addr), 2) + addr)
                     await writer.drain()
             elif cmd == RequestOp.FIND:
-                size = await reader.readexactly(2)
+                size = to_int(await reader.readexactly(2))
                 name = (await reader.readexactly(size)).decode('utf-8')
                 timeout = struct.unpack('!f', await reader.readexactly(4))[0]
                 try:
@@ -54,6 +54,10 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
                     err = str(e)[:0xffff].encode('utf_8')
                     writer.write(ResponseOp.ERROR +
                                  to_bytes(len(err), 2) + err)
+                    await writer.drain()
+                    continue
+                if toy is None:
+                    writer.write(ResponseOp.ERROR + b'\x00\x00')
                     await writer.drain()
                     continue
                 writer.write(ResponseOp.OK)

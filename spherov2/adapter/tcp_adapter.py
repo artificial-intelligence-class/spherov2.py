@@ -64,6 +64,8 @@ def get_tcp_adapter(host: str, port: int = 50004):
                 code = recvall(s, 1)
                 if code == ResponseOp.ERROR:
                     size = to_int(recvall(s, 2))
+                    if size == 0:
+                        return None
                     data = recvall(s, size)
                     raise Exception(data.decode('utf_8'))
                 elif code != ResponseOp.OK:
