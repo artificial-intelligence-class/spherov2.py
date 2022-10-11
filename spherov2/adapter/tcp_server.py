@@ -15,7 +15,7 @@ async def process_connection(reader: asyncio.streams.StreamReader, writer: async
     def callback(char, d):
         if writer.is_closing():
             return
-        char = char.encode('ascii')
+        char = char.uuid.encode('ascii')
         writer.write(ResponseOp.ON_DATA + to_bytes(len(char),
                      2) + char + to_bytes(len(d), 1) + d)
         asyncio.ensure_future(writer.drain())
