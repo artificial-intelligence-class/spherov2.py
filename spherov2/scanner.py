@@ -51,7 +51,7 @@ def find_toys(*, timeout=5.0, toy_types: Iterable[Type[Toy]] = None,
     else:
         toys = adapter.scan_toys(timeout)
     if toy_types is None:
-        toy_types = all_toys()
+        toy_types = set(all_toys())
     ret = []
     for toy in toys:
         if toy.name is None:
