@@ -175,6 +175,11 @@ class DriveControl:
 
     def set_raw_motors(self, left_mode, left_speed, right_mode, right_speed):
         self.__toy.set_raw_motors(left_mode, left_speed, right_mode, right_speed)
+        
+    def reset_heading(self):
+        self.set_stabilization(False)
+        self.__toy.set_heading(0)
+        self.set_stabilization(True)
 
 
 class FirmwareUpdateControl:
