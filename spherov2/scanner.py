@@ -12,6 +12,7 @@ from spherov2.toy.ollie import Ollie
 from spherov2.toy.r2d2 import R2D2
 from spherov2.toy.r2q5 import R2Q5
 from spherov2.toy.rvr import RVR
+from spherov2.toy.sprk2 import Sprk2
 
 
 class ToyNotFoundError(Exception):
@@ -94,3 +95,4 @@ find_R2D2: Callable[..., R2D2] = partial(find_toy, toy_types=[R2D2])
 find_R2Q5: Callable[..., R2Q5] = partial(find_toy, toy_types=[R2Q5])
 find_RVR: Callable[..., RVR] = partial(find_toy, toy_types=[RVR])
 find_BOLT: Callable[..., BOLT] = partial(find_toy, toy_types=[BOLT])
+find_Sprk2: Callable[..., Sprk2] = partial(find_toy, toy_types=[Sprk2])
