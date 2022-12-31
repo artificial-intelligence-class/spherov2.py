@@ -423,7 +423,6 @@ class ToyUtil:
             toy.save_compressed_frame_player_animation(animation_id, fps, fade_animation, palette_colors, frames_indexes)
         elif not_supported_handler:
             not_supported_handler()
-        ToyUtil.save_compressed_frame_player_animation(toy, s, s2, z, s3, s_arr, i, i_arr, _fallback)
 
     @staticmethod
     def save_compressed_frame_player64_bit_frame(toy: Toy, frame_index, compressed_frame,
