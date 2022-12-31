@@ -4,7 +4,7 @@ from typing import Callable, Dict, List, Iterable
 from spherov2.commands.animatronic import R2LegActions, Animatronic
 from spherov2.commands.api_and_shell import ApiAndShell
 from spherov2.commands.core import IntervalOptions, Core
-from spherov2.commands.io import AudioPlaybackModes, IO
+from spherov2.commands.io import AudioPlaybackModes, IO, FrameRotationOptions, FadeOverrideOptions
 from spherov2.commands.power import Power
 from spherov2.commands.sensor import CollisionDetectionMethods, Sensor, SensitivityBasedCollisionDetectionMethods, \
     SensitivityLevels
@@ -391,50 +391,9 @@ class ToyUtil:
             not_supported_handler()
 
     @staticmethod
-    def set_matrix_pixel(toy: Toy, x: int, y: int, r: int, g: int, b: int, is_user_color: bool,
-                         not_supported_handler: Callable[[], None] = None):
-        def _fallback():
-            not_supported_handler()
-
-        ToyUtil.set_led_matrix_pixel(toy, x, y, r, g, b, _fallback)
-
-    @staticmethod
-    def set_led_matrix_pixel(toy: Toy, x: int, y: int, r: int, g: int, b: int,
-                             not_supported_handler: Callable[[], None] = None):
-        if toy.implements(IO.set_compressed_frame_player_pixel):
-            toy.set_compressed_frame_player_pixel(x, y, r, g, b)
-        elif not_supported_handler:
-            not_supported_handler()
-
-    @staticmethod
-    def set_matrix_line(toy: Toy, x1: int, y1: int, x2: int, y2: int, r: int, g: int, b: int, is_user_color: bool,
-                        not_supported_handler: Callable[[], None] = None):
-        def _fallback():
-            not_supported_handler()
-
-        ToyUtil.set_led_matrix_line(toy, x1, y1, x2, y2, r, g, b, _fallback)
-
-    @staticmethod
-    def set_led_matrix_line(toy: Toy, x1: int, y1: int, x2: int, y2: int, r: int, g: int, b: int,
-                            not_supported_handler: Callable[[], None] = None):
-        if toy.implements(IO.draw_compressed_frame_player_line):
-            toy.draw_compressed_frame_player_line(x1, y1, x2, y2, r, g, b)
-        elif not_supported_handler:
-            not_supported_handler()
-
-    @staticmethod
-    def set_matrix_fill(toy: Toy, x1: int, y1: int, x2: int, y2: int, r: int, g: int, b: int, is_user_color: bool,
-                        not_supported_handler: Callable[[], None] = None):
-        def _fallback():
-            not_supported_handler()
-
-        ToyUtil.set_led_matrix_fill(toy, x1, y1, x2, y2, r, g, b, _fallback)
-
-    @staticmethod
-    def set_led_matrix_fill(toy: Toy, x1: int, y1: int, x2: int, y2: int, r: int, g: int, b: int,
-                            not_supported_handler: Callable[[], None] = None):
-        if toy.implements(IO.draw_compressed_frame_player_fill):
-            toy.draw_compressed_frame_player_fill(x1, y1, x2, y2, r, g, b)
+    def set_matrix_rotation(toy: Toy, rotation:FrameRotationOptions, not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.set_compressed_frame_player_frame_rotation):
+            toy.set_compressed_frame_player_frame_rotation(rotation)
         elif not_supported_handler:
             not_supported_handler()
 
@@ -456,27 +415,55 @@ class ToyUtil:
         ToyUtil.set_led_matrix_one_colour(toy, 0, 0, 0)
 
     # Bolt Animation
-    def register_matrix_animation(toy: Toy, s, s2, z, s3, s_arr, i, i_arr,
+    @staticmethod
+    def save_compressed_frame_player_animation(toy: Toy, animation_id, fps, fade_animation, palette_colors, frames_indexes,
                                   not_supported_handler: Callable[[], None] = None):
-        def _fallback():
+        if toy.implements(IO.save_compressed_frame_player_animation):
+            toy.save_compressed_frame_player_animation(animation_id, fps, fade_animation, palette_colors, frames_indexes)
+        elif not_supported_handler:
             not_supported_handler()
         ToyUtil.save_compressed_frame_player_animation(toy, s, s2, z, s3, s_arr, i, i_arr, _fallback)
 
-    def save_compressed_frame_player_animation(toy: Toy, s, s2, z, s3, s_arr, i, i_arr,
+    @staticmethod
+    def save_compressed_frame_player64_bit_frame(toy: Toy, frame_index, compressed_frame,
                                                not_supported_handler: Callable[[], None] = None):
-        if toy.implements(IO.save_compressed_frame_player_animation):
-            toy.save_compressed_frame_player_animation(s, s2, z, s3, s_arr, i, i_arr)
+        if toy.implements(IO.save_compressed_frame_player64_bit_frame):
+            toy.save_compressed_frame_player64_bit_frame(frame_index, compressed_frame)
         elif not_supported_handler:
             not_supported_handler()
 
-    def play_matrix_animation(toy: Toy, s, not_supported_handler: Callable[[], None] = None):
-        def _fallback():
+    @staticmethod
+    def play_compressed_frame_player_animation_with_loop_option(toy: Toy, animation_id, loop, not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.play_compressed_frame_player_animation_with_loop_option):
+            toy.play_compressed_frame_player_animation_with_loop_option(animation_id, loop)
+        elif not_supported_handler:
             not_supported_handler()
-        #TODO: Add correct call #ToyUtil.save_compressed_frame_player_animation(toy, s, s2, z, s3, s_arr, i, i_arr, _fallback)
 
-    def play_compressed_frame_player_animation(toy: Toy, s, not_supported_handler: Callable[[], None] = None):
-        if toy.implements(IO.play_compressed_frame_player_animation):
-            toy.play_compressed_frame_player_animation(s)
+    @staticmethod
+    def override_compressed_frame_player_animation_global_settings(toy: Toy, fps:int, fade_options:FadeOverrideOptions, not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.override_compressed_frame_player_animation_global_settings):
+            toy.override_compressed_frame_player_animation_global_settings(fps, fade_options)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def reset_compressed_frame_player_animation(toy: Toy, not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.reset_compressed_frame_player_animation):
+            toy.reset_compressed_frame_player_animation()
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def resume_compressed_frame_player_animation(toy: Toy, not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.resume_compressed_frame_player_animation):
+            toy.resume_compressed_frame_player_animation()
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def pause_compressed_frame_player_animation(toy: Toy, not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.pause_compressed_frame_player_animation):
+            toy.pause_compressed_frame_player_animation()
         elif not_supported_handler:
             not_supported_handler()
 
@@ -631,6 +618,27 @@ class ToyUtil:
             toy.enable_battery_state_changed_notify(enable)
         elif toy.implements(Power.enable_battery_voltage_state_change_notify):
             toy.enable_battery_voltage_state_change_notify(enable)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def calibrate_compass(toy: Toy, not_supported_handler: Callable[[], None] = None):
+        if toy.implements(Sensor.magnetometer_calibrate_to_north):
+            toy.magnetometer_calibrate_to_north()
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def scroll_matrix_text(toy: Toy, text:str, color: Color, fps: int, not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.set_compressed_frame_player_text_scrolling):
+            toy.set_compressed_frame_player_text_scrolling(text, color.r, color.g, color.b, fps, False)
+        elif not_supported_handler:
+            not_supported_handler()
+
+    @staticmethod
+    def set_matrix_character(toy: Toy, character: str, color: Color, not_supported_handler: Callable[[], None] = None):
+        if toy.implements(IO.set_compressed_frame_player_single_character):
+            toy.set_compressed_frame_player_single_character(color.r, color.g, color.b, character)
         elif not_supported_handler:
             not_supported_handler()
 
