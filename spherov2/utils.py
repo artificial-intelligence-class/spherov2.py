@@ -18,6 +18,7 @@ from spherov2.toy.mini import Mini
 from spherov2.toy.r2d2 import R2D2
 from spherov2.toy.r2q5 import R2Q5
 from spherov2.toy.rvr import RVR
+from spherov2.types import Color
 
 
 class ToyUtil:
