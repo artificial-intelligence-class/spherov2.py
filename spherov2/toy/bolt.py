@@ -54,7 +54,7 @@ class BOLT(ToyV2):
             x=ToySensor(0x10, -32768., 32767., lambda x: x * 100.),
             y=ToySensor(0x8, -32768., 32767., lambda x: x * 100.),
         ),
-        speed=OrderedDict(speed=ToySensor(0x4, 0., 32767.)), # Doesn't work when enabled
+        speed=OrderedDict(speed=ToySensor(0x4, 0., 32767.)),  # Doesn't work when enabled
         core_time=OrderedDict(core_time=ToySensor(0x2, 0., 0.))
     )
 
