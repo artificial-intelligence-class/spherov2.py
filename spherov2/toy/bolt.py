@@ -54,7 +54,7 @@ class BOLT(ToyV2):
             x=ToySensor(0x10, -32768., 32767., lambda x: x * 100.),
             y=ToySensor(0x8, -32768., 32767., lambda x: x * 100.),
         ),
-        speed=OrderedDict(speed=ToySensor(0x4, 0., 32767.)),
+        speed=OrderedDict(speed=ToySensor(0x4, 0., 32767.)), # Doesn't work when enabled
         core_time=OrderedDict(core_time=ToySensor(0x2, 0., 0.))
     )
 
@@ -156,10 +156,10 @@ class BOLT(ToyV2):
                                                                  proc=Processors.SECONDARY)  # SetCompressedFramePlayerSingleCharacterCommand
     set_compressed_frame_player_text_scrolling = partialmethod(IO.set_compressed_frame_player_text_scrolling,
                                                                proc=Processors.SECONDARY)  # SetCompressedFramePlayerTextScrollingCommand
-    add_compressed_frame_player_animation_complete_notify = partialmethod(
+    add_set_compressed_frame_player_text_scrolling_notify = partialmethod(
         Toy._add_listener,
         IO.set_compressed_frame_player_text_scrolling_notify)  # SetCompressedFramePlayerTextScrollingNotifyCommand
-    remove_compressed_frame_player_animation_complete_notify_listener = partialmethod(
+    remove_set_compressed_frame_player_text_scrolling_notify = partialmethod(
         Toy._remove_listener,
         IO.set_compressed_frame_player_text_scrolling_notify)  # SetCompressedFramePlayerTextScrollingNotifyCommand
     set_led = partialmethod(IO.set_led, proc=Processors.SECONDARY)  # SetLedCommand
@@ -168,13 +168,13 @@ class BOLT(ToyV2):
     release_led_requests = partialmethod(IO.release_led_requests, proc=Processors.PRIMARY)
 
     # Power
-    add_will_sleep_notify_listener = partialmethod(Toy._add_listener,
+    add_charger_state_changed_notify_listener = partialmethod(Toy._add_listener,
                                                    Power.charger_state_changed_notify)  # ChargerStateChangedNotifyCommand
-    remove_will_sleep_notify_listener = partialmethod(Toy._remove_listener,
+    remove_charger_state_changed_notify_listener = partialmethod(Toy._remove_listener,
                                                       Power.charger_state_changed_notify)  # ChargerStateChangedNotifyCommand
-    add_will_sleep_notify_listener = partialmethod(Toy._add_listener,
+    add_did_sleep_notify_listener = partialmethod(Toy._add_listener,
                                                    Power.did_sleep_notify)  # DidSleepNotifyCommand
-    remove_will_sleep_notify_listener = partialmethod(Toy._remove_listener,
+    remove_did_sleep_notify_listener = partialmethod(Toy._remove_listener,
                                                       Power.did_sleep_notify)  # DidSleepNotifyCommand
     enable_battery_voltage_state_change_notify = Power.enable_battery_voltage_state_change_notify  # EnableBatteryVoltageStateChangeNotifyCommand
     enable_charger_state_changed_notify = Power.enable_charger_state_changed_notify  # EnableChargerStateChangedNotifyCommand
@@ -194,7 +194,7 @@ class BOLT(ToyV2):
                                                            Sensor.collision_detected_notify)  # CollisionDetectedNotifyCommand
     remove_collision_detected_notify_listener = partialmethod(Toy._remove_listener,
                                                               Sensor.collision_detected_notify)  # CollisionDetectedNotifyCommand
-    configure_collision_detection = Sensor.configure_collision_detection  # ConfigureCollisionDetectionCommand
+    configure_collision_detection = partialmethod(Sensor.configure_collision_detection, proc=Processors.SECONDARY)  # ConfigureCollisionDetectionCommand
     enable_gyro_max_notify = partialmethod(Sensor.enable_gyro_max_notify, proc=Processors.SECONDARY)  # EnableGyroMaxNotifyCommand
     get_ambient_light_sensor_value = partialmethod(Sensor.get_ambient_light_sensor_value, proc=Processors.SECONDARY)
     get_bot_to_bot_infrared_readings = Sensor.get_bot_to_bot_infrared_readings  # GetBotToBotInfraredReadingsCommand
@@ -206,7 +206,7 @@ class BOLT(ToyV2):
     remove_gyro_max_notify_listener = partialmethod(Toy._remove_listener,
                                                     Sensor.gyro_max_notify)  # GyroMaxNotifyCommand
     listen_for_robot_to_robot_infrared_message = Sensor.listen_for_robot_to_robot_infrared_message  # ListenForRobotToRobotInfraredMessageCommand
-    magnetometer_calibrate_to_north = Sensor.magnetometer_calibrate_to_north  # MagnetometerCalibrateToNorthCommand
+    magnetometer_calibrate_to_north = partialmethod(Sensor.magnetometer_calibrate_to_north, proc=Processors.SECONDARY)  # MagnetometerCalibrateToNorthCommand
     add_magnetometer_north_yaw_notify_listener = partialmethod(Toy._add_listener,
                                                                Sensor.magnetometer_north_yaw_notify)  # MagnetometerNorthYawNotifyCommand
     remove_magnetometer_north_yaw_notify_listener = partialmethod(Toy._remove_listener,
@@ -221,7 +221,7 @@ class BOLT(ToyV2):
                                                               Sensor.sensor_streaming_data_notify)  # SensorStreamingDataNotifyCommand
     remove_sensor_streaming_data_notify_listener = partialmethod(Toy._remove_listener,
                                                                  Sensor.sensor_streaming_data_notify)  # SensorStreamingDataNotifyCommand
-    set_locator_flags = Sensor.set_locator_flags  # SetLocatorFlagsCommand
+    set_locator_flags = partialmethod(Sensor.set_locator_flags, proc=Processors.SECONDARY)  # SetLocatorFlagsCommand
     start_robot_to_robot_infrared_broadcasting = Sensor.start_robot_to_robot_infrared_broadcasting  # StartRobotToRobotInfraredBroadcastingCommand
     start_robot_to_robot_infrared_evading = Sensor.start_robot_to_robot_infrared_evading  # StartRobotToRobotInfraredEvadingCommand
     start_robot_to_robot_infrared_following = Sensor.start_robot_to_robot_infrared_following  # StartRobotToRobotInfraredFollowingCommand
