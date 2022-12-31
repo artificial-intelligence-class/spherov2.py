@@ -164,7 +164,7 @@ class Sensor(Commands):
 
     @staticmethod
     def magnetometer_calibrate_to_north(toy, proc=None):
-        toy._execute(Sensor._encode(toy, 0x25, proc))
+        toy._execute(Sensor._encode(toy, 37, proc))
 
     magnetometer_north_yaw_notify = (24, 38, 0xff), lambda listener, p: listener(to_int(p.data))
 

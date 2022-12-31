@@ -115,7 +115,7 @@ class IO(Commands):
             toy, 49, proc, [animation_id, fps % 31, int(fade_animation), len(palette_colors) // 3, *palette_colors, *struct.pack('>%dH' % (len(frames_indexes) + 1), len(frames_indexes), *frames_indexes)]))
 
     @staticmethod
-    def play_compressed_frame_player_animation(toy, animation_id, proc=None):  # unknown names
+    def play_compressed_frame_player_animation(toy, animation_id, proc=None):
         toy._execute(IO._encode(toy, 50, proc, [animation_id]))
 
     @staticmethod
@@ -145,7 +145,7 @@ class IO(Commands):
 
     @staticmethod
     def override_compressed_frame_player_animation_global_settings(toy, fps:int, fade_options:FadeOverrideOptions, proc=None):  # Untested / Unknown Param Names
-        toy._execute(IO._encode(toy, 0x39, proc, [fps, fade_options]))
+        toy._execute(IO._encode(toy, 57, proc, [fps, fade_options]))
 
     @staticmethod
     def set_compressed_frame_player_frame_rotation(toy, rotation: FrameRotationOptions, proc=None):
