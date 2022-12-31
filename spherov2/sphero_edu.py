@@ -40,8 +40,8 @@ class EventType(Enum):
     on_gyro_max = auto()  # [f.Sphero, f.Mini, f.Ollie, f.BB8, f.BB9E, f.BOLT, f.Mini]
     on_charging = auto()  # [f.Sphero, f.Ollie, f.BB8, f.BB9E, f.R2D2, f.R2Q5, f.BOLT]
     on_not_charging = auto()  # [f.Sphero, f.Ollie, f.BB8, f.BB9E, f.R2D2, f.R2Q5, f.BOLT]
-    on_magnetometer_north_yaw = auto()  # [f.BOLT] TODO
-    on_sensor_streaming_data = auto()  # [f.BOLT] TODO
+    on_magnetometer_north_yaw = auto()  # [f.BOLT]
+    on_sensor_streaming_data = auto()  # [f.BOLT]
     on_ir_message = auto()  # [f.BOLT, f.RVR] TODO
     on_color = auto()  # [f.RVR] TODO
 
@@ -98,6 +98,7 @@ class SpheroEduAPI:
         self.__falling_v = 1.
         self.__last_message = None
         self.__should_land = self.__free_falling = False
+        self.__compass_zero = None
 
         self.__listeners = defaultdict(set)
         ToyUtil.add_listeners(toy, self)
@@ -275,6 +276,25 @@ class SpheroEduAPI:
     def reset_aim(self):
         """Resets the heading calibration (aim) angle to use the current direction of the robot as 0°."""
         ToyUtil.reset_heading(self.__toy)
+
+    def calibrate_compass(self):
+        """
+        Calibrates the compass
+        """
+        if isinstance(self.__toy, BOLT):
+            self.__compass_zero = None
+            ToyUtil.calibrate_compass(self.__toy)
+            while self.__compass_zero is None:
+                time.sleep(0.1)
+
+    def set_compass_direction(self, direction:int):
+        """
+        Sets the direction relative to compass zero
+        """
+        if self.__compass_zero is None:
+            raise Exception("Compass is not calibrated")
+        self.__heading = (self.__compass_zero + direction) % 360
+        ToyUtil.roll_start(self.__toy, self.__heading, self.__speed)
 
     # Star Wars Droid Movements
     def play_animation(self, animation: IntEnum):
@@ -490,7 +510,7 @@ class SpheroEduAPI:
             sensors = ['accelerometer', 'gyroscope', 'imu', 'locator', 'velocity', 'ambient_light', 'color_detection']
             self.__sensor_name_mapping['imu'] = 'attitude'
         elif isinstance(self.__toy, BOLT):
-            sensors = ['accelerometer', 'gyroscope', 'attitude', 'locator', 'velocity', 'ambient_light']
+            sensors = ["accel_one", 'accelerometer', 'ambient_light', 'attitude', "core_time", 'gyroscope', 'locator', "quaternion", 'velocity']
         else:
             sensors = ['attitude', 'accelerometer', 'gyroscope', 'locator', 'velocity']
         ToyUtil.enable_sensors(self.__toy, sensors)
@@ -549,6 +569,7 @@ class SpheroEduAPI:
         self.__call_event_listener(EventType.on_gyro_max)
 
     def _magnetometer_north_yaw_notify(self, flags):
+        self.__compass_zero = flags
         self.__call_event_listener(EventType.on_magnetometer_north_yaw)
 
     def _sensor_streaming_data_notify(self, flags):
@@ -635,7 +656,12 @@ class SpheroEduAPI:
         return self.__leds.get('main', None)
 
     # Sphero BOLT Sensors
-    # TODO Compass Direction
+    # TODO verify that it is the same value as API (relative to current heading or reset heading)
+    def get_compass_direction(self):
+        """
+        Returns compass 0. None if compass not calibrated
+        """
+        return self.__compass_zero
 
     def get_luminosity_direct(self):
         """similar to get_luminosity, however this is a more direct call to the sphero to get a value directly"""
@@ -773,7 +799,7 @@ class SpheroEduAPI:
         **Note**: listeners will be called in a newly spawned thread, meaning the caller have to deal with concurrency
         if needed. This library is thread-safe."""
         if event_type not in EventType:
-            raise ValueError('Event type {event_type} does not exist')
+            raise ValueError(f'Event type {event_type} does not exist')
         if listener:
             self.__listeners[event_type].add(listener)
         else:
