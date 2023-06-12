@@ -1,10 +1,10 @@
 import math
-import threading
 import time
 from collections import namedtuple, defaultdict
 from enum import Enum, IntEnum, auto
 from functools import partial
 from typing import Union, Callable, Dict, Iterable
+import asyncio
 
 import numpy as np
 from transforms3d.euler import euler2mat
@@ -108,58 +108,78 @@ class SpheroEduAPI:
         self.__listeners = defaultdict(set)
         ToyUtil.add_listeners(toy, self)
 
-        self.__stopped = threading.Event()
-        self.__stopped.set()
-        self.__updating = threading.Lock()
-        self.__thread = None
+        self.__stopped = asyncio.Event()
+        self.__updating = asyncio.Lock()
 
-    def __enter__(self):
-        self.__stopped.clear()
-        self.__thread = threading.Thread(target=self.__background)
-        self.__toy.__enter__()
-        self.__thread.start()
-        try:
-            self.__toy.wake()
-            ToyUtil.set_robot_state_on_start(self.__toy)
-            self.__start_capturing_sensor_data()
-        except:
-            self.__exit__(None, None, None)
-            raise
+        # self.__stopped = threading.Event()
+        # self.__stopped.set()
+        # self.__updating = threading.Lock()
+        # self.__thread = None
+
+    async def __aenter__(self):
+        await self.__toy.__aenter__()
+        await self.__toy.wake()
+        await ToyUtil.set_robot_state_on_start(self.__toy)
+        await self.__start_capturing_sensor_data()
         return self
+        # self.__stopped.clear()
+        # self.__thread = threading.Thread(target=self.__background)
+        # self.__toy.__enter__()
+        # self.__thread.start()
+        # try:
+        #     self.__toy.wake()
+        #     ToyUtil.set_robot_state_on_start(self.__toy)
+        #     self.__start_capturing_sensor_data()
+        # except:
+        #     self.__exit__(None, None, None)
+        #     raise
+        # return self
 
-    def __exit__(self, *args):
+    async def __aexit__(self, *args):
         self.__stopped.set()
-        self.__thread.join()
         try:
-            ToyUtil.sleep(self.__toy)
+            await ToyUtil.sleep(self.__toy)
         except:
             pass
-        self.__toy.__exit__(*args)
+        await self.__toy.__aexit__(*args)
+        # self.__stopped.set()
+        # self.__thread.join()
+        # try:
+        #     ToyUtil.sleep(self.__toy)
+        # except:
+        #     pass
+        # self.__toy.__exit__(*args)
 
-    def __background(self):
-        while not self.__stopped.wait(0.8):
-            with self.__updating:
-                self.__update_speeds()
+    async def __background(self):
+        while True:
+            if self.__stopped.is_set():
+                break
+            else:
+                async with self.__updating:
+                    await self.__update_speeds()
+        # while not self.__stopped.wait(0.8):
+        #     with self.__updating:
+        #         self.__update_speeds()
 
-    def _will_sleep_notify(self):
-        ToyUtil.ping(self.__toy)
+    async def _will_sleep_notify(self):
+        await ToyUtil.ping(self.__toy)
 
     # Movements: control the robot's motors and control system.
-    def __update_speeds(self):
+    async def __update_speeds(self):
         if self.__speed != 0:
-            self.__update_speed()
+            await self.__update_speed()
         if self.__raw_motor.left != 0 or self.__raw_motor.right != 0:
-            self.__update_raw_motor()
+            await self.__update_raw_motor()
 
-    def __stop_all(self):
+    async def __stop_all(self):
         if self.__speed != 0:
             self.__speed = 0
-            self.__update_speed()
+            await self.__update_speed()
         if self.__raw_motor.left != 0 or self.__raw_motor.right != 0:
             self.__raw_motor = rawMotor(0, 0)
-            self.__update_raw_motor()
+            await self.__update_raw_motor()
 
-    def roll(self, heading: int, speed: int, duration: float):
+    async def roll(self, heading: int, speed: int, duration: float):
         """Combines heading(0-360°), speed(-255-255), and duration to make the robot roll with one line of code.
         For example, to have the robot roll at 90°, at speed 200 for 2s, use ``roll(90, 200, 2)``"""
         if isinstance(self.__toy, Mini) and speed != 0:
@@ -168,12 +188,13 @@ class SpheroEduAPI:
         self.__heading = heading % 360
         if speed < 0:
             self.__heading = (self.__heading + 180) % 360
-        self.__update_speed()
-        time.sleep(duration)
+        await self.__update_speed()
+        # time.sleep(duration)
+        await asyncio.sleep(duration)
         self.stop_roll()
 
-    def __update_speed(self):
-        ToyUtil.roll_start(self.__toy, self.__heading, self.__speed)
+    async def __update_speed(self):
+        await ToyUtil.roll_start(self.__toy, self.__heading, self.__speed)
 
     def set_speed(self, speed: int):
         """Sets the speed of the robot from -255 to 255, where positive speed is forward, negative speed is backward,
@@ -185,23 +206,23 @@ class SpheroEduAPI:
         if isinstance(self.__toy, Mini) and speed != 0:
             speed = round((speed + 126) * 2 / 3) if speed > 0 else round((speed - 126) * 2 / 3)
         self.__speed = bound_value(-255, speed, 255)
-        self.__update_speed()
+        asyncio.ensure_future(self.__update_speed())
 
     def stop_roll(self, heading: int = None):
         """Sets the speed to zero to stop the robot, effectively the same as the ``set_speed(0)`` command."""
         if heading is not None:
             self.__heading = heading % 360
         self.__speed = 0
-        ToyUtil.roll_stop(self.__toy, self.__heading, False)
+        asyncio.ensure_future(ToyUtil.roll_stop(self.__toy, self.__heading, False))
 
     def set_heading(self, heading: int):
         """Sets the direction the robot rolls.
         Assuming you aim the robot with the blue tail light facing you, then 0° is forward, 90° is right,
         270° is left, and 180° is backward. For example, use ``set_heading(90)`` to face right."""
         self.__heading = heading % 360
-        ToyUtil.roll_start(self.__toy, self.__heading, self.__speed)
+        return asyncio.ensure_future(ToyUtil.roll_start(self.__toy, self.__heading, self.__speed))
 
-    def spin(self, angle: int, duration: float):
+    async def spin(self, angle: int, duration: float):
         """Spins the robot for a given number of degrees over time, with 360° being a single revolution.
         For example, to spin the robot 360° over 1s, use: ``spin(360, 1)``.
         Use :func:`set_speed` prior to :func:`spin` to have the robot move in circle or an arc or circle.
@@ -227,10 +248,10 @@ class SpheroEduAPI:
 
         start = time.time()
         angle_gone = 0
-        with self.__updating:
+        async with self.__updating:
             while angle_gone < abs_angle:
                 delta = round(min((time.time() - start) / duration, 1.) * abs_angle) - angle_gone
-                self.set_heading(self.__heading + delta if angle > 0 else self.__heading - delta)
+                await self.set_heading(self.__heading + delta if angle > 0 else self.__heading - delta)
                 angle_gone += delta
 
     def set_stabilization(self, stabilize: bool):
@@ -250,16 +271,16 @@ class SpheroEduAPI:
         the control system is off."""
         self.__stabilization = stabilize
         if isinstance(self.__toy, (Sphero, Mini, Ollie, BB8, BB9E, BOLT)):
-            ToyUtil.set_stabilization(self.__toy, stabilize)
+            asyncio.ensure_future(ToyUtil.set_stabilization(self.__toy, stabilize))
 
-    def __update_raw_motor(self):
-        ToyUtil.set_raw_motor(self.__toy,
+    async def __update_raw_motor(self):
+       await ToyUtil.set_raw_motor(self.__toy,
                               RawMotorModes.REVERSE if self.__raw_motor.left < 0 else RawMotorModes.FORWARD,
                               abs(self.__raw_motor.left),
                               RawMotorModes.REVERSE if self.__raw_motor.right < 0 else RawMotorModes.FORWARD,
                               abs(self.__raw_motor.right))
 
-    def raw_motor(self, left: int, right: int, duration: float):
+    async def raw_motor(self, left: int, right: int, duration: float):
         """Controls the electrical power sent to the left and right motors independently, on a scale from -255 to 255
         where positive is forward, negative is backward, and 0 is stopped. If you set both motors to full power
         the robot will jump because stabilization (use of the IMU to keep the robot upright) is disabled when using
@@ -268,29 +289,31 @@ class SpheroEduAPI:
         to full power for 4s, making the robot jump off the ground, use ``raw_motor(255, 255, 4)``."""
         stabilize = self.__stabilization
         if stabilize:
-            self.set_stabilization(False)
+            await self.set_stabilization(False)
         self.__raw_motor = rawMotor(bound_value(-255, left, 255), bound_value(-255, right, 255))
-        self.__update_raw_motor()
+        await self.__update_raw_motor()
         if duration is not None:
-            time.sleep(duration)
+            # time.sleep(duration)
+            asyncio.sleep(duration)
             if stabilize:
-                self.set_stabilization(True)
+                await self.set_stabilization(True)
             self.__raw_motor = rawMotor(0, 0)
-            ToyUtil.set_raw_motor(self.__toy, RawMotorModes.OFF, 0, RawMotorModes.OFF, 0)
+            await ToyUtil.set_raw_motor(self.__toy, RawMotorModes.OFF, 0, RawMotorModes.OFF, 0)
 
-    def reset_aim(self):
+    async def reset_aim(self):
         """Resets the heading calibration (aim) angle to use the current direction of the robot as 0°."""
-        ToyUtil.reset_heading(self.__toy)
+        await ToyUtil.reset_heading(self.__toy)
 
-    def calibrate_compass(self):
+    async def calibrate_compass(self):
         """
         Calibrates the compass
         """
         if isinstance(self.__toy, BOLT):
             self.__compass_zero = None
-            ToyUtil.calibrate_compass(self.__toy)
+            await ToyUtil.calibrate_compass(self.__toy)
             while self.__compass_zero is None:
-                time.sleep(0.1)
+                # time.sleep(0.1)
+                await asyncio.sleep(0.1)
 
     def set_compass_direction(self, direction:int):
         """
@@ -299,53 +322,53 @@ class SpheroEduAPI:
         if self.__compass_zero is None:
             raise Exception("Compass is not calibrated")
         self.__heading = (self.__compass_zero + direction) % 360
-        ToyUtil.roll_start(self.__toy, self.__heading, self.__speed)
+        asyncio.ensure_future(ToyUtil.roll_start(self.__toy, self.__heading, self.__speed))
 
     # Star Wars Droid Movements
-    def play_animation(self, animation: IntEnum):
+    async def play_animation(self, animation: IntEnum):
         """Plays iconic `Star Wars Droid animations <https://edu.sphero.com/remixes/1195472/>`_ unique to BB-8, BB-9E,
         R2-D2 and R2-Q5 that combine movement, lights and sound. All animation enums can be accessed under the droid
         class, such as :class:`R2D2.Animations.CHARGER_1`."""
         if hasattr(self.__toy, 'Animations'):
             if animation not in self.__toy.Animations:
                 raise ValueError(f'Animation {animation} cannot be played by this toy')
-            with self.__updating:
-                self.__stop_all()
-            ToyUtil.play_animation(self.__toy, animation, True)
+            async with self.__updating:
+                await self.__stop_all()
+            await ToyUtil.play_animation(self.__toy, animation, True)
 
     # The R2-D2 and R2-Q5 Droids are physically different from other Sphero robots,
     # so there are some unique commands that only they can use.
     def set_dome_position(self, angle: float):
         """Rotates the dome on its axis, from -160° to 180°. For example, set to 45° using ``set_dome_position(45).``"""
         if isinstance(self.__toy, (R2D2, R2Q5)):
-            ToyUtil.set_head_position(self.__toy, bound_value(-160., angle, 180.))
+            asyncio.ensure_future(ToyUtil.set_head_position(self.__toy, bound_value(-160., angle, 180.)))
 
-    def set_stance(self, stance: Stance):
+    async def set_stance(self, stance: Stance):
         """Changes the stance between bipod and tripod. Set to bipod using ``set_stance(Stance.Bipod)`` and
         to tripod using ``set_stance(Stance.Tripod)``. Tripod is required for rolling."""
         if isinstance(self.__toy, (R2D2, R2Q5)):
             if stance == Stance.Bipod:
-                ToyUtil.perform_leg_action(self.__toy, R2LegActions.TWO_LEGS)
+                await ToyUtil.perform_leg_action(self.__toy, R2LegActions.TWO_LEGS)
             elif stance == Stance.Tripod:
-                ToyUtil.perform_leg_action(self.__toy, R2LegActions.THREE_LEGS)
+                await ToyUtil.perform_leg_action(self.__toy, R2LegActions.THREE_LEGS)
             else:
                 raise ValueError(f'Stance {stance} is not supported')
 
-    def set_waddle(self, waddle: bool):
+    async def set_waddle(self, waddle: bool):
         """Turns the waddle walk on using `set_waddle(True)`` and off using ``set_waddle(False)``."""
         if isinstance(self.__toy, (R2D2, R2Q5)):
-            with self.__updating:
-                self.__stop_all()
-            ToyUtil.perform_leg_action(self.__toy, R2LegActions.WADDLE if waddle else R2LegActions.STOP)
+            async with self.__updating:
+                await self.__stop_all()
+            await ToyUtil.perform_leg_action(self.__toy, R2LegActions.WADDLE if waddle else R2LegActions.STOP)
 
     # Lights: control the color and brightness of LEDs on a robot.
-    def set_main_led(self, color: Color):
+    async def set_main_led(self, color: Color):
         """Changes the color of the main LED light, or the full matrix on Sphero BOLT. Set this using RGB
         (red, green, blue) values on a scale of 0 - 255. For example, ``set_main_led(Color(r=90, g=255, b=90))``."""
         self.__leds['main'] = bound_color(color, self.__leds['main'])
-        ToyUtil.set_main_led(self.__toy, **self.__leds['main']._asdict(), is_user_color=False)
+        await ToyUtil.set_main_led(self.__toy, **self.__leds['main']._asdict(), is_user_color=False)
 
-    def set_front_led(self, color: Color):
+    async def set_front_led(self, color: Color):
         """For Sphero RVR: Changes the color of RVR's front two LED headlights together.
 
         For Sphero BOLT, R2D2, R2Q5: Changes the color of the front LED light.
@@ -354,9 +377,9 @@ class SpheroEduAPI:
         as ``set_front_color(Color(239, 0, 255))``."""
         if isinstance(self.__toy, (R2D2, R2Q5, BOLT, RVR)):
             self.__leds['front'] = bound_color(color, self.__leds['front'])
-            ToyUtil.set_front_led(self.__toy, **self.__leds['front']._asdict())
+            await ToyUtil.set_front_led(self.__toy, **self.__leds['front']._asdict())
 
-    def set_back_led(self, color: Union[Color, int]):
+    async def set_back_led(self, color: Union[Color, int]):
         """For older Sphero:
         Sets the brightness of the back aiming LED, aka the "Tail Light." This LED is limited to blue only, with a
         brightness scale from 0 to 255. For example, use ``set_back_led(255)`` to set the back LED to full brightness.
@@ -376,12 +399,12 @@ class SpheroEduAPI:
         on a scale of 0 - 255."""
         if isinstance(color, int):
             self.__leds['back'] = Color(0, 0, bound_value(0, color, 255))
-            ToyUtil.set_back_led_brightness(self.__toy, self.__leds['back'].b)
+            await ToyUtil.set_back_led_brightness(self.__toy, self.__leds['back'].b)
         elif isinstance(self.__toy, (R2D2, R2Q5, BOLT, RVR, Mini)):
             self.__leds['back'] = bound_color(color, self.__leds['back'])
-            ToyUtil.set_back_led(self.__toy, **self.__leds['back']._asdict())
+            await ToyUtil.set_back_led(self.__toy, **self.__leds['back']._asdict())
 
-    def fade(self, from_color: Color, to_color: Color, duration: float):
+    async def fade(self, from_color: Color, to_color: Color, duration: float):
         """Changes the main LED lights from one color to another over a period of seconds. For example, to fade from
         green to blue over 3s, use: ``fade(Color(0, 255, 0), Color(0, 0, 255), 3.0)``."""
         from_color = bound_color(from_color, self.__leds['main'])
@@ -392,13 +415,13 @@ class SpheroEduAPI:
             frac = (time.time() - start) / duration
             if frac >= 1:
                 break
-            self.set_main_led(Color(
+            await self.set_main_led(Color(
                 r=round(from_color.r * (1 - frac) + to_color.r * frac),
                 g=round(from_color.g * (1 - frac) + to_color.g * frac),
                 b=round(from_color.b * (1 - frac) + to_color.b * frac)))
-        self.set_main_led(to_color)
+        await self.set_main_led(to_color)
 
-    def strobe(self, color: Color, period: float, count: int):
+    async def strobe(self, color: Color, period: float, count: int):
         """Repeatedly blinks the main LED lights. The period is the time, in seconds, the light stays on during a
         single blink; cycles is the total number of blinks. The time for a single cycle is twice the period
         (time for a blink plus the same amount of time for the light to be off). Another way to say this is the period
@@ -406,12 +429,13 @@ class SpheroEduAPI:
         ``strobe(Color(255, 57, 66), (3 / 15) * .5, 15)``."""
         for i in range(count * 2):
             if i & 1:
-                self.set_main_led(color)
+                await self.set_main_led(color)
             else:
-                self.set_main_led(Color(0, 0, 0))
-            time.sleep(period)
+                await self.set_main_led(Color(0, 0, 0))
+            # time.sleep(period)
+            asyncio.sleep(period)
 
-    def register_matrix_animation(self, frames:list[list[list[int]]], palette:list[Color], fps:int, transition:bool):
+    async def register_matrix_animation(self, frames:list[list[list[int]]], palette:list[Color], fps:int, transition:bool):
         """
         Registers a matrix animation
         Frames is a list of frame. Each frame is a list of 8 row, each row is a list of 8 ints (from 0 to 15, index in color palette)
@@ -430,67 +454,67 @@ class SpheroEduAPI:
                             bit = (frame[row_idx][col_idx] & 1 << idx) >> idx
                             res |= bit << (7 - col_idx)
                         compressed_frame.append(res)
-                ToyUtil.save_compressed_frame_player64_bit_frame(self.__toy, self.__frame_index, compressed_frame)
+                await ToyUtil.save_compressed_frame_player64_bit_frame(self.__toy, self.__frame_index, compressed_frame)
                 frame_indexes.append(self.__frame_index)
                 self.__frame_index += 1
             palette_colors = []
             for color in palette:
                 palette_colors += list(color._asdict().values())
-            ToyUtil.save_compressed_frame_player_animation(self.__toy, self.__animation_index, fps, transition, palette_colors, frame_indexes)
+            await ToyUtil.save_compressed_frame_player_animation(self.__toy, self.__animation_index, fps, transition, palette_colors, frame_indexes)
             self.__animation_index += 1
 
-    def play_matrix_animation(self, animation_id, loop=True):
+    async def play_matrix_animation(self, animation_id, loop=True):
         """
         Plays a matrix animation
         """
         if isinstance(self.__toy, BOLT):
-            ToyUtil.play_compressed_frame_player_animation_with_loop_option(self.__toy, animation_id, loop)
+            await ToyUtil.play_compressed_frame_player_animation_with_loop_option(self.__toy, animation_id, loop)
 
-    def pause_matrix_animation(self):
+    async def pause_matrix_animation(self):
         """
         Pause a matrix animation
         """
         if isinstance(self.__toy, BOLT):
-            ToyUtil.pause_compressed_frame_player_animation(self.__toy)
+            await ToyUtil.pause_compressed_frame_player_animation(self.__toy)
 
-    def clear_matrix(self):
+    async def clear_matrix(self):
         """
         Clears a matrix animation
         """
         if isinstance(self.__toy, BOLT):
-            ToyUtil.reset_compressed_frame_player_animation(self.__toy)
+            await ToyUtil.reset_compressed_frame_player_animation(self.__toy)
 
-    def resume_matrix_animation(self):
+    async def resume_matrix_animation(self):
         """
         Resume a matrix animation
         """
         if isinstance(self.__toy, BOLT):
-            ToyUtil.resume_compressed_frame_player_animation(self.__toy)
+            await ToyUtil.resume_compressed_frame_player_animation(self.__toy)
 
-    def override_matrix_animation_framerate(self, fps: int = 0):
+    async def override_matrix_animation_framerate(self, fps: int = 0):
         """
         Overrides animation fps
         """
         if isinstance(self.__toy, BOLT):
             self.__fps_override = fps
-            ToyUtil.override_compressed_frame_player_animation_global_settings(self.__toy, self.__fps_override, self.__fade_override)
+            await ToyUtil.override_compressed_frame_player_animation_global_settings(self.__toy, self.__fps_override, self.__fade_override)
 
-    def override_matrix_animation_transition(self, option:FadeOverrideOptions = FadeOverrideOptions.NONE):
+    async def override_matrix_animation_transition(self, option:FadeOverrideOptions = FadeOverrideOptions.NONE):
         """
         Override animations transition
         """
         if isinstance(self.__toy, BOLT):
             self.__fade_override = option
-            ToyUtil.override_compressed_frame_player_animation_global_settings(self.__toy, self.__fps_override, self.__fade_override)
+            await ToyUtil.override_compressed_frame_player_animation_global_settings(self.__toy, self.__fps_override, self.__fade_override)
 
-    def set_matrix_rotation(self, rotation:FrameRotationOptions):
+    async def set_matrix_rotation(self, rotation:FrameRotationOptions):
         """
         Rotates the led matrix
         """
         if isinstance(self.__toy, BOLT):
-            ToyUtil.set_matrix_rotation(self.__toy, rotation)
+            await ToyUtil.set_matrix_rotation(self.__toy, rotation)
 
-    def scroll_matrix_text(self, text: str, color: Color, fps: int, wait: bool):
+    async def scroll_matrix_text(self, text: str, color: Color, fps: int, wait: bool):
         """
         Scrolls text on the matrix, with specified color.
         text max 25 characters
@@ -499,23 +523,23 @@ class SpheroEduAPI:
         """
         # TODO Implement wait
         if isinstance(self.__toy, BOLT):
-            ToyUtil.scroll_matrix_text(self.__toy, text, color, fps)
+            await ToyUtil.scroll_matrix_text(self.__toy, text, color, fps)
 
-    def set_matrix_character(self, character:str, color:Color):
+    async def set_matrix_character(self, character:str, color:Color):
         """
         Sets a character on the matrix with color specified
         """
         if isinstance(self.__toy, BOLT):
-            ToyUtil.set_matrix_character(self.__toy, character, color)
+            await ToyUtil.set_matrix_character(self.__toy, character, color)
 
-    def set_matrix_pixel(self, x: int, y: int, color: Color):
+    async def set_matrix_pixel(self, x: int, y: int, color: Color):
         """For Sphero BOLT: Changes the color of BOLT's matrix at X and Y value. 8x8
         """
         strMapLoc: str = str(x) + ':' + str(y)
         self.__leds[strMapLoc] = bound_color(color, self.__leds[strMapLoc])
-        ToyUtil.set_matrix_pixel(self.__toy, x, y, **self.__leds[strMapLoc]._asdict(), is_user_color=False)
+        await ToyUtil.set_matrix_pixel(self.__toy, x, y, **self.__leds[strMapLoc]._asdict(), is_user_color=False)
 
-    def set_matrix_line(self, x1: int, y1: int, x2: int, y2: int, color: Color):
+    async def set_matrix_line(self, x1: int, y1: int, x2: int, y2: int, color: Color):
         """For Sphero BOLT: Changes the color of BOLT's matrix from x1,y1 to x2,y2 in a line. 8x8
         """
         if isinstance(self.__toy, BOLT):
@@ -529,9 +553,9 @@ class SpheroEduAPI:
                 y_ = x1 + (dx / line_length) * line_increment
                 strMapLoc: str = str(x_) + ':' + str(y_)
                 self.__leds[strMapLoc] = bound_color(color, self.__leds[strMapLoc])
-            ToyUtil.set_matrix_line(self.__toy, x1, y1, x2, y2, color.r, color.g, color.b, is_user_color=False)
+            await ToyUtil.set_matrix_line(self.__toy, x1, y1, x2, y2, color.r, color.g, color.b, is_user_color=False)
 
-    def set_matrix_fill(self, x1: int, y1: int, x2: int, y2: int, color: Color):
+    async def set_matrix_fill(self, x1: int, y1: int, x2: int, y2: int, color: Color):
         """For Sphero BOLT: Changes the color of BOLT's matrix from x1,y1 to x2,y2 in a box. 8x8
         """
         if isinstance(self.__toy, BOLT):
@@ -543,41 +567,41 @@ class SpheroEduAPI:
                 for y_ in range(y_min, y_max + 1):
                     strMapLoc: str = str(x_) + ':' + str(y_)
                     self.__leds[strMapLoc] = bound_color(color, self.__leds[strMapLoc])
-            ToyUtil.set_matrix_fill(self.__toy, x1, y1, x2, y2, color.r, color.g, color.b, is_user_color=False)
+            await ToyUtil.set_matrix_fill(self.__toy, x1, y1, x2, y2, color.r, color.g, color.b, is_user_color=False)
 
 
     # Sphero RVR Lights
-    def set_left_headlight_led(self, color: Color):
+    async def set_left_headlight_led(self, color: Color):
         """Changes the color of the front left headlight LED on RVR. Set this using RGB (red, green, blue) values on a
         scale of 0 - 255. For example, the pink color is expressed as
         ``set_left_headlight_led(Color(253, 159, 255))``."""
         if isinstance(self.__toy, RVR):
             self.__leds['left_headlight'] = bound_color(color, self.__leds['left_headlight'])
-            ToyUtil.set_left_front_led(self.__toy, **self.__leds['left_headlight']._asdict())
+            await ToyUtil.set_left_front_led(self.__toy, **self.__leds['left_headlight']._asdict())
 
-    def set_right_headlight_led(self, color: Color):
+    async def set_right_headlight_led(self, color: Color):
         """Changes the color of the front right headlight LED on RVR. Set this using RGB (red, green, blue) values on a
         scale of 0 - 255. For example, the blue color is expressed as
         ``set_right_headlight_led(0, 28, 255)``."""
         if isinstance(self.__toy, RVR):
             self.__leds['right_headlight'] = bound_color(color, self.__leds['right_headlight'])
-            ToyUtil.set_right_front_led(self.__toy, **self.__leds['right_headlight']._asdict())
+            await ToyUtil.set_right_front_led(self.__toy, **self.__leds['right_headlight']._asdict())
 
-    def set_left_led(self, color: Color):
+    async def set_left_led(self, color: Color):
         """Changes the color of the LED on RVR's left side (which is the side with RVR's battery bay door). Set this
         using RGB (red, green, blue) values on a scale of 0 - 255. For example, the green color is expressed as
         ``set_left_led(Color(0, 255, 34))``."""
         if isinstance(self.__toy, RVR):
             self.__leds['left'] = bound_color(color, self.__leds['left'])
-            ToyUtil.set_battery_side_led(self.__toy, **self.__leds['left']._asdict())
+            await ToyUtil.set_battery_side_led(self.__toy, **self.__leds['left']._asdict())
 
-    def set_right_led(self, color: Color):
+    async def set_right_led(self, color: Color):
         """Changes the color of the LED on RVR's right side (which is the side with RVR's power button). Set this using
         RGB (red, green, blue) values on a scale of 0 - 255. For example, the red color is expressed as
         ``set_right_led(Color(255, 18, 0))``."""
         if isinstance(self.__toy, RVR):
             self.__leds['right'] = bound_color(color, self.__leds['right'])
-            ToyUtil.set_power_side_led(self.__toy, **self.__leds['right']._asdict())
+            await ToyUtil.set_power_side_led(self.__toy, **self.__leds['right']._asdict())
 
     # BB-9E Lights
     def set_dome_leds(self, brightness: int):
@@ -587,7 +611,7 @@ class SpheroEduAPI:
         if isinstance(self.__toy, BB9E):
             self.__leds['dome'] = bound_value(0, brightness, 15)
             ranged = self.__leds['dome'] * 255 // 15
-            ToyUtil.set_head_led(self.__toy, ranged)
+            asyncio.ensure_future(ToyUtil.set_head_led(self.__toy, ranged))
 
     # R2-D2 & R2-Q5 Lights
     def set_holo_projector_led(self, brightness: int):
@@ -595,14 +619,14 @@ class SpheroEduAPI:
         brightness using ``set_holo_projector_led(255)``."""
         if isinstance(self.__toy, (R2D2, R2Q5)):
             self.__leds['holo_projector'] = bound_value(0, brightness, 255)
-            ToyUtil.set_holo_projector(self.__toy, self.__leds['holo_projector'])
+            asyncio.ensure_future(ToyUtil.set_holo_projector(self.__toy, self.__leds['holo_projector']))
 
     def set_logic_display_leds(self, brightness: int):
         """Changes the brightness of the Logic Display LEDs, from 0 to 255. For example, set it to full brightness
         using ``set_logic_display_leds(255)``."""
         if isinstance(self.__toy, (R2D2, R2Q5)):
             self.__leds['logic_display'] = bound_value(0, brightness, 255)
-            ToyUtil.set_logic_display(self.__toy, self.__leds['logic_display'])
+            asyncio.ensure_future(ToyUtil.set_logic_display(self.__toy, self.__leds['logic_display']))
 
     # Sounds: Control sounds and words which can play from your programming device's speaker or the robot.
     def play_sound(self, sound: IntEnum):
@@ -611,10 +635,10 @@ class SpheroEduAPI:
         if hasattr(self.__toy, 'Audio'):
             if sound not in self.__toy.Audio:
                 raise ValueError(f'Sound {sound} cannot be played by this toy')
-            ToyUtil.play_sound(self.__toy, sound, False)
+            asyncio.ensure_future(ToyUtil.play_sound(self.__toy, sound, False))
 
     # Sensors: Querying sensor data allows you to react to real-time values coming from the robots' physical sensors.
-    def __start_capturing_sensor_data(self):
+    async def __start_capturing_sensor_data(self):
         if isinstance(self.__toy, RVR):
             sensors = ['accelerometer', 'gyroscope', 'imu', 'locator', 'velocity', 'ambient_light', 'color_detection']
             self.__sensor_name_mapping['imu'] = 'attitude'
@@ -622,9 +646,9 @@ class SpheroEduAPI:
             sensors = ["accel_one", 'accelerometer', 'ambient_light', 'attitude', "core_time", 'gyroscope', 'locator', "quaternion", 'velocity']
         else:
             sensors = ['attitude', 'accelerometer', 'gyroscope', 'locator', 'velocity']
-        ToyUtil.enable_sensors(self.__toy, sensors)
+        await ToyUtil.enable_sensors(self.__toy, sensors)
 
-    def _sensor_data_listener(self, sensor_data: Dict[str, Dict[str, float]]):
+    async def _sensor_data_listener(self, sensor_data: Dict[str, Dict[str, float]]):
         for sensor, data in sensor_data.items():
             if sensor in self.__sensor_name_mapping:
                 self.__sensor_data[self.__sensor_name_mapping[sensor]] = data
@@ -665,23 +689,23 @@ class SpheroEduAPI:
             self.__call_event_listener(EventType.on_landing)
             self.__should_land = False
 
-    def _collision_detected_notify(self, args):
+    async def _collision_detected_notify(self, args):
         self.__call_event_listener(EventType.on_collision)
 
-    def _battery_state_changed_notify(self, state: BatteryVoltageAndStateStates):
+    async def _battery_state_changed_notify(self, state: BatteryVoltageAndStateStates):
         if state == BatteryVoltageAndStateStates.CHARGED or state == BatteryVoltageAndStateStates.CHARGING:
             self.__call_event_listener(EventType.on_charging)
         else:
             self.__call_event_listener(EventType.on_not_charging)
 
-    def _gyro_max_notify(self, flags):
+    async def _gyro_max_notify(self, flags):
         self.__call_event_listener(EventType.on_gyro_max)
 
-    def _magnetometer_north_yaw_notify(self, flags):
+    async def _magnetometer_north_yaw_notify(self, flags):
         self.__compass_zero = flags
         self.__call_event_listener(EventType.on_magnetometer_north_yaw)
 
-    def _sensor_streaming_data_notify(self, flags):
+    async def _sensor_streaming_data_notify(self, flags):
         self.__call_event_listener(EventType.on_sensor_streaming_data)
 
     def get_acceleration(self):
@@ -824,7 +848,7 @@ class SpheroEduAPI:
         return self.__leds.get('logic_display', None)
 
     # Communications
-    def start_ir_broadcast(self, near: int, far: int):
+    async def start_ir_broadcast(self, near: int, far: int):
         """Sets the IR emitters to broadcast on two specified channels, from 0 to 7, so other BOLTs can follow or evade.
         The broadcaster uses two channels because the first channel emits near IR pulses (< 1 meter), and the second
         channel emits far IR pulses (1 to 3 meters) so the following and evading BOLTs can detect these messages on
@@ -832,26 +856,26 @@ class SpheroEduAPI:
         one purpose at time, such as sending messages along with broadcasting, following, or evading. For example,
         use ``start_ir_broadcast(0, 1)`` to broadcast on channels 0 and 1, so that other BOLTs following or evading on
         0 and 1 will recognize this robot."""
-        ToyUtil.start_robot_to_robot_infrared_broadcasting(self.__toy, bound_value(0, far, 7), bound_value(0, near, 7))
+        await ToyUtil.start_robot_to_robot_infrared_broadcasting(self.__toy, bound_value(0, far, 7), bound_value(0, near, 7))
 
-    def stop_ir_broadcast(self):
+    async def stop_ir_broadcast(self):
         """Stops the broadcasting behavior."""
-        ToyUtil.stop_robot_to_robot_infrared_broadcasting(self.__toy)
+        await ToyUtil.stop_robot_to_robot_infrared_broadcasting(self.__toy)
 
-    def start_ir_follow(self, near: int, far: int):
+    async def start_ir_follow(self, near: int, far: int):
         """Sets the IR receivers to look for broadcasting BOLTs on the same channel pair, from 0 to 7. Upon receiving
         messages from a broadcasting BOLT, the follower will adjust its heading and speed to follow the broadcaster.
         When a follower loses sight of a broadcaster, the follower will spin in place to search for the broadcaster.
         You can't use a channel for more than one purpose at time, such as sending messages along with broadcasting,
         following, or evading. For example, use ``start_ir_follow(0, 1)`` to follow another BOLT that is broadcasting on
         channels 0 and 1."""
-        ToyUtil.start_robot_to_robot_infrared_following(self.__toy, bound_value(0, far, 7), bound_value(0, near, 7))
+        await ToyUtil.start_robot_to_robot_infrared_following(self.__toy, bound_value(0, far, 7), bound_value(0, near, 7))
 
-    def stop_ir_follow(self):
+    async def stop_ir_follow(self):
         """Stops the following behavior."""
-        ToyUtil.stop_robot_to_robot_infrared_following(self.__toy)
+        await ToyUtil.stop_robot_to_robot_infrared_following(self.__toy)
 
-    def start_ir_evade(self, near: int, far: int):
+    async def start_ir_evade(self, near: int, far: int):
         """Sets the IR receivers to look for broadcasting BOLTs on the same channel pair, from 0 to 7. Upon receiving
         messages from a broadcasting BOLT, the evader will adjust its heading to roll away from the broadcaster.
         When an evader loses sight of a broadcaster, the evader will spin in place to search for the broadcaster.
@@ -859,30 +883,30 @@ class SpheroEduAPI:
         broadcaster. You can't use a channel for more than one purpose at time, such as sending messages along with
         broadcasting, following, or evading. For example, use ``start_ir_evade(0, 1)`` to evade another BOLT that is
         broadcasting on channels 0 and 1."""
-        ToyUtil.start_robot_to_robot_infrared_evading(self.__toy, bound_value(0, far, 7), bound_value(0, near, 7))
+        await ToyUtil.start_robot_to_robot_infrared_evading(self.__toy, bound_value(0, far, 7), bound_value(0, near, 7))
 
-    def stop_ir_evade(self):
+    async def stop_ir_evade(self):
         """Stops the evading behavior."""
-        ToyUtil.stop_robot_to_robot_infrared_evading(self.__toy)
+        await ToyUtil.stop_robot_to_robot_infrared_evading(self.__toy)
 
-    def send_ir_message(self, channel: int, intensity: int):
+    async def send_ir_message(self, channel: int, intensity: int):
         """Sends a message on a given IR channel, at a set intensity, from 1 to 64. Intensity is proportional to
         proximity, where a 1 is the closest, and 64 is the farthest. For example, use ``send_ir_message(4, 5)`` to send
         message 4 at intensity 5. You will need to use ``onIRMessage4(channel)`` event for on a corresponding robot to
         receive the message. Also see the ``getLastIRMessage()`` sensor to keep track of the last message your robot
         received. You can't use a channel for more than one purpose at time, such as sending messages along with
         broadcasting, following, or evading."""
-        ToyUtil.send_robot_to_robot_infrared_message(
+        await ToyUtil.send_robot_to_robot_infrared_message(
             self.__toy, bound_value(0, channel, 7), bound_value(1, intensity, 64))
 
-    def listen_for_ir_message(self, channels: Union[int, Iterable[int]], duration: int = 0xFFFFFFFF):
+    async def listen_for_ir_message(self, channels: Union[int, Iterable[int]], duration: int = 0xFFFFFFFF):
         if isinstance(channels, int):
             channels = (channels,)
         if len(channels) > 0:
-            ToyUtil.listen_for_robot_to_robot_infrared_message(
+            await ToyUtil.listen_for_robot_to_robot_infrared_message(
                 self.__toy, map(lambda v: bound_value(0, v, 7), channels), bound_value(0, duration, 0xFFFFFFFF))
 
-    def _robot_to_robot_infrared_message_received_notify(self, infrared_code: int):
+    async def _robot_to_robot_infrared_message_received_notify(self, infrared_code: int):
         self.__last_message = infrared_code
         self.__call_event_listener(EventType.on_ir_message, infrared_code)
 
@@ -899,7 +923,7 @@ class SpheroEduAPI:
     # be called every time it occurs by default, unless you customize it.
     def __call_event_listener(self, event_type: EventType, *args, **kwargs):
         for f in self.__listeners[event_type]:
-            threading.Thread(target=f, args=(self, *args), kwargs=kwargs).start()
+            asyncio.ensure_future(f(*args, **kwargs))
 
     def register_event(self, event_type: EventType, listener: Callable[..., None]):
         """Registers the event type with listener. If listener is ``None`` then it removes all listeners of the
@@ -910,6 +934,8 @@ class SpheroEduAPI:
         if event_type not in EventType:
             raise ValueError(f'Event type {event_type} does not exist')
         if listener:
+            if not asyncio.iscoroutinefunction(listener):
+                raise ValueError(f'Listener {listener} is not a coroutine function')
             self.__listeners[event_type].add(listener)
         else:
             del self.__listeners[event_type]

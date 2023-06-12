@@ -67,58 +67,58 @@ class Drive(Commands):
     _did = 22
 
     @staticmethod
-    def set_raw_motors(toy, left_mode: RawMotorModes, left_speed, right_mode: RawMotorModes, right_speed, proc=None):
-        toy._execute(Drive._encode(toy, 1, proc, [left_mode, left_speed, right_mode, right_speed]))
+    async def set_raw_motors(toy, left_mode: RawMotorModes, left_speed, right_mode: RawMotorModes, right_speed, proc=None):
+        await toy._execute(Drive._encode(toy, 1, proc, [left_mode, left_speed, right_mode, right_speed]))
 
     @staticmethod
-    def reset_yaw(toy, proc=None):
-        toy._execute(Drive._encode(toy, 6, proc))
+    async def reset_yaw(toy, proc=None):
+        await toy._execute(Drive._encode(toy, 6, proc))
 
     @staticmethod
-    def drive_with_heading(toy, speed, heading, drive_flags: DriveFlags, proc=None):
-        toy._execute(Drive._encode(toy, 7, proc, [speed, *to_bytes(heading, 2), drive_flags]))
+    async def drive_with_heading(toy, speed, heading, drive_flags: DriveFlags, proc=None):
+        await toy._execute(Drive._encode(toy, 7, proc, [speed, *to_bytes(heading, 2), drive_flags]))
 
     @staticmethod
-    def generic_raw_motor(toy, index: GenericRawMotorIndexes, mode: GenericRawMotorModes, speed, proc=None):
-        toy._execute(Drive._encode(toy, 11, proc, [index, mode, *speed]))
+    async def generic_raw_motor(toy, index: GenericRawMotorIndexes, mode: GenericRawMotorModes, speed, proc=None):
+        await toy._execute(Drive._encode(toy, 11, proc, [index, mode, *speed]))
 
     @staticmethod
-    def set_stabilization(toy, stabilization_index: StabilizationIndexes, proc=None):
-        toy._execute(Drive._encode(toy, 12, proc, [stabilization_index]))
+    async def set_stabilization(toy, stabilization_index: StabilizationIndexes, proc=None):
+        await toy._execute(Drive._encode(toy, 12, proc, [stabilization_index]))
 
     @staticmethod
-    def set_control_system_type(toy, s, s2, proc=None):  # unknown name
-        toy._execute(Drive._encode(toy, 14, proc, [s, s2]))
+    async def set_control_system_type(toy, s, s2, proc=None):  # unknown name
+        await toy._execute(Drive._encode(toy, 14, proc, [s, s2]))
 
     @staticmethod
-    def set_pitch_torque_modification_value(toy, f, proc=None):  # Untested / Unknown Param Name
-        toy._execute(Drive._encode(toy, 15, proc, [f]))
+    async def set_pitch_torque_modification_value(toy, f, proc=None):  # Untested / Unknown Param Name
+        await toy._execute(Drive._encode(toy, 15, proc, [f]))
 
     @staticmethod
-    def set_component_parameters(toy, s, s2, f_arr, proc=None):  # unknown name
-        toy._execute(Drive._encode(toy, 32, proc, [s, s2, *struct.pack('>%df' % len(f_arr), *f_arr)]))
+    async def set_component_parameters(toy, s, s2, f_arr, proc=None):  # unknown name
+        await toy._execute(Drive._encode(toy, 32, proc, [s, s2, *struct.pack('>%df' % len(f_arr), *f_arr)]))
 
     @staticmethod
-    def get_component_parameters(toy, s, s2, proc=None):  # unknown name
-        data = toy._execute(Drive._encode(toy, 33, proc, [s, s2])).data
+    async def get_component_parameters(toy, s, s2, proc=None):  # unknown name
+        data = await toy._execute(Drive._encode(toy, 33, proc, [s, s2])).data
         return struct.unpack('>%df' % (len(data) // 4), data)
 
     @staticmethod
-    def set_custom_control_system_timeout(toy, timeout, proc=None):
-        toy._execute(Drive._encode(toy, 34, proc, to_bytes(timeout, 2)))
+    async def set_custom_control_system_timeout(toy, timeout, proc=None):
+        await toy._execute(Drive._encode(toy, 34, proc, to_bytes(timeout, 2)))
 
     @staticmethod
-    def enable_motor_stall_notify(toy, enable, proc=None):
-        toy._execute(Drive._encode(toy, 37, proc, [int(enable)]))
+    async def enable_motor_stall_notify(toy, enable, proc=None):
+        await toy._execute(Drive._encode(toy, 37, proc, [int(enable)]))
 
     motor_stall_notify = (22, 38, 0xff), lambda listener, p: listener(MotorStall(*p.data))
 
     @staticmethod
-    def enable_motor_fault_notify(toy, enable, proc=None):
-        toy._execute(Drive._encode(toy, 39, proc, [int(enable)]))
+    async def enable_motor_fault_notify(toy, enable, proc=None):
+        await toy._execute(Drive._encode(toy, 39, proc, [int(enable)]))
 
     motor_fault_notify = (22, 40, 0xff), lambda listener, p: listener(bool(p.data[0]))
 
     @staticmethod
-    def get_motor_fault_state(toy, proc=None):
-        return bool(toy._execute(Drive._encode(toy, 41, proc)).data[0])
+    async def get_motor_fault_state(toy, proc=None):
+        return bool(await toy._execute(Drive._encode(toy, 41, proc)).data[0])

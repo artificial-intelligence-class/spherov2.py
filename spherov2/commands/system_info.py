@@ -42,118 +42,118 @@ class SystemInfo(Commands):
     _did = 17
 
     @staticmethod
-    def get_main_app_version(toy, proc=None):
-        return Version(*struct.unpack('>3H', toy._execute(SystemInfo._encode(toy, 0, proc)).data))
+    async def get_main_app_version(toy, proc=None):
+        return Version(*struct.unpack('>3H', await toy._execute(SystemInfo._encode(toy, 0, proc)).data))
 
     @staticmethod
-    def get_bootloader_version(toy, proc=None):
-        return Version(*struct.unpack('>3H', toy._execute(SystemInfo._encode(toy, 1, proc)).data))
+    async def get_bootloader_version(toy, proc=None):
+        return Version(*struct.unpack('>3H', await toy._execute(SystemInfo._encode(toy, 1, proc)).data))
 
     @staticmethod
-    def get_board_revision(toy, proc=None):
-        return toy._execute(SystemInfo._encode(toy, 3, proc)).data[0]
+    async def get_board_revision(toy, proc=None):
+        return await toy._execute(SystemInfo._encode(toy, 3, proc)).data[0]
 
     @staticmethod
-    def get_mac_address(toy, proc=None):
-        return toy._execute(SystemInfo._encode(toy, 6, proc)).data
+    async def get_mac_address(toy, proc=None):
+        return await toy._execute(SystemInfo._encode(toy, 6, proc)).data
 
     @staticmethod
-    def get_model_number(toy, proc=None):
-        return toy._execute(SystemInfo._encode(toy, 18, proc)).data
+    async def get_model_number(toy, proc=None):
+        return await toy._execute(SystemInfo._encode(toy, 18, proc)).data
 
     @staticmethod
-    def get_stats_id(toy, proc=None):
-        return toy._execute(SystemInfo._encode(toy, 19, proc)).data
+    async def get_stats_id(toy, proc=None):
+        return await toy._execute(SystemInfo._encode(toy, 19, proc)).data
 
     @staticmethod
-    def get_secondary_main_app_version(toy, proc=None):
-        toy._execute(SystemInfo._encode(toy, 23, proc))
+    async def get_secondary_main_app_version(toy, proc=None):
+        await toy._execute(SystemInfo._encode(toy, 23, proc))
         return Version(
             *struct.unpack('>3H', toy._wait_packet(SystemInfo.secondary_main_app_version_notify).data))
 
     secondary_main_app_version_notify = (17, 24, 0xff)
 
     @staticmethod
-    def get_processor_name(toy, proc=None):
-        return toy._execute(SystemInfo._encode(toy, 31, proc)).data.rstrip(b'\0')
+    async def get_processor_name(toy, proc=None):
+        return await toy._execute(SystemInfo._encode(toy, 31, proc)).data.rstrip(b'\0')
 
     @staticmethod
-    def get_boot_reason(toy, proc=None):
-        return BootReasons(toy._execute(SystemInfo._encode(toy, 32, proc)).data[0])
+    async def get_boot_reason(toy, proc=None):
+        return BootReasons(await toy._execute(SystemInfo._encode(toy, 32, proc)).data[0])
 
     @staticmethod
-    def get_last_error_info(toy, proc=None):
+    async def get_last_error_info(toy, proc=None):
         return LastErrorInfo(
-            *struct.unpack('>32sH12s', toy._execute(SystemInfo._encode(toy, 33, proc)).data))
+            *struct.unpack('>32sH12s', await toy._execute(SystemInfo._encode(toy, 33, proc)).data))
 
     @staticmethod
-    def get_secondary_mcu_bootloader_version(toy, proc=None):
-        toy._execute(SystemInfo._encode(toy, 36, proc))
+    async def get_secondary_mcu_bootloader_version(toy, proc=None):
+        await toy._execute(SystemInfo._encode(toy, 36, proc))
         return Version(*struct.unpack('>3H', toy._wait_packet(SystemInfo.secondary_mcu_bootloader_version_notify).data))
 
     secondary_mcu_bootloader_version_notify = (17, 37, 0xff)
 
     @staticmethod
-    def get_three_character_sku(toy, proc=None):
-        return toy._execute(SystemInfo._encode(toy, 40, proc)).data
+    async def get_three_character_sku(toy, proc=None):
+        return await toy._execute(SystemInfo._encode(toy, 40, proc)).data
 
     @staticmethod
-    def write_config_block(toy, proc=None):
-        toy._execute(SystemInfo._encode(toy, 43, proc))
+    async def write_config_block(toy, proc=None):
+        await toy._execute(SystemInfo._encode(toy, 43, proc))
 
     @staticmethod
-    def get_config_block(toy, proc=None):
-        data = toy._execute(SystemInfo.get_config_block(SystemInfo._encode(toy, 44, proc).data))
+    async def get_config_block(toy, proc=None):
+        data = await toy._execute(SystemInfo.get_config_block(SystemInfo._encode(toy, 44, proc).data))
         return ConfigBlock(*struct.unpack('>2I', data[:8]), data[8:])
 
     @staticmethod
-    def set_config_block(toy, metadata_version, config_block_version, application_data, proc=None):
-        toy._execute(SystemInfo._encode(
+    async def set_config_block(toy, metadata_version, config_block_version, application_data, proc=None):
+        await toy._execute(SystemInfo._encode(
             45, proc, [*to_bytes(metadata_version, 4), *to_bytes(config_block_version, 4), *application_data]))
 
     @staticmethod
-    def erase_config_block(toy, j, proc=None):
-        toy._execute(SystemInfo._encode(toy, 46, proc, to_bytes(j, 4)))
+    async def erase_config_block(toy, j, proc=None):
+        await toy._execute(SystemInfo._encode(toy, 46, proc, to_bytes(j, 4)))
 
     @staticmethod
-    def get_swd_locking_status(toy, proc=None):
-        return bool(toy._execute(SystemInfo._encode(toy, 48, proc)).data[0])
+    async def get_swd_locking_status(toy, proc=None):
+        return bool(await toy._execute(SystemInfo._encode(toy, 48, proc)).data[0])
 
     @staticmethod
-    def get_manufacturing_date(toy, proc=None):
+    async def get_manufacturing_date(toy, proc=None):
         return ManufacturingDate(
-            *struct.unpack('>HBB', toy._execute(SystemInfo._encode(toy, 51, proc)).data))
+            *struct.unpack('>HBB', await toy._execute(SystemInfo._encode(toy, 51, proc)).data))
 
     @staticmethod
-    def get_sku(toy, proc=None):
-        return toy._execute(SystemInfo._encode(toy, 56, proc)).data.rstrip(b'\0')
+    async def get_sku(toy, proc=None):
+        return await toy._execute(SystemInfo._encode(toy, 56, proc)).data.rstrip(b'\0')
 
     @staticmethod
-    def get_core_up_time_in_milliseconds(toy, proc=None):
-        return to_int(toy._execute(SystemInfo._encode(toy, 57, proc)).data)
+    async def get_core_up_time_in_milliseconds(toy, proc=None):
+        return to_int(await toy._execute(SystemInfo._encode(toy, 57, proc)).data)
 
     @staticmethod
-    def get_event_log_status(toy, proc=None):
-        return EventLogStatus(*struct.unpack('>3I', toy._execute(SystemInfo._encode(toy, 58, proc)).data))
+    async def get_event_log_status(toy, proc=None):
+        return EventLogStatus(*struct.unpack('>3I', await toy._execute(SystemInfo._encode(toy, 58, proc)).data))
 
     @staticmethod
-    def get_event_log_data(toy, j, j2, proc=None):  # unknown name
-        return toy._execute(SystemInfo._encode(toy, 59, proc, to_bytes(j, 4) + to_bytes(j2, 4))).data
+    async def get_event_log_data(toy, j, j2, proc=None):  # unknown name
+        return await toy._execute(SystemInfo._encode(toy, 59, proc, to_bytes(j, 4) + to_bytes(j2, 4))).data
 
     @staticmethod
-    def clear_event_log(toy, proc=None):
-        toy._execute(SystemInfo._encode(toy, 60, proc))
+    async def clear_event_log(toy, proc=None):
+        await toy._execute(SystemInfo._encode(toy, 60, proc))
 
     @staticmethod
-    def enable_sos_message_notify(toy, enable: bool, proc=None):
-        toy._execute(SystemInfo._encode(toy, 61, proc, [int(enable)]))
+    async def enable_sos_message_notify(toy, enable: bool, proc=None):
+        await toy._execute(SystemInfo._encode(toy, 61, proc, [int(enable)]))
 
     sos_message_notify = (17, 62, 0xff), lambda listener, p: listener(SosMessages(p.data[0]))
 
     @staticmethod
-    def get_sos_message(toy, proc=None):
-        toy._execute(SystemInfo._encode(toy, 63, proc))
+    async def get_sos_message(toy, proc=None):
+        await toy._execute(SystemInfo._encode(toy, 63, proc))
 
     @staticmethod
-    def clear_sos_message(toy, proc=None):
-        toy._execute(SystemInfo._encode(toy, 68, proc))
+    async def clear_sos_message(toy, proc=None):
+        await toy._execute(SystemInfo._encode(toy, 68, proc))

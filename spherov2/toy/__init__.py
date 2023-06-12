@@ -1,9 +1,6 @@
-import threading
-import time
 from collections import OrderedDict, defaultdict
-from concurrent import futures
 from functools import partial
-from queue import SimpleQueue
+import asyncio
 from typing import NamedTuple, Callable
 
 from spherov2.controls.v1 import Packet as PacketV1
@@ -33,70 +30,84 @@ class Toy:
     def __init__(self, toy, adapter_cls):
         self.address = toy.address
         self.name = toy.name
+        self.ble_device = toy
 
         self.__adapter = None
         self.__adapter_cls = adapter_cls
         self._packet_manager = self._packet.Manager()
         self.__decoder = self._packet.Collector(self.__new_packet)
-        self.__waiting = defaultdict(SimpleQueue)
+        self.__waiting = defaultdict(asyncio.Queue)
         self.__listeners = defaultdict(dict)
         self._sensor_controller = None
 
-        self.__thread = None
-        self.__packet_queue = SimpleQueue()
+        self.__packet_queue = asyncio.Queue()
 
     def __repr__(self):
         return f'{self.name} ({self.address})'
 
-    def __enter__(self):
+    async def __aenter__(self):
         if self.__adapter is not None:
             raise RuntimeError('Toy already in context manager')
-        self.__adapter = self.__adapter_cls(self.address)
-        self.__thread = threading.Thread(target=self.__process_packet)
+        self.__adapter = self.__adapter_cls(self.ble_device)
+        await self.__adapter.connect()
+        asyncio.ensure_future(self.__process_packet())
         try:
             for uuid, data in self._handshake:
-                self.__adapter.write(uuid, data)
-            self.__adapter.set_callback(self._response_uuid, self.__api_read)
-            self.__thread.start()
+                await self.__adapter.write(uuid, data)
+            await self.__adapter.set_callback(self._response_uuid, self.__api_read)
         except:
-            self.__exit__(None, None, None)
+            print("going to run aexit!")
+            await self.__aexit__(None, None, None)
             raise
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.__adapter.close()
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        print("Exiting from Toy Context Manager")
+        self.__packet_queue.put_nowait(None)
+        await self.__packet_queue.join()
+        await self.__adapter.disconnect()
         self.__adapter = None
-        if self.__thread.is_alive():
-            self.__packet_queue.put(None)
-            self.__thread.join()
-        self.__packet_queue = SimpleQueue()
+        self.__packet_queue = asyncio.Queue()
+        # self.__adapter.close()
+        # self.__adapter = None
+        # if self.__thread.is_alive():
+        #     self.__packet_queue.put(None)
+        #     self.__thread.join()
+        # self.__packet_queue = SimpleQueue()
 
-    def __process_packet(self):
+    async def __process_packet(self):
         while self.__adapter is not None:
-            payload = self.__packet_queue.get()
+            try:
+                payload = await self.__packet_queue.get()
+            except:
+                continue
+            self.__packet_queue.task_done()
             if payload is None:
                 break
             # print('request ' + ' '.join([hex(c) for c in payload]))
             while payload:
-                self.__adapter.write(self._send_uuid, payload[:20])
+                await self.__adapter.write(self._send_uuid, payload[:20])
                 payload = payload[20:]
-            time.sleep(self.toy_type.cmd_safe_interval)
+            await asyncio.sleep(self.toy_type.cmd_safe_interval)
 
-    def _execute(self, packet):
+    async def _execute(self, packet):
         if self.__adapter is None:
             raise RuntimeError('Use toys in context manager')
-        self.__packet_queue.put(packet.build())
-        return self._wait_packet(packet.id)
+        self.__packet_queue.put_nowait(packet.build())
+        return await self._wait_packet(packet.id)
 
-    def _wait_packet(self, key, timeout=10.0, check_error=False):
-        future = futures.Future()
-        self.__waiting[key].put(future)
-        packet = future.result(timeout)
+    async def _wait_packet(self, key, timeout=10.0, check_error=False):
+        future = asyncio.futures.Future()
+        await self.__waiting[key].put(future)
+        packet = await asyncio.wait_for(future, timeout)
         if check_error:
-            packet.check_error()
+            if packet.error != PacketV2.Error.success:
+                raise Exception(packet.error)
         return packet
 
     def _add_listener(self, key, listener: Callable):
+        if not asyncio.iscoroutinefunction(listener):
+            raise ValueError(f'Listener {listener} is not a coroutine function')
         self.__listeners[key[0]][listener] = partial(key[1], listener)
 
     def _remove_listener(self, key, listener: Callable):
@@ -105,14 +116,16 @@ class Toy:
     def __api_read(self, char, data):
         self.__decoder.add(data)
 
-    def __new_packet(self, packet):
+    async def __new_packet(self, packet):
         # print('response ' + ' '.join([hex(c) for c in packet.build()]))
         key = packet.id
         queue = self.__waiting[key]
         while not queue.empty():
-            queue.get().set_result(packet)
+            queue_item = await queue.get()
+            queue_item.set_result(packet)
         for f in self.__listeners[key].values():
-            threading.Thread(target=f, args=(packet,)).start()
+            asyncio.ensure_future(f(packet))
+            # threading.Thread(target=f, args=(packet,)).start()
 
     @classmethod
     def implements(cls, method, with_target=False):

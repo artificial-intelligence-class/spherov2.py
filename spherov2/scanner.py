@@ -26,7 +26,7 @@ def all_toys(cls=Toy):
         yield from all_toys(sub)
 
 
-def find_toys(*, timeout=5.0, toy_types: Iterable[Type[Toy]] = None,
+async def find_toys(*, timeout=5.0, toy_types: Iterable[Type[Toy]] = None,
               toy_names: Iterable[str] = None, adapter=None) -> List[Toy]:
     """Find toys that matches the criteria given.
 
@@ -45,12 +45,12 @@ def find_toys(*, timeout=5.0, toy_types: Iterable[Type[Toy]] = None,
     if toy_names is not None:
         toy_names = set(toy_names)
     if toy_names is not None and len(toy_names) == 1:
-        toy = adapter.scan_toy(list(toy_names)[0], timeout)
+        toy = await adapter.scan_toy(list(toy_names)[0], timeout)
         if toy is None:
             return []
         toys = [toy]
     else:
-        toys = adapter.scan_toys(timeout)
+        toys = await adapter.scan_toys(timeout)
     if toy_types is None:
         toy_types = set(all_toys())
     ret = []
@@ -68,7 +68,7 @@ def find_toys(*, timeout=5.0, toy_types: Iterable[Type[Toy]] = None,
     return ret
 
 
-def find_toy(*, toy_name: str = None, **kwargs) -> Toy:
+async def find_toy(*, toy_name: str = None, **kwargs) -> Toy:
     """Find a single toy that matches the criteria given.
 
     :param toy_name: A string of toy name that needs to be scanned. Set to ``None`` to scan toy with all kinds of names.
@@ -80,7 +80,7 @@ def find_toy(*, toy_name: str = None, **kwargs) -> Toy:
     :return: A toy that is scanned.
     :raise ToyNotFoundError: If no toys could be found
     """
-    toys = find_toys(toy_names=[toy_name] if toy_name else None, **kwargs)
+    toys = await find_toys(toy_names=[toy_name] if toy_name else None, **kwargs)
     if not toys:
         raise ToyNotFoundError
     return toys[0]
