@@ -1,4 +1,4 @@
-import threading
+import asyncio
 from enum import IntEnum
 from typing import NamedTuple, Callable, Dict, List
 
@@ -138,14 +138,14 @@ class Packet:
                     _, _, dlen, *remain = payload
                     if dlen > len(remain):
                         break
-                    self.__callback(Packet.parse_response(payload[:dlen + 3]))
+                    asyncio.ensure_future(self.__callback(Packet.parse_response(payload[:dlen + 3])))
                     self.__data = remain[dlen:]
                 elif sop2 == Packet.ASYNC:
                     _, dlen_msb, dlen_lsb, *remain = payload
                     dlen = (dlen_msb << 8) | dlen_lsb
                     if dlen > len(remain):
                         break
-                    self.__callback(Packet.parse_async(payload[:dlen + 3]))
+                    asyncio.ensure_future(self.__callback(Packet.parse_async(payload[:dlen + 3])))
                     self.__data = remain[dlen:]
                 else:
                     raise PacketDecodingException('Unexpected start of packet 2')
@@ -156,30 +156,30 @@ class DriveControl:
         self.__toy = toy
         self.__is_aiming = False
 
-    def roll_start(self, heading, speed):
+    async def roll_start(self, heading, speed):
         flag = ReverseFlags.OFF
         if speed < 0:
             flag = ReverseFlags.ON
             heading = (heading + 180) % 360
         speed = min(255, abs(speed))
-        self.__toy.roll(speed, heading, RollModes.GO, flag)
+        await self.__toy.roll(speed, heading, RollModes.GO, flag)
 
-    def roll_stop(self, heading):
-        self.__toy.roll(0, heading, RollModes.STOP, ReverseFlags.OFF)
+    async def roll_stop(self, heading):
+        await self.__toy.roll(0, heading, RollModes.STOP, ReverseFlags.OFF)
 
-    def set_heading(self, heading):
-        self.__toy.roll(0, heading, RollModes.CALIBRATE, ReverseFlags.OFF)
+    async def set_heading(self, heading):
+        await self.__toy.roll(0, heading, RollModes.CALIBRATE, ReverseFlags.OFF)
 
-    def set_stabilization(self, stabilize):
-        self.__toy.set_stabilization(stabilize)
+    async def set_stabilization(self, stabilize):
+        await self.__toy.set_stabilization(stabilize)
 
-    def set_raw_motors(self, left_mode, left_speed, right_mode, right_speed):
-        self.__toy.set_raw_motors(left_mode, left_speed, right_mode, right_speed)
+    async def set_raw_motors(self, left_mode, left_speed, right_mode, right_speed):
+        await self.__toy.set_raw_motors(left_mode, left_speed, right_mode, right_speed)
         
-    def reset_heading(self):
-        self.set_stabilization(False)
-        self.__toy.set_heading(0)
-        self.set_stabilization(True)
+    async def reset_heading(self):
+        await self.set_stabilization(False)
+        await self.__toy.set_heading(0)
+        await self.set_stabilization(True)
 
 
 class FirmwareUpdateControl:
@@ -209,7 +209,7 @@ class SensorControl:
     def remove_sensor_data_listener(self, listener: Callable[[Dict[str, Dict[str, float]]], None]):
         self.__listeners.remove(listener)
 
-    def __sensor_streaming_data(self, sensor_data: List[int]):
+    async def __sensor_streaming_data(self, sensor_data: List[int]):
         data = {}
 
         def __new_data():
@@ -231,21 +231,21 @@ class SensorControl:
                 __new_data()
 
         for f in self.__listeners:
-            threading.Thread(target=f, args=(data,)).start()
+            asyncio.ensure_future(f(data))
 
-    def set_count(self, count: int):
+    async def set_count(self, count: int):
         if count >= 0 and count != self.__count:
             self.__count = count
-            self.__update()
+            await self.__update()
 
-    def set_interval(self, interval: int):
+    async def set_interval(self, interval: int):
         if interval >= 0 and interval != self.__interval:
             self.__interval = interval * 4 // 10
             if self.__interval == 0 and interval > 0:
                 self.__interval = 1
-            self.__update()
+            await self.__update()
 
-    def __update(self):
+    async def __update(self):
         sensors_mask = extended_sensors_mask = 0
         for sensor in self.__enabled.values():
             for component in sensor.values():
@@ -253,26 +253,26 @@ class SensorControl:
         for sensor in self.__enabled_extended.values():
             for component in sensor.values():
                 extended_sensors_mask |= component.bit
-        self.__toy.set_data_streaming(self.__interval, 1, sensors_mask, self.__count, extended_sensors_mask)
+        await self.__toy.set_data_streaming(self.__interval, 1, sensors_mask, self.__count, extended_sensors_mask)
 
-    def enable(self, *sensors):
+    async def enable(self, *sensors):
         for sensor in sensors:
             if sensor in self.__toy.sensors:
                 self.__enabled[sensor] = self.__toy.sensors[sensor]
             elif sensor in self.__toy.extended_sensors:
                 self.__enabled_extended[sensor] = self.__toy.extended_sensors[sensor]
-        self.__update()
+        await self.__update()
 
-    def disable(self, *sensors):
+    async def disable(self, *sensors):
         for sensor in sensors:
             self.__enabled.pop(sensor, None)
             self.__enabled_extended.pop(sensor, None)
-        self.__update()
+        await self.__update()
 
-    def disable_all(self):
+    async def disable_all(self):
         self.__enabled.clear()
         self.__enabled_extended.clear()
-        self.__update()
+        await self.__update()
 
 
 class StatsControl:
