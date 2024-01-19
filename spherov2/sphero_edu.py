@@ -4,7 +4,7 @@ import time
 from collections import namedtuple, defaultdict
 from enum import Enum, IntEnum, auto
 from functools import partial
-from typing import Union, Callable, Dict, Iterable
+from typing import Union, Callable, Dict, Iterable, List
 
 import numpy as np
 from transforms3d.euler import euler2mat
@@ -411,7 +411,7 @@ class SpheroEduAPI:
                 self.set_main_led(Color(0, 0, 0))
             time.sleep(period)
 
-    def register_matrix_animation(self, frames:list[list[list[int]]], palette:list[Color], fps:int, transition:bool):
+    def register_matrix_animation(self, frames:List[List[List[int]]], palette:List[Color], fps:int, transition:bool):
         """
         Registers a matrix animation
         Frames is a list of frame. Each frame is a list of 8 row, each row is a list of 8 ints (from 0 to 15, index in color palette)
